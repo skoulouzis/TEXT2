@@ -12,5 +12,6 @@
     <description>Taxonomy EXtraction Text attemts to extract a taxonomy of terms from text. It's a collection of existing algorthms and code</description>
     <modules>
         <module>termXtraction</module>
+        <module>termSemantization</module>
     </modules>
 </project>
