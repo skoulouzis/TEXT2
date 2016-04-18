@@ -13,5 +13,6 @@
     <modules>
         <module>termXtraction</module>
         <module>termSemantization</module>
+        <module>termClassifier</module>
     </modules>
 </project>
