@@ -33,16 +33,16 @@ public class Term {
         this.lemma = lemma;
     }
 
-    void setBroader(List<Term> broader) {
+    public void setBroader(List<Term> broader) {
         broader.equals(this);
         this.broader = broader;
     }
 
-    List<Term> getBroader() {
+    public List<Term> getBroader() {
         return this.broader;
     }
 
-    void setUID(String uid) {
+    public void setUID(String uid) {
         this.uid = uid;
     }
 
@@ -58,7 +58,7 @@ public class Term {
         return lemma;
     }
 
-    void setIsFromDictionary(boolean fromDict) {
+    public void setIsFromDictionary(boolean fromDict) {
         this.fromDictionary = fromDict;
     }
 
@@ -100,7 +100,7 @@ public class Term {
         return this.altLables;
     }
 
-    void setGlosses(List<String> glosses) {
+    public void setGlosses(List<String> glosses) {
         this.glosses = glosses;
     }
 
@@ -108,7 +108,7 @@ public class Term {
         return this.glosses;
     }
 
-    void setBroaderUIDS(List<String> buids) {
+    public void setBroaderUIDS(List<String> buids) {
         this.buids = buids;
     }
 
@@ -116,7 +116,7 @@ public class Term {
         return this.nuids;
     }
 
-    void setNarrowerUIDS(Set<String> nuids) {
+    public void setNarrowerUIDS(Set<String> nuids) {
         this.nuids = nuids;
     }
 
@@ -124,7 +124,7 @@ public class Term {
         return this.buids;
     }
 
-    void setForeignKey(String fKey) {
+    public void setForeignKey(String fKey) {
         this.fKey = fKey;
     }
 
@@ -137,7 +137,7 @@ public class Term {
         return this.lemma + "-" + uid;
     }
 
-    void addNarrowerUID(String uid) {
+    public void addNarrowerUID(String uid) {
         if (this.nuids == null) {
             nuids = new HashSet<>();
         }
@@ -155,18 +155,18 @@ public class Term {
         narrower.add(tv);
     }
 
-    void setNarrower(ArrayList<Term> narrower) {
+    public void setNarrower(ArrayList<Term> narrower) {
         this.narrower = narrower;
     }
 
-    void addBroaderUID(String buid) {
+    public void addBroaderUID(String buid) {
         if (this.buids == null) {
             this.buids = new ArrayList<>();
         }
         this.buids.add(buid);
     }
 
-    void addBroader(Term tv) {
+    public void addBroader(Term tv) {
         if (this.broader == null) {
             this.broader = new ArrayList<>();
         }

@@ -155,7 +155,7 @@ public class FileUtils {
         return nGrams;
     }
 
-    protected static Set<String> getNGramsFromTermDictionary(String lemma, String keywordsDictionarayFile) throws IOException {
+    public static Set<String> getNGramsFromTermDictionary(String lemma, String keywordsDictionarayFile) throws IOException {
         if (nGramsMap == null) {
             nGramsMap = new HashMap<>();
         }

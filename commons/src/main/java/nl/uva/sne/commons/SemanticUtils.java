@@ -68,7 +68,7 @@ public class SemanticUtils {
      * @param rightVector right vector
      * @return cosine similarity between the two vectors
      */
-    protected static Double cosineSimilarity(Map<String, Double> leftVector, Map<String, Double> rightVector) {
+    public static Double cosineSimilarity(Map<String, Double> leftVector, Map<String, Double> rightVector) {
         if (leftVector == null || rightVector == null) {
             throw new IllegalArgumentException("Vectors must not be null");
         }
