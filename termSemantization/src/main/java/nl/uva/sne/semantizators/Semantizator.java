@@ -8,6 +8,7 @@ package nl.uva.sne.semantizators;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+import nl.uva.sne.commons.Term;
 import org.json.simple.parser.ParseException;
 
 /**

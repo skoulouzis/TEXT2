@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.semantizators.Semantizator;
-import nl.uva.sne.semantizators.Term;
+import nl.uva.sne.commons.Term;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
@@ -35,7 +35,7 @@ public class Main {
             Semantizator semantizator = (Semantizator) obj;
 
             semantizator.configure(getProperties());
-            String in = "/home/alogo/Downloads/textdocs/dictionary.csv";
+            String in = "/home/alogo/Downloads/textdocs/dictionaryMix.csv";
             List<Term> terms = semantizator.semnatizeTerms(in);
 
             writeTerms2Json(terms, "/home/alogo/Downloads/jsonTerms/");

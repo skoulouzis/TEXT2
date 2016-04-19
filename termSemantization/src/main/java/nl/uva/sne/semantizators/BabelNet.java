@@ -26,6 +26,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nl.uva.sne.commons.FileUtils;
+import nl.uva.sne.commons.SemanticUtils;
+import nl.uva.sne.commons.Term;
+import nl.uva.sne.commons.TermFactory;
+import nl.uva.sne.commons.ValueComparator;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -49,7 +54,7 @@ public class BabelNet implements Semantizator {
     private static Map<String, String> disambiguateCache;
     private static Map<String, String> edgesCache;
 
-    private final int limit = 100;
+    private final int limit = 1000;
     private static String stopwordsFile;
 
     @Override
