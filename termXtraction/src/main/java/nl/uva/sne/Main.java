@@ -5,7 +5,6 @@
  */
 package nl.uva.sne;
 
-import nl.uva.sne.extractors.ValueComparator;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +14,7 @@ import java.util.Properties;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nl.uva.sne.commons.ValueComparator;
 import nl.uva.sne.extractors.TermExtractor;
 
 /**

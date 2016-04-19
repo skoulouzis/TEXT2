@@ -22,6 +22,10 @@ import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
+import nl.uva.sne.commons.SemanticUtils;
+import nl.uva.sne.commons.Term;
+import nl.uva.sne.commons.TermFactory;
+import nl.uva.sne.commons.ValueComparator;
 import org.apache.lucene.util.Version;
 
 /*
