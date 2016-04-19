@@ -59,11 +59,11 @@ public class JtopiaExtractor implements TermExtractor {
     }
 
     @Override
-    public Map<String, Integer> termXtraction(String inDir) throws IOException {
+    public Map<String, Double> termXtraction(String inDir) throws IOException {
         File dir = new File(inDir);
         TermsExtractor termExtractor = new TermsExtractor();
         TermDocument topiaDoc = new TermDocument();
-        HashMap<String, Integer> keywordsDictionaray = new HashMap();
+        HashMap<String, Double> keywordsDictionaray = new HashMap();
                
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
@@ -83,12 +83,12 @@ public class JtopiaExtractor implements TermExtractor {
                     Set<String> terms = topiaDoc.getFinalFilteredTerms().keySet();
                     for (String t : terms) {
                         String text = t.replaceAll(" ", "_");
-                        Integer tf;
+                        Double tf;
                         if (keywordsDictionaray.containsKey(text.toLowerCase())) {
                             tf = keywordsDictionaray.get(text.toLowerCase());
                             tf++;
                         } else {
-                            tf = 1;
+                            tf = 1.0;
                         }
                         keywordsDictionaray.put(text.toLowerCase(), tf);
                     }

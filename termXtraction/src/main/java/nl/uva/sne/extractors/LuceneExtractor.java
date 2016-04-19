@@ -2,8 +2,10 @@ package nl.uva.sne.extractors;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +15,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import nl.uva.sne.commons.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -22,11 +28,12 @@ import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
-import nl.uva.sne.commons.SemanticUtils;
-import nl.uva.sne.commons.Term;
-import nl.uva.sne.commons.TermFactory;
 import nl.uva.sne.commons.ValueComparator;
 import org.apache.lucene.util.Version;
+import org.unix4j.Unix4j;
+import org.unix4j.unix.grep.GrepOption;
+import org.unix4j.unix.grep.GrepOptionSets;
+import org.unix4j.unix.grep.GrepOptions;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -43,6 +50,10 @@ public class LuceneExtractor implements TermExtractor {
 
     private String stopwordsFile;
     private int maxNGrams;
+    private String scoreType;
+    private boolean removeExclusiveTerms;
+    private List<File> docs = new ArrayList<>();
+    private File dir;
 
     @Override
     public void configure(Properties prop) {
@@ -51,38 +62,46 @@ public class LuceneExtractor implements TermExtractor {
                 + File.separator + "etc" + File.separator + "sropwords");
 
         maxNGrams = Integer.valueOf(prop.getProperty("max.ngrams", "4"));
+
+        scoreType = prop.getProperty("score.type", "tf").toLowerCase();
+
+        removeExclusiveTerms = Boolean.valueOf(prop.getProperty("remove.exclusive.terms", "false"));
     }
 
     @Override
-    public Map<String, Integer> termXtraction(String inDir) throws IOException {
-        File dir = new File(inDir);
-
-        Map<String, Integer> keywordsDictionaray = new HashMap();
-
+    public Map<String, Double> termXtraction(String inDir) throws IOException {
+        dir = new File(inDir);
+        Map<String, Double> termDictionaray = new HashMap();
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+                docs.add(f);
                 try (BufferedReader br = new BufferedReader(new FileReader(f))) {
                     for (String text; (text = br.readLine()) != null;) {
-
                         List<String> tokens = tokenize(text);
-
                         for (String t : tokens) {
-                            Integer tf;
-                            if (keywordsDictionaray.containsKey(t)) {
-                                tf = keywordsDictionaray.get(t);
+                            Double tf;
+                            if (termDictionaray.containsKey(t)) {
+                                tf = termDictionaray.get(t);
                                 tf++;
                             } else {
-                                tf = 1;
+                                tf = 1.0;
                             }
-                            keywordsDictionaray.put(t, tf);
+                            termDictionaray.put(t, tf);
                         }
                     }
                 }
             }
         }
+        if (removeExclusiveTerms) {
+            return removeExclusiveTerms(termDictionaray);
+        }
 
-        Map<String, Integer> sorted_map = removeExclusiveTerms(keywordsDictionaray);
-        return sorted_map;
+        try {
+            return Util.getScore(termDictionaray, scoreType, docs);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     private CharArraySet getStopWords() throws IOException {
@@ -100,9 +119,9 @@ public class LuceneExtractor implements TermExtractor {
         }
     }
 
-    private Map<String, Integer> removeExclusiveTerms(Map<String, Integer> keywordsDictionaray) {
+    private Map<String, Double> removeExclusiveTerms(Map<String, Double> keywordsDictionaray) {
         ValueComparator bvc = new ValueComparator(keywordsDictionaray);
-        Map<String, Integer> sorted_map = new TreeMap(bvc);
+        Map<String, Double> sorted_map = new TreeMap(bvc);
         sorted_map.putAll(keywordsDictionaray);
 
         //remove terms that only apear with others. e.g. if we only 
@@ -170,4 +189,5 @@ public class LuceneExtractor implements TermExtractor {
 
         return words;
     }
+
 }

@@ -28,31 +28,31 @@ public class Main {
     public static void main(String args[]) {
 
         try {
-            String className = "nl.uva.sne.extractors.JtopiaExtractor";
-//            String className = "nl.uva.sne.extractors.LuceneExtractor";
+//            String className = "nl.uva.sne.extractors.JtopiaExtractor";
+            String className = "nl.uva.sne.extractors.LuceneExtractor";
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             TermExtractor termExtractor = (TermExtractor) obj;
 
             termExtractor.configure(getProperties());
-//            Map<String, Integer> terms = termExtractor.termXtraction("/home/alogo/Downloads/textdocs");
-//            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/dictionary.csv");
+            Map<String, Double> terms = termExtractor.termXtraction("/home/alogo/Downloads/textdocs");
+            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/dictionary.csv");
 
-            Map<String, Integer> terms = termExtractor.termXtraction("/home/alogo/Downloads/jsonTerms/");
-            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/clusterNames.csv");
-
+//            Map<String, Integer> terms = termExtractor.termXtraction("/home/alogo/Downloads/jsonTerms/");
+//            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/clusterNames.csv");
+//
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private static void writeDictionary2File(Map<String, Integer> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
-        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
-        Map<String, Integer> sorted_map = new TreeMap(bvc);
-        sorted_map.putAll(keywordsDictionaray);
+    private static void writeDictionary2File(Map<String, Double> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
+//        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
+//        Map<String, Integer> sorted_map = new TreeMap(bvc);
+//        sorted_map.putAll(keywordsDictionaray);
 
         try (PrintWriter out = new PrintWriter(outkeywordsDictionarayFile)) {
-            for (String key : sorted_map.keySet()) {
+            for (String key : keywordsDictionaray.keySet()) {
                 out.print(key + "," + keywordsDictionaray.get(key) + "\n");
             }
         }

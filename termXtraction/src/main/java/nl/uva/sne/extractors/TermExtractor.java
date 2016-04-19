@@ -17,6 +17,6 @@ public interface TermExtractor {
     
     public void configure(Properties prop);
     
-    public Map<String,Integer> termXtraction(String inDir) throws IOException;
+    public Map<String,Double> termXtraction(String inDir) throws IOException;
     
 }
