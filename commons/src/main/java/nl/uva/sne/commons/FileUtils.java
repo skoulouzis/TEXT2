@@ -25,6 +25,9 @@ import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.unix4j.Unix4j;
+import org.unix4j.builder.Unix4jCommandBuilder;
+import org.unix4j.unix.grep.GrepOptions;
 
 /**
  *
@@ -100,7 +103,7 @@ public class FileUtils {
         return getBoolean(jsonFile, "isFromDictionary");
     }
 
-    private static Set<String> grep(File f, Pattern pattern, boolean removePattern) throws IOException {
+    public static Set<String> grep(File f, Pattern pattern, boolean removePattern) throws IOException {
 
         // Open the file and then get a channel from the stream
         FileInputStream fis = new FileInputStream(f);
@@ -114,7 +117,7 @@ public class FileUtils {
         CharBuffer cb = DECODER.decode(bb);
 
         // Perform the search
-        Set<String> ngrams = grep(f, cb, pattern, removePattern);
+        Set<String> ngrams = grep(cb, pattern, removePattern);
 
         // Close the channel and the stream
         fc.close();
@@ -124,13 +127,11 @@ public class FileUtils {
     // Use the linePattern to break the given CharBuffer into lines, applying
     // the input pattern to each line to see if we have a match
     //
-    private static Set<String> grep(File f, CharBuffer cb, Pattern pattern, boolean removePattern) {
+    private static Set<String> grep(CharBuffer cb, Pattern pattern, boolean removePattern) {
         Set<String> nGrams = new HashSet<>();
         Matcher lm = LINE_PATTERN.matcher(cb);	// Line matcher
         Matcher pm = null;			// Pattern matcher
-//        int lines = 0;
         while (lm.find()) {
-//            lines++;
             CharSequence cs = lm.group(); 	// The current line
             if (pm == null) {
                 pm = pattern.matcher(cs);
