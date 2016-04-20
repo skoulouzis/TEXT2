@@ -8,25 +8,38 @@ package nl.uva.sne.commons;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import net.didion.jwnl.JWNL;
+import net.didion.jwnl.JWNLException;
+import net.didion.jwnl.data.IndexWord;
+import net.didion.jwnl.data.IndexWordSet;
+import net.didion.jwnl.data.POS;
+import net.didion.jwnl.dictionary.Dictionary;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.hy.ArmenianAnalyzer;
+import org.apache.lucene.analysis.shingle.ShingleFilter;
+import org.apache.lucene.analysis.snowball.SnowballFilter;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardFilter;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
-import org.unix4j.Unix4j;
-import org.unix4j.unix.grep.GrepOptionSets;
+import org.json.simple.parser.ParseException;
 
 /**
  *
@@ -35,7 +48,29 @@ import org.unix4j.unix.grep.GrepOptionSets;
 public class SemanticUtils {
 
     static Set<String> stopwords = new HashSet();
-    public static String stopwordsFile;
+    public static String stopwordsFile = System.getProperty("user.home")
+            + File.separator + "workspace" + File.separator + "TEXT2"
+            + File.separator + "etc" + File.separator + "sropwords";
+
+    static Map<String, Map<String, Double>> termDocCache;
+
+    static Set<String> nonLematizedWords = new HashSet();
+    private static Dictionary wordNetdictionary;
+
+    private static File nonLematizedWordsFile = new File(
+            System.getProperty("user.home")
+            + File.separator + "workspace" + File.separator + "TEXT2"
+            + File.separator + "termXtraction" + File.separator + "etc" + File.separator + "nonLematizedWords");
+
+    static {
+        try {
+            JWNL.initialize(new FileInputStream(System.getProperty("user.home")
+                    + File.separator + "workspace" + File.separator + "TEXT2"
+                    + File.separator + "etc" + File.separator + "file_properties.xml"));
+        } catch (JWNLException | FileNotFoundException ex) {
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public static double tfIdf(List<String> doc, List<List<String>> docs, String term) {
         return tf(doc, term) * idf(docs, term);
@@ -135,10 +170,8 @@ public class SemanticUtils {
         }
         return dotProduct;
     }
-    
-    
 
-    public static Set<String> getDocument(Term term) throws IOException {
+    public static Set<String> getDocument(Term term) throws IOException, JWNLException {
 
         Set<String> doc = new HashSet<>();
 
@@ -163,8 +196,30 @@ public class SemanticUtils {
         return doc;
     }
 
-    private static List<String> tokenize(String text) throws IOException {
+    public static List<String> getNGrams(String text, int maxNGrams) throws IOException {
+        List<String> words = new ArrayList<>();
 
+        Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_42, CharArraySet.EMPTY_SET);
+        TokenStream tokenStream = analyzer.tokenStream("content", new StringReader(text));
+        StopFilter stopFilter = new StopFilter(Version.LUCENE_42, tokenStream, getStopWords());
+        stopFilter.setEnablePositionIncrements(false);
+//        SnowballFilter snowballFilter = new SnowballFilter(stopFilter, "English");
+
+        try (ShingleFilter sf = new ShingleFilter(stopFilter, 2, maxNGrams)) {
+            sf.setOutputUnigrams(false);
+            CharTermAttribute charTermAttribute = sf.addAttribute(CharTermAttribute.class);
+            sf.reset();
+            while (sf.incrementToken()) {
+                String word = charTermAttribute.toString();
+                words.add(word.replaceAll(" ", "_"));
+            }
+            sf.end();
+        }
+        return words;
+    }
+
+    public static List<String> tokenize(String text) throws IOException, JWNLException {
+        text = text.replaceAll("[^a-zA-Z\\s]", "");
         text = text.replaceAll("-+", "-0");
         text = text.replaceAll("’", "'");
         text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");
@@ -200,55 +255,94 @@ public class SemanticUtils {
             }
         }
     }
-    
-    public Map<String, Double> getScore(Map<String, Double> termDictionaray,String scoreType, List<File> docs) throws IOException, InterruptedException {
-        ValueComparator bvc = new ValueComparator(termDictionaray);
-        Map<String, Double> sorted_map = new TreeMap(bvc);
-        sorted_map.putAll(termDictionaray);
 
-        switch (scoreType) {
-            case "tf":
-                return sorted_map;
+    public static Map<String, Double> getTermsInDoc(Map<String, Double> termDictionaray, File f) throws IOException, JWNLException {
 
-            case "tf_ratio":
-//                TF(t) = (Number of times term t appears in a document) / (Total number of terms in the document).
-//                FileUtils.grep(f, pattern, false);
-                return sorted_map;
-
-            case "idf":
-                Map<String,Double> newTermDictionaray = new HashMap<>();
-//                IDF(t) = log_e(Total number of documents / Number of documents with term t in it). 
-                for (String term : sorted_map.keySet()) {
-
-                    int numOfDocsWithTerm = 0;
-                    GrepOptionSets go = new GrepOptionSets();
-
-                    for (File f : docs) {
-                        try (InputStream fis = new FileInputStream(f)) {
-                            String result = Unix4j.from(fis).grep(go.i.count, term.replaceAll("_", " ")).toStringResult();
-                            Integer lineCount = Integer.valueOf(result);
-                            if (lineCount > 0) {
-                                numOfDocsWithTerm++;
-                            }
-                        }
-
-                    }
-                    if (numOfDocsWithTerm > 0) {
-                        double idf = Math.log((double) docs.size() / (double) numOfDocsWithTerm);
-                        System.err.println(term + " , " + idf);
-                    } else {
-                        System.err.println(term + " , " + 0);
-                    }
-
-                    Thread.sleep(1);
-                }
-
-//                Math.log(docs.size() /);
-                return sorted_map;
-
-            default:
-                return sorted_map;
+        if (termDocCache == null) {
+            termDocCache = new HashMap<>();
         }
+        Map<String, Double> termsInDoc = termDocCache.get(f.getAbsolutePath());
+        if (termsInDoc != null) {
+            return termsInDoc;
+        }
+        termsInDoc = new HashMap<>();
+        List<String> tokens = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            for (String text; (text = br.readLine()) != null;) {
+                tokens.addAll(tokenize(text));
+            }
+        }
+
+        for (String term : termDictionaray.keySet()) {
+            for (String t : tokens) {
+                if (term.equals(t)) {
+                    Double tf = termsInDoc.get(t);
+                    if (tf != null) {
+                        tf++;
+                    } else {
+                        tf = 1.0;
+                    }
+                    termsInDoc.put(t, tf);
+                }
+            }
+        }
+        termDocCache.put(f.getAbsolutePath(), termsInDoc);
+        return termsInDoc;
+    }
+
+    public static String lemmatize(String word) throws JWNLException, FileNotFoundException, MalformedURLException, IOException, ParseException, Exception {
+        if (nonLemetize(word) || word.contains("_")) {
+            return word;
+        }
+
+        wordNetdictionary = getWordNetDictionary();
+        IndexWordSet set = wordNetdictionary.lookupAllIndexWords(word);
+        for (IndexWord iw : set.getIndexWordArray()) {
+            return iw.getLemma();
+        }
+//        word = lmmtizeFromOnlineWordNet(word, language);
+//        word = lemmatizeFromBabelNet(word, language);
+
+        return word;
+    }
+
+    public static boolean nonLemetize(String word) throws FileNotFoundException, IOException {
+        if (nonLematizedWords.isEmpty() || nonLematizedWords == null) {
+            loadNonLematizeWords();
+        }
+        return nonLematizedWords.contains(word);
+    }
+
+    private static Dictionary getWordNetDictionary() {
+        if (wordNetdictionary == null) {
+            wordNetdictionary = Dictionary.getInstance();
+        }
+        return wordNetdictionary;
+    }
+
+    private static void loadNonLematizeWords() throws FileNotFoundException, IOException {
+        if (nonLematizedWordsFile.exists() && nonLematizedWordsFile.length() > 1) {
+            try (BufferedReader br = new BufferedReader(new FileReader(nonLematizedWordsFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    nonLematizedWords.add(line);
+                }
+            }
+        }
+    }
+
+    public static POS[] getPOS(String s) throws JWNLException {
+        // Look up all IndexWords (an IndexWord can only be one POS)
+        wordNetdictionary = getWordNetDictionary();
+        IndexWordSet set = wordNetdictionary.lookupAllIndexWords(s);
+        // Turn it into an array of IndexWords
+        IndexWord[] words = set.getIndexWordArray();
+        // Make the array of POS
+        POS[] pos = new POS[words.length];
+        for (int i = 0; i < words.length; i++) {
+            pos[i] = words[i].getPOS();
+        }
+        return pos;
     }
 
 }

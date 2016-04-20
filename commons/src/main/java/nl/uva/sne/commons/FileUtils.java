@@ -5,6 +5,7 @@
  */
 package nl.uva.sne.commons;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -25,9 +26,6 @@ import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.unix4j.Unix4j;
-import org.unix4j.builder.Unix4jCommandBuilder;
-import org.unix4j.unix.grep.GrepOptions;
 
 /**
  *
@@ -171,6 +169,23 @@ public class FileUtils {
         nGramsMap.put(lemma, nGrams);
 
         return nGrams;
+    }
+
+    public static Map<String, Double> csv2Map(String file) throws IOException {
+        Map<String, Double> map = new HashMap<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.length() > 2) {
+                    String[] parts = line.split(",");
+                    if (parts.length > 1) {
+                        map.put(parts[0], Double.valueOf(parts[1]));
+                    }
+                }
+            }
+        }
+
+        return map;
     }
 
 }

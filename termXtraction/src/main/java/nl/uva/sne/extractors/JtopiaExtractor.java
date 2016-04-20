@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.io.FilenameUtils;
 
 /**
@@ -28,26 +30,26 @@ public class JtopiaExtractor implements TermExtractor {
     public void configure(Properties prop) {
 
         String taggerType = prop.getProperty("tagger.type", "stanford");
+        String modelPath = prop.getProperty("model.path",
+                System.getProperty("user.home") + File.separator + "workspace"
+                + File.separator + "TEXT2" + File.separator + "etc" + File.separator + "model");
+        if (modelPath.endsWith("/")) {
+            modelPath = modelPath.substring(0, modelPath.length() - 1);
+        }
         switch (taggerType) {
             case "stanford":
-                Configuration.setModelFileLocation(System.getProperty("user.home")
-                        + File.separator + "workspace" + File.separator + "termXtraction"
-                        + File.separator + "etc" + File.separator
-                        + "model/stanford/english-left3words-distsim.tagger");
+                Configuration.setModelFileLocation(modelPath + File.separator
+                        + "stanford" + File.separator + "english-left3words-distsim.tagger");
                 Configuration.setTaggerType("stanford");
                 break;
             case "openNLP":
-                Configuration.setModelFileLocation(System.getProperty("user.home")
-                        + File.separator + "workspace" + File.separator + "termXtraction"
-                        + File.separator + "etc" + File.separator
-                        + "model/openNLP/en-pos-maxent.bin");
+                Configuration.setModelFileLocation(modelPath + File.separator
+                        + "openNLP" + File.separator + "en-pos-maxent.bin");
                 Configuration.setTaggerType("openNLP");
                 break;
             case "default":
-                Configuration.setModelFileLocation(System.getProperty("user.home")
-                        + File.separator + "workspace" + File.separator + "termXtraction"
-                        + File.separator + "etc" + File.separator
-                        + "model/default/english-lexicon.txt");
+                Configuration.setModelFileLocation(modelPath + File.separator
+                        + "default" + File.separator + "english-lexicon.txt");
                 Configuration.setTaggerType("default");
                 break;
         }
@@ -64,8 +66,10 @@ public class JtopiaExtractor implements TermExtractor {
         TermsExtractor termExtractor = new TermsExtractor();
         TermDocument topiaDoc = new TermDocument();
         HashMap<String, Double> keywordsDictionaray = new HashMap();
-               
+        int count = 0;
         for (File f : dir.listFiles()) {
+            count++;
+            Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                 try (BufferedReader br = new BufferedReader(new FileReader(f))) {
                     StringBuilder stringBuffer = new StringBuilder();
@@ -78,7 +82,7 @@ public class JtopiaExtractor implements TermExtractor {
                         text = text.toLowerCase();
                         stringBuffer.append(text).append("\n");
                     }
-                    
+
                     topiaDoc = termExtractor.extractTerms(stringBuffer.toString());
                     Set<String> terms = topiaDoc.getFinalFilteredTerms().keySet();
                     for (String t : terms) {

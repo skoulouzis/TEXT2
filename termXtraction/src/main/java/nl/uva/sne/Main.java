@@ -14,7 +14,9 @@ import java.util.Properties;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.ValueComparator;
+import nl.uva.sne.extractors.SortTerms;
 import nl.uva.sne.extractors.TermExtractor;
 
 /**
@@ -26,34 +28,71 @@ public class Main {
     public static String propertiesPath = "termXtraction.properties";
 
     public static void main(String args[]) {
+        String className = null;
+        boolean extractTerms = false;
+        String textDocs = null;
+        String dictionaryOut = null;
+        String dictionaryIn = null;
+        boolean sort = false;
 
-        try {
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+// -e nl.uva.sne.extractors.LuceneExtractor $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionary.csv
+                if (args[i].equals("-e")) {
+                    extractTerms = true;
+                    className = args[i + 1];
+                    textDocs = args[i + 2];
+                    dictionaryOut = args[i + 3];
+                    break;
+                }
+                // -s nl.uva.sne.extractors.IDFSort $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/allAds/ $HOME/Downloads/textdocs/dictionaryIDF.csv
+                if (args[i].equals("-s")) {
+                    sort = true;
+                    className = args[i + 1];
+                    dictionaryIn = args[i + 2];
+                    textDocs= args[i + 3];
+                    dictionaryOut = args[i + 4];
+                    break;
+                }
+
+            }
+        }
+
 //            String className = "nl.uva.sne.extractors.JtopiaExtractor";
-            String className = "nl.uva.sne.extractors.LuceneExtractor";
+//        className = "nl.uva.sne.extractors.LuceneExtractor";
+        try {
             Class c = Class.forName(className);
             Object obj = c.newInstance();
-            TermExtractor termExtractor = (TermExtractor) obj;
+            if (extractTerms) {
+                TermExtractor termExtractor = (TermExtractor) obj;
+                termExtractor.configure(getProperties());
+                Map<String, Double> terms = termExtractor.termXtraction(textDocs);
+                writeDictionary2File(terms, dictionaryOut);
+            }
 
-            termExtractor.configure(getProperties());
-            Map<String, Double> terms = termExtractor.termXtraction("/home/alogo/Downloads/textdocs");
-            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/dictionary.csv");
-
-//            Map<String, Integer> terms = termExtractor.termXtraction("/home/alogo/Downloads/jsonTerms/");
-//            writeDictionary2File(terms, "/home/alogo/Downloads/textdocs/clusterNames.csv");
-//
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException ex) {
+            //            className = "nl.uva.sne.extractors.IDFSort";
+//            className = "nl.uva.sne.extractors.TFRatio";
+//            className = "nl.uva.sne.extractors.TFIDF";
+            if (sort) {
+                SortTerms sorter = (SortTerms) obj;
+                Map<String, Double> terms = FileUtils.csv2Map(dictionaryIn);
+                terms = sorter.sort(terms, textDocs);
+                writeDictionary2File(terms, dictionaryOut);
+            }
+        } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private static void writeDictionary2File(Map<String, Double> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
-//        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
-//        Map<String, Integer> sorted_map = new TreeMap(bvc);
-//        sorted_map.putAll(keywordsDictionaray);
+        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
+        Map<String, Double> sorted_map = new TreeMap(bvc);
+        sorted_map.putAll(keywordsDictionaray);
 
         try (PrintWriter out = new PrintWriter(outkeywordsDictionarayFile)) {
-            for (String key : keywordsDictionaray.keySet()) {
-                out.print(key + "," + keywordsDictionaray.get(key) + "\n");
+            for (String key : sorted_map.keySet()) {
+                Double value = keywordsDictionaray.get(key);
+                out.print(key + "," + value + "\n");
             }
         }
     }

@@ -2,38 +2,24 @@ package nl.uva.sne.extractors;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import nl.uva.sne.commons.FileUtils;
+import net.didion.jwnl.JWNLException;
+import net.didion.jwnl.data.POS;
+import nl.uva.sne.commons.SemanticUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.hy.ArmenianAnalyzer;
-import org.apache.lucene.analysis.shingle.ShingleFilter;
-import org.apache.lucene.analysis.standard.StandardFilter;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.CharArraySet;
 import nl.uva.sne.commons.ValueComparator;
-import org.apache.lucene.util.Version;
-import org.unix4j.Unix4j;
-import org.unix4j.unix.grep.GrepOption;
-import org.unix4j.unix.grep.GrepOptionSets;
-import org.unix4j.unix.grep.GrepOptions;
+import org.json.simple.parser.ParseException;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -46,77 +32,70 @@ import org.unix4j.unix.grep.GrepOptions;
  */
 public class LuceneExtractor implements TermExtractor {
 
-    static Set<String> stopwords = new HashSet();
-
-    private String stopwordsFile;
-    private int maxNGrams;
-    private String scoreType;
     private boolean removeExclusiveTerms;
-    private List<File> docs = new ArrayList<>();
-    private File dir;
+    private int maxNgrams;
 
     @Override
     public void configure(Properties prop) {
-        stopwordsFile = prop.getProperty("stop.words", System.getProperty("user.home")
-                + File.separator + "workspace" + File.separator + "termXtraction"
-                + File.separator + "etc" + File.separator + "sropwords");
-
-        maxNGrams = Integer.valueOf(prop.getProperty("max.ngrams", "4"));
-
-        scoreType = prop.getProperty("score.type", "tf").toLowerCase();
-
         removeExclusiveTerms = Boolean.valueOf(prop.getProperty("remove.exclusive.terms", "false"));
+        maxNgrams = Integer.valueOf(prop.getProperty("max.ngrams", "4"));
     }
 
     @Override
-    public Map<String, Double> termXtraction(String inDir) throws IOException {
-        dir = new File(inDir);
+    public Map<String, Double> termXtraction(String inDir) throws IOException, FileNotFoundException, MalformedURLException {
+        File dir = new File(inDir);
         Map<String, Double> termDictionaray = new HashMap();
+        int count = 0;
         for (File f : dir.listFiles()) {
+            count++;
+            Logger.getLogger(LuceneExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
-                docs.add(f);
-                try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-                    for (String text; (text = br.readLine()) != null;) {
-                        List<String> tokens = tokenize(text);
-                        for (String t : tokens) {
-                            Double tf;
-                            if (termDictionaray.containsKey(t)) {
-                                tf = termDictionaray.get(t);
-                                tf++;
-                            } else {
-                                tf = 1.0;
-                            }
-                            termDictionaray.put(t, tf);
+                try {
+                    StringBuilder sb = new StringBuilder();
+                    try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+                        for (String text; (text = br.readLine()) != null;) {
+                            sb.append(text.toLowerCase()).append(" ");
                         }
                     }
+                    List<String> tokens = SemanticUtils.tokenize(sb.toString());
+                    for (String t : tokens) {
+                        t = SemanticUtils.lemmatize(t);
+                        POS[] pos = SemanticUtils.getPOS(t);
+                        if (pos.length == 1 && pos[0].equals(POS.ADJECTIVE)) {
+                            continue;
+                        }
+                        Double tf;
+                        if (termDictionaray.containsKey(t)) {
+                            tf = termDictionaray.get(t);
+                            tf++;
+                        } else {
+                            tf = 1.0;
+                        }
+                        termDictionaray.put(t, tf);
+                    }
+                    List<String> ngrams = SemanticUtils.getNGrams(sb.toString(), maxNgrams);
+                    for (String t : ngrams) {
+                        Double tf;
+                        if (termDictionaray.containsKey(t)) {
+                            tf = termDictionaray.get(t);
+                            tf++;
+                        } else {
+                            tf = 1.0;
+                        }
+                        termDictionaray.put(t, tf);
+                    }
+
+                } catch (JWNLException ex) {
+                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (Exception ex) {
+                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
         if (removeExclusiveTerms) {
             return removeExclusiveTerms(termDictionaray);
         }
-
-        try {
-            return Util.getScore(termDictionaray, scoreType, docs);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
-
-    private CharArraySet getStopWords() throws IOException {
-        if (stopwords.isEmpty()) {
-            readStopWords();
-        }
-        return new CharArraySet(Version.LUCENE_42, stopwords, true);
-    }
-
-    private void readStopWords() throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(stopwordsFile))) {
-            for (String line; (line = br.readLine()) != null;) {
-                stopwords.add(line);
-            }
-        }
+        return termDictionaray;
     }
 
     private Map<String, Double> removeExclusiveTerms(Map<String, Double> keywordsDictionaray) {
@@ -147,47 +126,6 @@ public class LuceneExtractor implements TermExtractor {
         for (String k : toRemove) {
             keywordsDictionaray.remove(k);
         }
-        bvc = new ValueComparator(keywordsDictionaray);
-        sorted_map = new TreeMap(bvc);
-        sorted_map.putAll(keywordsDictionaray);
-        return sorted_map;
+        return keywordsDictionaray;
     }
-
-    private List<String> tokenize(String text) throws IOException {
-
-        text = text.replaceAll("-+", "-0");
-        text = text.replaceAll("’", "'");
-        text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");
-        text = text.replaceAll("(?:'(?:[tdsm]|[vr]e|ll))+\\b", "");
-        text = text.toLowerCase();
-
-        ArrayList<String> words = new ArrayList<>();
-        Analyzer analyzer = new ArmenianAnalyzer(Version.LUCENE_42, getStopWords());
-        StringBuilder sb = new StringBuilder();
-        try (TokenStream tokenStream = analyzer.tokenStream("field", new StringReader(text))) {
-            CharTermAttribute term = tokenStream.addAttribute(CharTermAttribute.class);
-            tokenStream.reset();
-            while (tokenStream.incrementToken()) {
-                words.add(term.toString());
-                sb.append(term.toString()).append(" ");
-            }
-            tokenStream.end();
-        }
-
-        StandardTokenizer source = new StandardTokenizer(Version.LUCENE_42, new StringReader(sb.toString()));
-        TokenStream tokenStream = new StandardFilter(Version.LUCENE_42, source);
-        try (ShingleFilter sf = new ShingleFilter(tokenStream, 2, maxNGrams)) {
-            sf.setOutputUnigrams(false);
-            CharTermAttribute charTermAttribute = sf.addAttribute(CharTermAttribute.class);
-            sf.reset();
-            while (sf.incrementToken()) {
-                String word = charTermAttribute.toString();
-                words.add(word.replaceAll(" ", "_"));
-            }
-            sf.end();
-        }
-
-        return words;
-    }
-
 }
