@@ -107,6 +107,7 @@ public class Main {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             in = classLoader.getResourceAsStream(propertiesPath);
             Properties properties = new Properties();
+            System.err.println(in);
             properties.load(in);
             return properties;
         } catch (IOException ex) {
