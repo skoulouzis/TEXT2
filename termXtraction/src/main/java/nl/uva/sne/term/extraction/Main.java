@@ -58,7 +58,12 @@ public class Main {
             }
             String props = args[args.length - 1];
             if (props.endsWith("termXtraction.properties")) {
-                propertiesPath = props;
+                if (!props.startsWith("file")) {
+                    propertiesPath = "file:///" + props;
+                } else {
+                    propertiesPath = props;
+                }
+
             }
         }
 
