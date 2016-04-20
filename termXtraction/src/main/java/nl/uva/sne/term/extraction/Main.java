@@ -5,6 +5,7 @@
  */
 package nl.uva.sne.term.extraction;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,7 @@ import nl.uva.sne.extractors.TermExtractor;
 public class Main {
 
     public static String propertiesPath = "termXtraction.properties";
+    private static String props;
 
     public static void main(String args[]) {
         String className = null;
@@ -56,7 +58,7 @@ public class Main {
                 }
 
             }
-            String props = args[args.length - 1];
+            props = args[args.length - 1];
             if (props.endsWith(".properties")) {
                 propertiesPath = props;
             }
@@ -104,11 +106,13 @@ public class Main {
     private static Properties getProperties() throws IOException {
         InputStream in = null;
         try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            in = classLoader.getResourceAsStream(propertiesPath);
+            if (props != null) {
+                in = new FileInputStream(propertiesPath);
+            } else {
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                in = classLoader.getResourceAsStream(propertiesPath);
+            }
             Properties properties = new Properties();
-            System.err.println(propertiesPath);
-            System.err.println(in);
             properties.load(in);
             return properties;
         } catch (IOException ex) {
