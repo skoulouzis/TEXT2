@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne;
+package nl.uva.sne.classifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +16,7 @@ import java.util.Set;
 import nl.uva.sne.classifiers.Classifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
@@ -31,7 +32,7 @@ public class Main {
 
     public static String propertiesPath = "cluster.properties";
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws JWNLException {
         try {
             String className = "nl.uva.sne.classifiers.Kmeans";
             Class c = Class.forName(className);
@@ -81,14 +82,13 @@ public class Main {
         }
     }
 
-    private static void writeClustersToOneFile(String inDir, String outkeywordsFile) throws IOException, ParseException {
+    private static void writeClustersToOneFile(String inDir, String outkeywordsFile) throws IOException, ParseException, JWNLException {
         File dir = new File(inDir);
         StringBuilder sb = new StringBuilder();
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
                 Term tv = TermFactory.create(f.getAbsolutePath());
                 Set<String> doc = SemanticUtils.getDocument(tv);
-
                 for (String s : doc) {
                     sb.append(s).append(" ");
                 }

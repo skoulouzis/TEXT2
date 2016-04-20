@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
@@ -54,11 +55,15 @@ public class Kmeans implements Classifier {
                 terms.add(TermFactory.create(f.getAbsolutePath()));
             }
         }
-        
+
         for (Term tv : terms) {
-            Set<String> doc = SemanticUtils.getDocument(tv);
-            allDocs.add(new ArrayList<>(doc));
-            docs.put(tv.getUID(), new ArrayList<>(doc));
+            try {
+                Set<String> doc = SemanticUtils.getDocument(tv);
+                allDocs.add(new ArrayList<>(doc));
+                docs.put(tv.getUID(), new ArrayList<>(doc));
+            } catch (JWNLException ex) {
+                Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
         Set<String> allWords = new HashSet<>();
