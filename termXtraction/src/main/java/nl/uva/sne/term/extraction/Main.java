@@ -104,7 +104,6 @@ public class Main {
     private static Properties getProperties() throws IOException {
         InputStream in = null;
         try {
-            System.err.println(propertiesPath);
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             in = classLoader.getResourceAsStream(propertiesPath);
             Properties properties = new Properties();
