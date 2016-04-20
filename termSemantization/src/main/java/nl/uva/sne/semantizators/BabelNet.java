@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
@@ -81,11 +82,13 @@ public class BabelNet implements Semantizator {
                     }
                 }
             }
+        } catch (JWNLException ex) {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.SEVERE, null, ex);
         }
         return terms;
     }
 
-    private Term getTerm(String term, String termDictionaryFile) throws IOException, ParseException {
+    private Term getTerm(String term, String termDictionaryFile) throws IOException, ParseException, JWNLException {
         List<Term> possibleTerms = getTermNodeByLemma(term);
         if (possibleTerms != null & possibleTerms.size() > 1) {
             return disambiguate(term, possibleTerms, termDictionaryFile);
@@ -307,7 +310,7 @@ public class BabelNet implements Semantizator {
         return map;
     }
 
-    private Term disambiguate(String term, List<Term> possibleTerms, String termDictionaryFile) throws IOException {
+    private Term disambiguate(String term, List<Term> possibleTerms, String termDictionaryFile) throws IOException, JWNLException {
         Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, termDictionaryFile);
         possibleTerms = tf_idf_Disambiguation(possibleTerms, ngarms, term);
         if (possibleTerms != null && possibleTerms.size() == 1) {
@@ -321,7 +324,7 @@ public class BabelNet implements Semantizator {
         return null;
     }
 
-    private List<Term> tf_idf_Disambiguation(List<Term> possibleTerms, Set<String> nGrams, String lemma) throws IOException {
+    private List<Term> tf_idf_Disambiguation(List<Term> possibleTerms, Set<String> nGrams, String lemma) throws IOException, JWNLException {
 
         List<List<String>> allDocs = new ArrayList<>();
         Map<String, List<String>> docs = new HashMap<>();
