@@ -60,7 +60,6 @@ public class Main {
             if (props.endsWith("termXtraction.properties")) {
                 propertiesPath = props;
             }
-
         }
 
 //            String className = "nl.uva.sne.extractors.JtopiaExtractor";
@@ -105,11 +104,11 @@ public class Main {
     private static Properties getProperties() throws IOException {
         InputStream in = null;
         try {
+            System.err.println(propertiesPath);
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             in = classLoader.getResourceAsStream(propertiesPath);
             Properties properties = new Properties();
             properties.load(in);
-
             return properties;
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
