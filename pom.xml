@@ -16,42 +16,5 @@
         <module>termClassifier</module>
         <module>commons</module>
     </modules>
-        
-    <repositories>
-      
-        <repository>
-            <id>repo2_maven_org</id>
-            <url>http://repo2.maven.org/maven2</url>
-        </repository>
-        
-        <repository>
-            <id>mvn-public</id>
-            <name>MVNRepository</name>
-            <url>http://mvnrepository.com</url>
-        </repository>
-
-        
-        <repository>
-            <snapshots />
-            <id>skoulouzis-snapshots</id>
-            <url>https://raw.githubusercontent.com/skoulouzis/mvn-repo/master/snapshots</url>
-        </repository>
-                
-                
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>releases</id>
-            <url>https://raw.githubusercontent.com/skoulouzis/mvn-repo/master/releases</url>
-        </repository>
-      
-        <repository>
-            <id>jlangdetect-googlecode</id>
-            <name>JLangDetect Maven repository</name>
-            <url>https://jlangdetect.googlecode.com/svn/repo</url>
-        </repository>
-
-    </repositories>
     
 </project>
