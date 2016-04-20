@@ -50,12 +50,17 @@ public class Main {
                     sort = true;
                     className = args[i + 1];
                     dictionaryIn = args[i + 2];
-                    textDocs= args[i + 3];
+                    textDocs = args[i + 3];
                     dictionaryOut = args[i + 4];
                     break;
                 }
 
             }
+            String props = args[args.length - 1];
+            if (props.endsWith("termXtraction.properties")) {
+                propertiesPath = props;
+            }
+
         }
 
 //            String className = "nl.uva.sne.extractors.JtopiaExtractor";
