@@ -70,7 +70,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>nl.uva.sne.termExtraction.Main</mainClass>
+                            <mainClass>nl.uva.sne.term.extraction.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
