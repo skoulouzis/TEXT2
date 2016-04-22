@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath nl.uva.sne.term.extraction.Main -e nl.uva.sne.extractors.LuceneExtractor /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/workspace/TEXT2/etc/text.properties</exec.args>
+                <exec.args>-classpath %classpath nl.uva.sne.term.extraction.Main -s nl.uva.sne.extractors.TFIDF /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionaryIDF.csv</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath nl.uva.sne.term.extraction.Main -e nl.uva.sne.extractors.LuceneExtractor /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/workspace/TEXT2/etc/text.properties</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath nl.uva.sne.term.extraction.Main -s nl.uva.sne.extractors.TFIDF /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionaryIDF.csv</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath nl.uva.sne.term.extraction.Main -e nl.uva.sne.extractors.LuceneExtractor /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/workspace/TEXT2/etc/text.properties</exec.args>
+                <exec.args>-classpath %classpath nl.uva.sne.term.extraction.Main -s nl.uva.sne.extractors.TFIDF /home/alogo/Downloads/textdocs/dictionary.csv /home/alogo/Downloads/textdocs /home/alogo/Downloads/textdocs/dictionaryIDF.csv</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>

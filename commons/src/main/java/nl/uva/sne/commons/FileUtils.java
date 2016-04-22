@@ -8,8 +8,10 @@ package nl.uva.sne.commons;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -21,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
@@ -184,8 +187,32 @@ public class FileUtils {
                 }
             }
         }
-
         return map;
+    }
+
+    public static Map<String, Double> mergeDictionaries(Map<String, Double> correctTF, Map<String, Double> otherMap) {
+        Map<String, Double> map = new HashMap<>();
+        for (String t : otherMap.keySet()) {
+            Double tf = correctTF.get(t);
+            if (tf == null) {
+                tf = otherMap.get(t);
+            }
+            map.put(t, tf);
+        }
+        return map;
+    }
+    
+    public static void writeDictionary2File(Map<String, Double> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
+        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
+        Map<String, Double> sorted_map = new TreeMap(bvc);
+        sorted_map.putAll(keywordsDictionaray);
+
+        try (PrintWriter out = new PrintWriter(outkeywordsDictionarayFile)) {
+            for (String key : sorted_map.keySet()) {
+                Double value = keywordsDictionaray.get(key);
+                out.print(key + "," + value + "\n");
+            }
+        }
     }
 
 }

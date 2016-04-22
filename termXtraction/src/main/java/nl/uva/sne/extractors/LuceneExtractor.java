@@ -19,7 +19,6 @@ import net.didion.jwnl.data.POS;
 import nl.uva.sne.commons.SemanticUtils;
 import org.apache.commons.io.FilenameUtils;
 import nl.uva.sne.commons.ValueComparator;
-import org.json.simple.parser.ParseException;
 
 /*
  * To change this license header, choose License Headers in Project Properties.

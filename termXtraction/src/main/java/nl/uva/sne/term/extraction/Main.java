@@ -34,8 +34,10 @@ public class Main {
         boolean extractTerms = false;
         String textDocs = null;
         String dictionaryOut = null;
-        String dictionaryIn = null;
+        String dictionaryIn1 = null;
+        String dictionaryIn2 = null;
         boolean sort = false;
+        boolean merge = false;
 
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
@@ -47,14 +49,22 @@ public class Main {
                     dictionaryOut = args[i + 3];
                     break;
                 }
-                // -s nl.uva.sne.extractors.IDFSort $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/allAds/ $HOME/Downloads/textdocs/dictionaryIDF.csv
+                // -s nl.uva.sne.extractors.IDFSort $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryIDF.csv
+                // -s nl.uva.sne.extractors.TFRatio $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryIDF.csv
                 if (args[i].equals("-s")) {
                     sort = true;
                     className = args[i + 1];
-                    dictionaryIn = args[i + 2];
+                    dictionaryIn1 = args[i + 2];
                     textDocs = args[i + 3];
                     dictionaryOut = args[i + 4];
                     break;
+                }
+//                 -m $HOME/Downloads/textdocs/dictionaryLucine.csv $HOME/Downloads/textdocs/dictionaryTopia.csv $HOME/Downloads/textdocs/dictionary.csv 
+                if (args[i].equals("-m")) {
+                    dictionaryIn1 = args[i + 1];
+                    dictionaryIn2 = args[i + 2];
+                    dictionaryOut = args[i + 3];
+                    merge = true;
                 }
 
             }
@@ -67,39 +77,36 @@ public class Main {
 //            String className = "nl.uva.sne.extractors.JtopiaExtractor";
 //        className = "nl.uva.sne.extractors.LuceneExtractor";
         try {
-            Class c = Class.forName(className);
-            Object obj = c.newInstance();
+
             if (extractTerms) {
+                Class c = Class.forName(className);
+                Object obj = c.newInstance();
                 TermExtractor termExtractor = (TermExtractor) obj;
                 termExtractor.configure(getProperties());
                 Map<String, Double> terms = termExtractor.termXtraction(textDocs);
-                writeDictionary2File(terms, dictionaryOut);
+                FileUtils.writeDictionary2File(terms, dictionaryOut);
             }
 
             //            className = "nl.uva.sne.extractors.IDFSort";
 //            className = "nl.uva.sne.extractors.TFRatio";
 //            className = "nl.uva.sne.extractors.TFIDF";
             if (sort) {
+                Class c = Class.forName(className);
+                Object obj = c.newInstance();
                 SortTerms sorter = (SortTerms) obj;
-                Map<String, Double> terms = FileUtils.csv2Map(dictionaryIn);
+                Map<String, Double> terms = FileUtils.csv2Map(dictionaryIn1);
                 terms = sorter.sort(terms, textDocs);
-                writeDictionary2File(terms, dictionaryOut);
+                FileUtils.writeDictionary2File(terms, dictionaryOut);
+            }
+
+            if (merge) {
+                Map<String, Double> correctTF = FileUtils.csv2Map(dictionaryIn1);
+                Map<String, Double> otherMap = FileUtils.csv2Map(dictionaryIn2);
+                Map<String, Double> out = FileUtils.mergeDictionaries(correctTF, otherMap);
+                FileUtils.writeDictionary2File(out, dictionaryOut);
             }
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private static void writeDictionary2File(Map<String, Double> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
-        ValueComparator bvc = new ValueComparator(keywordsDictionaray);
-        Map<String, Double> sorted_map = new TreeMap(bvc);
-        sorted_map.putAll(keywordsDictionaray);
-
-        try (PrintWriter out = new PrintWriter(outkeywordsDictionarayFile)) {
-            for (String key : sorted_map.keySet()) {
-                Double value = keywordsDictionaray.get(key);
-                out.print(key + "," + value + "\n");
-            }
         }
     }
 
