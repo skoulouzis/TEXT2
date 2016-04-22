@@ -50,7 +50,8 @@ public class Main {
                     break;
                 }
                 // -s nl.uva.sne.extractors.IDFSort $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryIDF.csv
-                // -s nl.uva.sne.extractors.TFRatio $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryIDF.csv
+                // -s nl.uva.sne.extractors.TFRatio $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryTFRatio.csv
+                // -s nl.uva.sne.extractors.TFIDF $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryTFIDF.csv
                 if (args[i].equals("-s")) {
                     sort = true;
                     className = args[i + 1];
@@ -59,7 +60,7 @@ public class Main {
                     dictionaryOut = args[i + 4];
                     break;
                 }
-//                 -m $HOME/Downloads/textdocs/dictionaryLucine.csv $HOME/Downloads/textdocs/dictionaryTopia.csv $HOME/Downloads/textdocs/dictionary.csv 
+//                 -m $HOME/Downloads/textdocs/dictionaryTopia.csv $HOME/Downloads/textdocs/dictionaryLucine.csv $HOME/Downloads/textdocs/dictionary.csv 
                 if (args[i].equals("-m")) {
                     dictionaryIn1 = args[i + 1];
                     dictionaryIn2 = args[i + 2];
