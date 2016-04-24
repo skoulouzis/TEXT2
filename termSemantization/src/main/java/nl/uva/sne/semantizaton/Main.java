@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.semantizators.Semantizator;
 import nl.uva.sne.commons.Term;
 import org.json.simple.JSONObject;
@@ -25,20 +26,35 @@ import org.json.simple.parser.ParseException;
 public class Main {
 
     public static String propertiesPath = "semantization.properties";
+    private static String props;
 
     public static void main(String args[]) {
+        String allTermsDictionary = null, filterredDictionary = null, outDir = null;
+        if (args != null) {
+
+            allTermsDictionary = args[0];
+            filterredDictionary = args[1];
+            outDir = args[2];
+            
+            props = args[args.length - 1];
+            if (props.endsWith(".properties")) {
+                propertiesPath = props;
+            }
+        }
 
         try {
+//          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
+
             String className = "nl.uva.sne.semantizators.BabelNet";
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             Semantizator semantizator = (Semantizator) obj;
 
-            semantizator.configure(getProperties());
-            String in = "/home/alogo/Downloads/textdocs/dictionaryMix.csv";
-            List<Term> terms = semantizator.semnatizeTerms(in);
+            semantizator.configure(FileUtils.getProperties(propertiesPath));
 
-            writeTerms2Json(terms, "/home/alogo/Downloads/jsonTerms/");
+            List<Term> terms = semantizator.semnatizeTerms(allTermsDictionary, filterredDictionary);
+            
+            writeTerms2Json(terms, outDir);
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -54,25 +70,6 @@ public class Main {
                 file.flush();
             }
         }
-    }
-
-    private static Properties getProperties() throws IOException {
-        InputStream in = null;
-        try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            in = classLoader.getResourceAsStream(propertiesPath);
-            Properties properties = new Properties();
-            properties.load(in);
-
-            return properties;
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-        }
-        return null;
     }
 
     private static JSONObject term2Json(Term t) {

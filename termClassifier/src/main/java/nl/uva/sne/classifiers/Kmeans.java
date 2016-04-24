@@ -5,6 +5,8 @@
  */
 package nl.uva.sne.classifiers;
 
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,21 +15,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
 import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
+import weka.clusterers.HierarchicalClusterer;
+import weka.clusterers.MakeDensityBasedClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.gui.hierarchyvisualizer.HierarchyVisualizer;
 
 /**
  *
@@ -35,12 +43,11 @@ import weka.core.Instances;
  */
 public class Kmeans implements Classifier {
 
+    private int numOfClusters;
+
     @Override
     public void configure(Properties properties) {
-        String stopwordsFile = properties.getProperty("stop.words", System.getProperty("user.home")
-                + File.separator + "workspace" + File.separator + "termXtraction"
-                + File.separator + "etc" + File.separator + "sropwords");
-        SemanticUtils.stopwordsFile = stopwordsFile;
+        numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
     }
 
     @Override
@@ -105,19 +112,48 @@ public class Kmeans implements Classifier {
                 inst.setValue(index, featureV.get(w));
                 index++;
             }
-//            System.err.println(count + " " + t);
             data.add(inst);
             instancesMap.add(t);
             count++;
         }
+        
+
+//        weka.clusterers.HierarchicalClusterer hc = new HierarchicalClusterer();
+//        try {
+//            hc.setOptions(new String[]{"-L", "COMPLETE"});
+//            hc.setDebug(true);
+//            hc.setNumClusters(2);
+//
+//            hc.setDistanceFunction(new EuclideanDistance());
+//            hc.setDistanceIsBranchLength(true);
+//            hc.buildClusterer(data);
+//            hc.setPrintNewick(false);
+//            System.out.println(hc.graph());
+//            // Print Newick
+//            hc.setPrintNewick(true);
+//            System.out.println(hc.graph());
+//            	// Let's try to show this clustered data!
+//		JFrame mainFrame = new JFrame("Weka Test");
+//		mainFrame.setSize(600, 400);
+//		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		Container content = mainFrame.getContentPane();
+//		content.setLayout(new GridLayout(1, 1));
+//		
+//		HierarchyVisualizer visualizer = new HierarchyVisualizer(hc.graph());
+//		content.add(visualizer);
+//		
+//		mainFrame.setVisible(true);
+//        } catch (Exception ex) {
+//            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
         SimpleKMeans kmeans = new SimpleKMeans();
-        kmeans.setSeed(10);
+        kmeans.setSeed(new Random().nextInt());
 
         //important parameter to set: preserver order, number of cluster.
         kmeans.setPreserveInstancesOrder(true);
         try {
-            kmeans.setNumClusters(6);
+            kmeans.setNumClusters(numOfClusters);
             kmeans.buildClusterer(data);
             // This array returns the cluster number (starting with 0) for each instance
             // The array has as many elements as the number of instances

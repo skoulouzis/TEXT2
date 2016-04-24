@@ -6,17 +6,13 @@
 package nl.uva.sne.term.extraction;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.FileUtils;
-import nl.uva.sne.commons.ValueComparator;
 import nl.uva.sne.extractors.SortTerms;
 import nl.uva.sne.extractors.TermExtractor;
 
@@ -83,7 +79,7 @@ public class Main {
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
                 TermExtractor termExtractor = (TermExtractor) obj;
-                termExtractor.configure(getProperties());
+                termExtractor.configure(FileUtils.getProperties(propertiesPath));
                 Map<String, Double> terms = termExtractor.termXtraction(textDocs);
                 FileUtils.writeDictionary2File(terms, dictionaryOut);
             }
@@ -109,27 +105,5 @@ public class Main {
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    private static Properties getProperties() throws IOException {
-        InputStream in = null;
-        try {
-            if (props != null) {
-                in = new FileInputStream(propertiesPath);
-            } else {
-                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                in = classLoader.getResourceAsStream(propertiesPath);
-            }
-            Properties properties = new Properties();
-            properties.load(in);
-            return properties;
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-        }
-        return null;
     }
 }

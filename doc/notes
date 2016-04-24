@@ -1,0 +1,130 @@
+----------------------POS filtering------------------------------
+$ wget http://www.logos.ic.i.u-tokyo.ac.jp/~tsuruoka/lapos/lapos-0.1.2.tar.gz
+$ tar -xzvf lapos-0.1.2.tar.gz
+$ cd lapos-0.1.2/
+$ make
+
+
+$ cat ../dictionary.csv |./lapos -t -m ./model_wsj02-21  > ../dictionaryPOS.csv
+$ cd ../
+$ sed -i 's|.0/CD||g' dictionaryPOS.csv 
+$ sed -i 's|,/,|,|g' dictionaryPOS.csv 
+$ sed -i 's| , |,|g' dictionaryPOS.csv
+$ sed -i 's|/|,|g' dictionaryPOS.csv
+$ sed -i "s|NN 's|NN|g" dictionaryPOS.csv
+$ sed -i '/we’/d' dictionaryPOS.csv 
+$ sed -i '/you’/d' dictionaryPOS.csv 
+$ sed -i '/’t/d' dictionaryPOS.csv 
+$ sed -i '/youve/d' dictionaryPOS.csv 
+$ sed -i '/_perform/d' dictionaryPOS.csv 
+$ sed -i '/seeking_/d' dictionaryPOS.csv 
+$ sed -i '/seeks_/d' dictionaryPOS.csv 
+$ sed -i '/meets_/d' dictionaryPOS.csv 
+$ sed -i '/meeting/d' dictionaryPOS.csv 
+$ sed -i '/bring/d' dictionaryPOS.csv
+$ sed -i '/leverage/d' dictionaryPOS.csv 
+$ sed -i '/day/d' dictionaryPOS.csv
+
+$ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
+$ grep ',FW,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',PRP,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',RP,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',RP,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',UH,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',WP,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep ',WRB,' dictionaryPOS.csv >> dictionaryREMOVE.csv
+$ grep -v -x -f dictionaryREMOVE.csv dictionaryPOS.csv > out
+$ mv out dictionaryPOS.csv
+
+
+$ grep ',JJR,' dictionaryPOS.csv > dictionaryJJR.csv
+# inspect dictionaryJJR.csv
+$ grep -v -x -f dictionaryJJR.csv dictionaryPOS.csv > out
+# inspect out
+$ mv out dictionaryPOS.csv
+
+# grep ',JJS,' dictionaryPOS.csv > dictionaryJJS.csv
+# inspect dictionaryJJS.csv
+$ grep -v -x -f dictionaryJJS.csv dictionaryPOS.csv > out
+# inspect out
+$ mv out dictionaryPOS.csv
+
+$grep ',IN,' dictionaryPOS.csv > dictionaryIN.csv
+$ grep -v -x -f dictionaryIN.csv dictionaryPOS.csv > out
+
+
+# grep ',RBR,' dictionaryPOS.csv > dictionaryRBR.csv
+# inspect dictionaryRBR.csv for things like zookeeper 
+$ grep -v -x -f dictionaryRBR.csv dictionaryPOS.csv > out
+$ mv out dictionaryPOS.csv
+
+
+$ grep ',CD,' dictionaryPOS.csv > dictionaryCD.csv
+# inspect dictionaryCD.csv for things like hadoop_hive 
+$ grep -v -x -f dictionaryCD.csv dictionaryPOS.csv > out
+$ mv out dictionaryPOS.csv
+
+
+$ grep ',JJ,' dictionaryPOS.csv > dictionaryJJ.csv
+$ sed -i '/statistic/d' dictionaryJJ.csv
+$ sed -i '/data/d' dictionaryJJ.csv
+$ sed -i '/academ/d' dictionaryJJ.csv
+$ sed -i '/skill/d' dictionaryJJ.csv
+$ sed -i '/senior/d' dictionaryJJ.csv
+$ sed -i '/junior/d' dictionaryJJ.csv
+$ sed -i '/commercial/d' dictionaryJJ.csv
+$ sed -i '/scale/d' dictionaryJJ.csv
+$ sed -i '/mobile/d' dictionaryJJ.csv
+$ sed -i '/smart/d' dictionaryJJ.csv
+$ sed -i '/creative/d' dictionaryJJ.csv
+$ sed -i '/curious/d' dictionaryJJ.csv
+$ sed -i '/cross_functional/d' dictionaryJJ.csv
+$ sed -i '/scien/d' dictionaryJJ.csv
+$ sed -i '/crossfunctional/d' dictionaryJJ.csv
+$ sed -i '/european/d' dictionaryJJ.csv
+$ sed -i '/written/d' dictionaryJJ.csv
+$ sed -i '/oral/d' dictionaryJJ.csv
+$ sed -i '/multidisciplinary/d' dictionaryJJ.csv
+$ sed -i '/med/d' dictionaryJJ.csv
+$ sed -i '/human/d' dictionaryJJ.csv
+$ sed -i '/quantitative/d' dictionaryJJ.csv
+$ sed -i '/learn/d' dictionaryJJ.csv
+$ sed -i '/pharm/d' dictionaryJJ.csv
+$ sed -i '/compet/d' dictionaryJJ.csv
+$ sed -i '/active/d' dictionaryJJ.csv
+$ sed -i '/intel/d' dictionaryJJ.csv
+$ sed -i '/hybrid/d' dictionaryJJ.csv
+$ sed -i '/proficient/d' dictionaryJJ.csv
+$ sed -i '/eager/d' dictionaryJJ.csv
+$ sed -i '/supervise/d' dictionaryJJ.csv
+$ sed -i '/unsupervised/d' dictionaryJJ.csv
+$ sed -i '/sca/d' dictionaryJJ.csv
+$ sed -i '/innovative/d' dictionaryJJ.csv
+$ sed -i '/effective/d' dictionaryJJ.csv
+$ sed -i '/integral/d' dictionaryJJ.csv
+$ sed -i '/abstract/d' dictionaryJJ.csv
+$ sed -i '/phd/d' dictionaryJJ.csv
+$ sed -i '/mission_critical/d' dictionaryJJ.csv
+$ sed -i '/asian/d' dictionaryJJ.csv
+$ sed -i '/american/d' dictionaryJJ.csv
+$ sed -i '/munich/d' dictionaryJJ.csv
+$ sed -i '/math/d' dictionaryJJ.csv
+$ sed -i '/program/d' dictionaryJJ.csv
+$ sed -i '/sql/d' dictionaryJJ.csv
+$ sed -i '/university/d' dictionaryJJ.csv
+$ sed -i '/techno/d' dictionaryJJ.csv
+$ sed -i '/anal/d' dictionaryJJ.csv
+$ sed -i '/iterate/d' dictionaryJJ.csv
+$ sed -i '/learn/d' dictionaryJJ.csv
+$ sed -i '/android/d' dictionaryJJ.csv
+# inspect dictionaryJJ.csv 
+$ grep -v -x -f dictionaryJJ.csv dictionaryPOS.csv > out
+$ mv out dictionaryPOS.csv
+
+
+$ grep ',VBP,' dictionaryPOS.csv > dictionaryVBP.csv
+$ sed -i '/respons/d' dictionaryVBP.csv
+$ sed -i '/university/d' dictionaryVBP.csv
+$ sed -i '/require/d' dictionaryVBP.csv
+#inspect dictionaryVBP.csv 
+# grep -v -x -f dictionaryVBP.csv dictionaryPOS.csv > out

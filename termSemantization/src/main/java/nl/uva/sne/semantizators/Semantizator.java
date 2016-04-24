@@ -17,7 +17,7 @@ import org.json.simple.parser.ParseException;
  */
 public interface Semantizator {
 
-    public List<Term> semnatizeTerms(String termDictionaryFile) throws IOException, ParseException;
+    public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException;
 
     public void configure(Properties properties);
 

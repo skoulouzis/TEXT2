@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -22,8 +23,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
@@ -201,7 +205,7 @@ public class FileUtils {
         }
         return map;
     }
-    
+
     public static void writeDictionary2File(Map<String, Double> keywordsDictionaray, String outkeywordsDictionarayFile) throws FileNotFoundException {
         ValueComparator bvc = new ValueComparator(keywordsDictionaray);
         Map<String, Double> sorted_map = new TreeMap(bvc);
@@ -215,4 +219,25 @@ public class FileUtils {
         }
     }
 
+    public static Properties getProperties(String propertiesPath) throws IOException {
+        InputStream in = null;
+        try {
+            if (new File(propertiesPath).exists() && new File(propertiesPath).isFile()) {
+                in = new FileInputStream(propertiesPath);
+            } else {
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                in = classLoader.getResourceAsStream(propertiesPath);
+            }
+            Properties properties = new Properties();
+            properties.load(in);
+            return properties;
+        } catch (IOException ex) {
+            Logger.getLogger(FileUtils.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+        }
+        return null;
+    }
 }

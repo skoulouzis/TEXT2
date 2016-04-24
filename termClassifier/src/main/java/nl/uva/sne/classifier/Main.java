@@ -7,20 +7,17 @@ package nl.uva.sne.classifier;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import nl.uva.sne.classifiers.Classifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
+import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
 
@@ -39,36 +36,17 @@ public class Main {
             Object obj = c.newInstance();
             Classifier classifier = (Classifier) obj;
 
-            classifier.configure(getProperties());
+            classifier.configure(FileUtils.getProperties(propertiesPath));
 
-//            Map<String, String> cluster = classifier.cluster("/home/alogo/Downloads/jsonTerms");
-//            copyTerms2Clusters(cluster, "/home/alogo/Downloads/jsonTerms");
+            Map<String, String> cluster = classifier.cluster("/home/alogo/Downloads/jsonTerms");
+            copyTerms2Clusters(cluster, "/home/alogo/Downloads/jsonTerms");
 //            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/0", "/home/alogo/Downloads/jsonTerms/0.txt");
 //            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/1", "/home/alogo/Downloads/jsonTerms/1.txt");
-            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/4", "/home/alogo/Downloads/jsonTerms/4.txt");
+//            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/4", "/home/alogo/Downloads/jsonTerms/4.txt");
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    private static Properties getProperties() throws IOException {
-        InputStream in = null;
-        try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            in = classLoader.getResourceAsStream(propertiesPath);
-            Properties properties = new Properties();
-            properties.load(in);
-
-            return properties;
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-        }
-        return null;
     }
 
     private static void copyTerms2Clusters(Map<String, String> cluster, String outputDir) throws IOException {
@@ -78,7 +56,7 @@ public class Main {
                 dir.mkdir();
             }
             File file = new File(fileName + ".json");
-            FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
+            org.apache.commons.io.FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
         }
     }
 

@@ -55,19 +55,18 @@ public class BabelNet implements Semantizator {
     private static Map<String, String> disambiguateCache;
     private static Map<String, String> edgesCache;
 
-    private final int limit = 1000;
-    private static String stopwordsFile;
+    private final int limit = 10;
 
     @Override
-    public List<Term> semnatizeTerms(String termDictionaryFile) throws IOException, ParseException {
+    public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
-        File dictionary = new File(termDictionaryFile);
+        File dictionary = new File(filterredDictionary);
         int count = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
             for (String line; (line = br.readLine()) != null;) {
                 String[] parts = line.split(",");
                 String term = parts[0];
-                Integer score = Integer.valueOf(parts[1]);
+//                Integer score = Integer.valueOf(parts[1]);
                 if (term.length() > 1) {
                     count++;
                     if (count > limit) {
@@ -75,7 +74,7 @@ public class BabelNet implements Semantizator {
                     }
                     StringBuilder sb = new StringBuilder();
                     sb.append(term).append("->");
-                    Term tt = getTerm(term, termDictionaryFile);
+                    Term tt = getTerm(term, allTermsDictionary);
                     if (tt != null) {
                         terms.add(tt);
                         sb.append(tt.getLemma());
@@ -88,11 +87,11 @@ public class BabelNet implements Semantizator {
         return terms;
     }
 
-    private Term getTerm(String term, String termDictionaryFile) throws IOException, ParseException, JWNLException {
+    private Term getTerm(String term, String allTermsDictionary) throws IOException, ParseException, JWNLException {
         List<Term> possibleTerms = getTermNodeByLemma(term);
         if (possibleTerms != null & possibleTerms.size() > 1) {
-            return disambiguate(term, possibleTerms, termDictionaryFile);
-        } else if (possibleTerms != null & possibleTerms.size() == 1) {
+            return disambiguate(term, possibleTerms, allTermsDictionary);
+        } else if (possibleTerms.size() == 1) {
             return possibleTerms.get(0);
         }
         return null;
@@ -155,10 +154,6 @@ public class BabelNet implements Semantizator {
     public void configure(Properties properties) {
         key = properties.getProperty("bablenet.key");
         cachePath = properties.getProperty("cache.path");
-        stopwordsFile = properties.getProperty("stop.words", System.getProperty("user.home")
-                + File.separator + "workspace" + File.separator + "termXtraction"
-                + File.separator + "etc" + File.separator + "sropwords");
-        SemanticUtils.stopwordsFile = stopwordsFile;
     }
 
     private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException {
@@ -313,15 +308,17 @@ public class BabelNet implements Semantizator {
     private Term disambiguate(String term, List<Term> possibleTerms, String termDictionaryFile) throws IOException, JWNLException {
         Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, termDictionaryFile);
         possibleTerms = tf_idf_Disambiguation(possibleTerms, ngarms, term);
+        Term dis = null;
         if (possibleTerms != null && possibleTerms.size() == 1) {
-            return possibleTerms.get(0);
+            dis = possibleTerms.get(0);
         } else if (possibleTerms == null || possibleTerms.size() < 1) {
             possibleTerms = babelNetDisambiguation("EN", term, ngarms);
             if (possibleTerms != null && possibleTerms.size() == 1) {
-                return possibleTerms.get(0);
+                dis = possibleTerms.get(0);
             }
         }
-        return null;
+        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "term: {0} category: {1} alt: {2}", new Object[]{term, dis.getCategories().toString(),dis.getAlternativeLables()});
+        return dis;
     }
 
     private List<Term> tf_idf_Disambiguation(List<Term> possibleTerms, Set<String> nGrams, String lemma) throws IOException, JWNLException {
