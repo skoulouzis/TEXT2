@@ -47,7 +47,7 @@ import org.mapdb.Serializer;
  */
 public class BabelNet implements Semantizator {
 
-    private String key;
+    private String keysStr;
     private DB db;
     private String cachePath;
     private static Map<String, String> synsetCache;
@@ -55,7 +55,10 @@ public class BabelNet implements Semantizator {
     private static Map<String, String> disambiguateCache;
     private static Map<String, String> edgesCache;
 
-    private final int limit = 10;
+    private int limit;
+    private String key;
+    private String[] keys;
+    private int keyIndex = 0;
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -152,8 +155,11 @@ public class BabelNet implements Semantizator {
 
     @Override
     public void configure(Properties properties) {
-        key = properties.getProperty("bablenet.key");
+        keysStr = properties.getProperty("bablenet.key");
+        keys = keysStr.split(",");
+        key = keys[keyIndex];
         cachePath = properties.getProperty("cache.path");
+        limit = Integer.valueOf(properties.getProperty("num.of.terms", "100"));
     }
 
     private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException {
@@ -232,6 +238,8 @@ public class BabelNet implements Semantizator {
     private void handleKeyLimitException(String genreJson) throws IOException {
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
             saveCache();
+            keyIndex++;
+            key = keys[keyIndex];
             throw new IOException(genreJson);
         }
     }
@@ -317,7 +325,7 @@ public class BabelNet implements Semantizator {
                 dis = possibleTerms.get(0);
             }
         }
-        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "term: {0} category: {1} alt: {2}", new Object[]{term, dis.getCategories().toString(),dis.getAlternativeLables()});
+        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "term: {0} category: {1} alt: {2}", new Object[]{term, dis.getCategories().toString(), dis.getAlternativeLables()});
         return dis;
     }
 
@@ -509,7 +517,7 @@ public class BabelNet implements Semantizator {
             return null;
         }
         if (genreJson == null) {
-            URL url = new URL("https://babelfy.io/v1/disambiguate?text=" + sentence + "&lang=" + language + "&key=" + key);
+            URL url = new URL("https://babelfy.io/v1/disambiguate?text=" + sentence + "&lang=" + language + "&key=" + keysStr);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
             if (!genreJson.isEmpty() || genreJson.length() < 1) {
@@ -531,10 +539,10 @@ public class BabelNet implements Semantizator {
                 Double globalScore = (Double) jo.get("globalScore");
                 Double coherenceScore = (Double) jo.get("coherenceScore");
                 double someScore = (score + globalScore + coherenceScore) / 3.0;
-                String synet = getBabelnetSynset(id, language, key);
+                String synet = getBabelnetSynset(id, language, keysStr);
                 Term t = tvf.create(synet, language, lemma, null);
                 if (t != null) {
-                    List<Term> h = getHypernyms(language, t, key);
+                    List<Term> h = getHypernyms(language, t, keysStr);
                     t.setBroader(h);
                     return new Pair<>(t, someScore);
                 }
