@@ -28,23 +28,46 @@ import org.json.simple.parser.ParseException;
 public class Main {
 
     public static String propertiesPath = "cluster.properties";
+    private static String props;
 
-    public static void main(String args[]) throws JWNLException {
+    public static void main(String args[]) {
+        boolean cluster = true;
+        String className = null;
+        String jsonTermsDir = null;
+        String clustersOutDir = null;
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+//           -c nl.uva.sne.classifiers.Kmeans $HOME/Downloads/jsonTerms  $HOME/Downloads/clusters
+                if (args[i].equals("-c")) {
+                    cluster = true;
+                    className = args[i + 1];
+                    jsonTermsDir = args[i + 2];
+                    clustersOutDir = args[i + 3];
+                    break;
+                }
+
+                props = args[args.length - 1];
+                if (props.endsWith(".properties")) {
+                    propertiesPath = props;
+                }
+            }
+        }
+
         try {
-            String className = "nl.uva.sne.classifiers.Kmeans";
+//            className = "nl.uva.sne.classifiers.Kmeans";
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             Classifier classifier = (Classifier) obj;
 
             classifier.configure(FileUtils.getProperties(propertiesPath));
 
-            Map<String, String> cluster = classifier.cluster("/home/alogo/Downloads/jsonTerms");
-            copyTerms2Clusters(cluster, "/home/alogo/Downloads/jsonTerms");
-//            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/0", "/home/alogo/Downloads/jsonTerms/0.txt");
+            Map<String, String> theCluster = classifier.cluster(jsonTermsDir);
+            copyTerms2Clusters(theCluster, clustersOutDir);
+
+            writeClustersToOneFile(clustersOutDir);
 //            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/1", "/home/alogo/Downloads/jsonTerms/1.txt");
 //            writeClustersToOneFile("/home/alogo/Downloads/jsonTerms/4", "/home/alogo/Downloads/jsonTerms/4.txt");
-
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException | JWNLException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -76,5 +99,14 @@ public class Main {
             out.print(sb.toString());
         }
 
+    }
+
+    private static void writeClustersToOneFile(String clustersOutDir) throws IOException, ParseException, JWNLException {
+        File dir = new File(clustersOutDir);
+        for (File f : dir.listFiles()) {
+            if (f.isDirectory()) {
+                writeClustersToOneFile(f.getAbsolutePath(), dir.getAbsolutePath() + File.separator + " " + f.getName()+".txt");
+            }
+        }
     }
 }
