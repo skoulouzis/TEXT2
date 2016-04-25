@@ -298,6 +298,7 @@ public class FileUtils {
     }
 
     public static Properties getProperties(String propertiesPath) throws IOException {
+        Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Reading properties from: {0}", propertiesPath);
         InputStream in = null;
         try {
             if (new File(propertiesPath).exists() && new File(propertiesPath).isFile()) {

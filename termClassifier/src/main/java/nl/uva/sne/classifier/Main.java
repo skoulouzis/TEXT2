@@ -16,6 +16,7 @@ import nl.uva.sne.classifiers.Classifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
+import nl.uva.sne.classifiers.Kmeans;
 import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
@@ -71,7 +72,6 @@ public class Main {
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
                 Classifier classifier = (Classifier) obj;
-
                 classifier.configure(FileUtils.getProperties(propertiesPath));
 
                 Map<String, String> theCluster = classifier.cluster(jsonTermsDir);

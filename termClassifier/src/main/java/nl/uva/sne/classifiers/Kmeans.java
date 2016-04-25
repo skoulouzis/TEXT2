@@ -42,6 +42,7 @@ public class Kmeans implements Classifier {
     @Override
     public void configure(Properties properties) {
         numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "kmeans.num.of.clusters: {0}", numOfClusters);
     }
 
     @Override
