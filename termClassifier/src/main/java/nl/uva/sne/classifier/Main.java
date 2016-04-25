@@ -103,6 +103,7 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
+                Logger.getLogger(Main.class.getName()).log(Level.INFO, "Processing {0}", f.getAbsolutePath());
                 Term tv;
                 try (FileReader fr = new FileReader(f)) {
                     tv = TermFactory.create(fr);
@@ -124,6 +125,7 @@ public class Main {
         File dir = new File(clustersOutDir);
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
+
                 writeClustersToOneFile(f.getAbsolutePath(), dir.getAbsolutePath() + File.separator + " " + f.getName() + ".txt");
             }
         }
@@ -143,6 +145,7 @@ public class Main {
         File dir = new File(clustersOutDir);
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+                Logger.getLogger(Main.class.getName()).log(Level.INFO, "Processing {0}", f.getAbsolutePath());
                 Map<String, Double> terms = termExtractor.termXtraction(f.getAbsolutePath());
 //                ValueComparator bvc = new ValueComparator(terms);
 //                Map<String, Double> sorted_map = new TreeMap(bvc);
