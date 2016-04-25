@@ -15,6 +15,7 @@
         <module>termSemantization</module>
         <module>termClassifier</module>
         <module>commons</module>
+        <module>taxonomy</module>
     </modules>
     
 </project>

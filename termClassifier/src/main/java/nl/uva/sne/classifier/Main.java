@@ -124,7 +124,6 @@ public class Main {
         File dir = new File(clustersOutDir);
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
-
                 writeClustersToOneFile(f.getAbsolutePath(), dir.getAbsolutePath() + File.separator + " " + f.getName() + ".txt");
             }
         }
@@ -149,7 +148,7 @@ public class Main {
 //                ValueComparator bvc = new ValueComparator(terms);
 //                Map<String, Double> sorted_map = new TreeMap(bvc);
 //                sorted_map.putAll(terms);
-                FileUtils.writeDictionary2File(terms, clustersOutDir + f.getName() + ".csv");
+                FileUtils.writeDictionary2File(terms, clustersOutDir + File.separator + FilenameUtils.removeExtension(f.getName()) + ".csv");
             }
         }
     }
