@@ -159,7 +159,7 @@ public class BabelNet implements Semantizator {
         keys = keysStr.split(",");
         key = keys[keyIndex];
         cachePath = properties.getProperty("cache.path");
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "100"));
+        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
     }
 
     private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException {
@@ -325,7 +325,7 @@ public class BabelNet implements Semantizator {
                 dis = possibleTerms.get(0);
             }
         }
-        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "term: {0} category: {1} alt: {2}", new Object[]{term, dis.getCategories().toString(), dis.getAlternativeLables()});
+        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Category: {1} alt: {2}", new Object[]{term, dis.getCategories(), dis.getAlternativeLables()});
         return dis;
     }
 
