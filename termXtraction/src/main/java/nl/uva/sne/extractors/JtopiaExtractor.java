@@ -67,35 +67,46 @@ public class JtopiaExtractor implements TermExtractor {
         TermDocument topiaDoc = new TermDocument();
         HashMap<String, Double> keywordsDictionaray = new HashMap();
         int count = 0;
-        for (File f : dir.listFiles()) {
-            count++;
-            Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
-            if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
-                try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-                    StringBuilder stringBuffer = new StringBuilder();
-                    for (String text; (text = br.readLine()) != null;) {
-                        text = text.replaceAll("-", "");
-                        text = text.replaceAll("((mailto\\:|(news|(ht|f)tp(s?))\\://){1}\\S+)", "");
-                        text = text.replaceAll("[^a-zA-Z\\s]", "");
-//        text = text.replaceAll("(\\d+,\\d+)|\\d+", "");
-                        text = text.replaceAll("  ", " ");
-                        text = text.toLowerCase();
-                        stringBuffer.append(text).append("\n");
-                    }
+        if (dir.isDirectory()) {
+            for (File f : dir.listFiles()) {
+                count++;
+                Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
+                keywordsDictionaray.putAll(extractFromFile(f, termExtractor, topiaDoc));
+            }
+        } else if (dir.isFile()) {
+            keywordsDictionaray.putAll(extractFromFile(dir, termExtractor, topiaDoc));
+        }
+        return keywordsDictionaray;
+    }
 
-                    topiaDoc = termExtractor.extractTerms(stringBuffer.toString());
-                    Set<String> terms = topiaDoc.getFinalFilteredTerms().keySet();
-                    for (String t : terms) {
-                        String text = t.replaceAll(" ", "_");
-                        Double tf;
-                        if (keywordsDictionaray.containsKey(text.toLowerCase())) {
-                            tf = keywordsDictionaray.get(text.toLowerCase());
-                            tf++;
-                        } else {
-                            tf = 1.0;
-                        }
-                        keywordsDictionaray.put(text.toLowerCase(), tf);
+    private Map<String, Double> extractFromFile(File f, TermsExtractor termExtractor, TermDocument topiaDoc) throws IOException {
+        HashMap<String, Double> keywordsDictionaray = null;
+        if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+            keywordsDictionaray = new HashMap();
+            try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+                StringBuilder stringBuffer = new StringBuilder();
+                for (String text; (text = br.readLine()) != null;) {
+                    text = text.replaceAll("-", "");
+                    text = text.replaceAll("((mailto\\:|(news|(ht|f)tp(s?))\\://){1}\\S+)", "");
+                    text = text.replaceAll("[^a-zA-Z\\s]", "");
+//        text = text.replaceAll("(\\d+,\\d+)|\\d+", "");
+                    text = text.replaceAll("  ", " ");
+                    text = text.toLowerCase();
+                    stringBuffer.append(text).append("\n");
+                }
+
+                topiaDoc = termExtractor.extractTerms(stringBuffer.toString());
+                Set<String> terms = topiaDoc.getFinalFilteredTerms().keySet();
+                for (String t : terms) {
+                    String text = t.replaceAll(" ", "_");
+                    Double tf;
+                    if (keywordsDictionaray.containsKey(text.toLowerCase())) {
+                        tf = keywordsDictionaray.get(text.toLowerCase());
+                        tf++;
+                    } else {
+                        tf = 1.0;
                     }
+                    keywordsDictionaray.put(text.toLowerCase(), tf);
                 }
             }
         }

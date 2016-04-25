@@ -45,43 +45,82 @@ public class FileUtils {
     private static final Pattern LINE_PATTERN
             = Pattern.compile(".*\r?\n");
     private static Map<String, Set<String>> nGramsMap;
+    private static JSONParser parser;
 
-    protected static List<String> getGlosses(String jsonFile) throws IOException, org.json.simple.parser.ParseException {
-        return getList(jsonFile, "glosses");
+    protected static List<String> getGlosses(String jsonString) throws IOException, org.json.simple.parser.ParseException {
+        return getList(jsonString, "glosses");
+    }
+
+    protected static List<String> getGlosses(FileReader fr) throws IOException, org.json.simple.parser.ParseException {
+        return getList(fr, "glosses");
     }
 
     protected static String getUID(String path) throws IOException, org.json.simple.parser.ParseException {
         return getString(path, "uid");
     }
 
-    protected static String getLemma(String jsonFile) throws IOException, ParseException {
-        return getString(jsonFile, "lemma");
+    static String getUID(FileReader fr) throws IOException, ParseException {
+        return getString(fr, "uid");
     }
 
-    protected static String getString(String path, String field) throws IOException, org.json.simple.parser.ParseException {
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader(path));
+    protected static String getLemma(String jsonString) throws IOException, ParseException {
+        return getString(jsonString, "lemma");
+    }
+
+    static String getLemma(FileReader fr) throws IOException, ParseException {
+        return getString(fr, "lemma");
+    }
+
+    private static String getString(FileReader fr, String field) throws IOException, ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj = parser.parse(fr);
         JSONObject jsonObject = (JSONObject) obj;
         return (String) jsonObject.get(field);
     }
 
-    protected static Boolean getBoolean(String path, String field) throws IOException, org.json.simple.parser.ParseException {
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader(path));
+    protected static String getString(String jsonString, String field) throws IOException, org.json.simple.parser.ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj = parser.parse(jsonString);
+        JSONObject jsonObject = (JSONObject) obj;
+        return (String) jsonObject.get(field);
+    }
+
+    protected static Boolean getBoolean(String jsonStr, String field) throws IOException, org.json.simple.parser.ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj = parser.parse(jsonStr);
         JSONObject jsonObject = (JSONObject) obj;
         return (Boolean) jsonObject.get(field);
     }
 
-    static List<String> getAltLables(String jsonFile) throws IOException, ParseException {
-        return getList(jsonFile, "alternativeLables");
+    private static boolean getBoolean(FileReader fr, String field) throws IOException, ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj = parser.parse(fr);
+        JSONObject jsonObject = (JSONObject) obj;
+        return (Boolean) jsonObject.get(field);
     }
 
-    private static List<String> getList(String jsonFile, String field) throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-        Object obj;
-        try (FileReader fr = new FileReader(jsonFile)) {
-            obj = parser.parse(fr);
+    static List<String> getAltLables(String jsonString) throws IOException, ParseException {
+        return getList(jsonString, "alternativeLables");
+    }
+
+    static List<String> getAltLables(FileReader fr) throws IOException, ParseException {
+        return getList(fr, "alternativeLables");
+    }
+
+    private static List<String> getList(String jsonString, String field) throws IOException, ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
         }
+        Object obj;
+        obj = parser.parse(jsonString);
         JSONObject jsonObject = (JSONObject) obj;
         org.json.simple.JSONArray ja = (org.json.simple.JSONArray) jsonObject.get(field);
         if (ja == null) {
@@ -95,20 +134,55 @@ public class FileUtils {
         return list;
     }
 
-    static List<String> getBroaderUIDS(String jsonFile) throws IOException, ParseException {
-        return getList(jsonFile, "broaderUIDS");
+    private static List<String> getList(FileReader fr, String field) throws IOException, ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj;
+        obj = parser.parse(fr);
+        JSONObject jsonObject = (JSONObject) obj;
+        org.json.simple.JSONArray ja = (org.json.simple.JSONArray) jsonObject.get(field);
+        if (ja == null) {
+            return null;
+        }
+        List<String> list = new ArrayList<>();
+        for (Object elem : ja) {
+            String s = (String) elem;
+            list.add(s);
+        }
+        return list;
     }
 
-    static List<String> getCategories(String jsonFile) throws IOException, ParseException {
-        return getList(jsonFile, "categories");
+    static List<String> getBroaderUIDS(String jsonString) throws IOException, ParseException {
+        return getList(jsonString, "broaderUIDS");
     }
 
-    static String getForeignKey(String jsonFile) throws IOException, ParseException {
-        return getString(jsonFile, "foreignKey");
+    static List<String> getBroaderUIDS(FileReader fr) throws IOException, ParseException {
+        return getList(fr, "broaderUIDS");
     }
 
-    static boolean IsFromDictionary(String jsonFile) throws IOException, ParseException {
-        return getBoolean(jsonFile, "isFromDictionary");
+    static List<String> getCategories(String jsonString) throws IOException, ParseException {
+        return getList(jsonString, "categories");
+    }
+
+    static List<String> getCategories(FileReader fr) throws IOException, ParseException {
+        return getList(fr, "categories");
+    }
+
+    static String getForeignKey(String jsonString) throws IOException, ParseException {
+        return getString(jsonString, "foreignKey");
+    }
+
+    static String getForeignKey(FileReader fr) throws IOException, ParseException {
+        return getString(fr, "foreignKey");
+    }
+
+    static boolean IsFromDictionary(String jsonString) throws IOException, ParseException {
+        return getBoolean(jsonString, "isFromDictionary");
+    }
+
+    static boolean IsFromDictionary(FileReader fr) throws IOException, ParseException {
+        return getBoolean(fr, "isFromDictionary");
     }
 
     public static Set<String> grep(File f, Pattern pattern, boolean removePattern) throws IOException {
@@ -244,4 +318,19 @@ public class FileUtils {
         }
         return null;
     }
+
+    public static String readFile(FileReader fr) throws IOException {
+        try (BufferedReader reader = new BufferedReader(fr)) {
+            String line;
+            StringBuilder stringBuilder = new StringBuilder();
+            String ls = System.getProperty("line.separator");
+
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+                stringBuilder.append(ls);
+            }
+            return stringBuilder.toString();
+        }
+    }
+
 }

@@ -5,6 +5,7 @@
  */
 package nl.uva.sne.commons;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class TermFactory {
         term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonFile));
         return term;
     }
-    
+
     public static Term create(String synet, String language, String lemma, String theID) throws ParseException, UnsupportedEncodingException {
         Term node = null;
         language = language.toLowerCase();
@@ -145,6 +146,20 @@ public class TermFactory {
         }
 
         return null;
+    }
+
+    public static Term create(FileReader fr) throws IOException, ParseException {
+        String jsonStr = FileUtils.readFile(fr);
+        Term term = new Term(FileUtils.getLemma(jsonStr));
+        term.setUID(FileUtils.getUID(jsonStr));
+        term.setAlternativeLables(FileUtils.getAltLables(jsonStr));
+        term.setBroaderUIDS(FileUtils.getBroaderUIDS(jsonStr));
+        term.setCategories(FileUtils.getCategories(jsonStr));
+        term.setForeignKey(FileUtils.getForeignKey(jsonStr));
+        term.setGlosses(FileUtils.getGlosses(jsonStr));
+        term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonStr));
+        return term;
+
     }
 
 }

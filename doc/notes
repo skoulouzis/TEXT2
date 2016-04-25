@@ -50,6 +50,8 @@ sed -i '/everything/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/strengthen/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/emerge/d' term_dictionaryPOS_expert_validation.csv
 
+one_
+
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
 $ grep ',FW,' dictionaryPOS.csv >> dictionaryREMOVE.csv
 $ grep ',PRP,' dictionaryPOS.csv >> dictionaryREMOVE.csv

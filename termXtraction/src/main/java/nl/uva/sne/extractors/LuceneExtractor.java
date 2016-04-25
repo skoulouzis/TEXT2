@@ -19,6 +19,7 @@ import net.didion.jwnl.data.POS;
 import nl.uva.sne.commons.SemanticUtils;
 import org.apache.commons.io.FilenameUtils;
 import nl.uva.sne.commons.ValueComparator;
+import org.json.simple.parser.ParseException;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -45,54 +46,61 @@ public class LuceneExtractor implements TermExtractor {
         File dir = new File(inDir);
         Map<String, Double> termDictionaray = new HashMap();
         int count = 0;
-        for (File f : dir.listFiles()) {
-            count++;
-            Logger.getLogger(LuceneExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
-            if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
-                try {
-                    StringBuilder sb = new StringBuilder();
-                    try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-                        for (String text; (text = br.readLine()) != null;) {
-                            sb.append(text.toLowerCase()).append(" ");
-                        }
+        try {
+            if (dir.isDirectory()) {
+                for (File f : dir.listFiles()) {
+                    count++;
+                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
+                    if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+                        termDictionaray.putAll(extractFromFile(f));
                     }
-                    List<String> tokens = SemanticUtils.tokenize(sb.toString());
-                    for (String t : tokens) {
-                        t = SemanticUtils.lemmatize(t);
-                        POS[] pos = SemanticUtils.getPOS(t);
-                        if (pos.length == 1 && pos[0].equals(POS.ADJECTIVE)) {
-                            continue;
-                        }
-                        Double tf;
-                        if (termDictionaray.containsKey(t)) {
-                            tf = termDictionaray.get(t);
-                            tf++;
-                        } else {
-                            tf = 1.0;
-                        }
-                        termDictionaray.put(t, tf);
-                    }
-                    List<String> ngrams = SemanticUtils.getNGrams(sb.toString(), maxNgrams);
-                    for (String t : ngrams) {
-                        Double tf;
-                        if (termDictionaray.containsKey(t)) {
-                            tf = termDictionaray.get(t);
-                            tf++;
-                        } else {
-                            tf = 1.0;
-                        }
-                        termDictionaray.put(t, tf);
-                    }
-
-                } catch (JWNLException ex) {
-                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (Exception ex) {
-                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
                 }
+            } else if (dir.isFile()) {
+                termDictionaray.putAll(extractFromFile(dir));
             }
+        } catch (Exception ex) {
+            Logger.getLogger(LuceneExtractor.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (removeExclusiveTerms) {
             return removeExclusiveTerms(termDictionaray);
+        }
+        return termDictionaray;
+    }
+
+    private Map<String, Double> extractFromFile(File f) throws IOException, JWNLException, MalformedURLException, ParseException, Exception {
+        Map<String, Double> termDictionaray = new HashMap();
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            for (String text; (text = br.readLine()) != null;) {
+                sb.append(text.toLowerCase()).append(" ");
+            }
+        }
+        List<String> tokens = SemanticUtils.tokenize(sb.toString());
+        for (String t : tokens) {
+            t = SemanticUtils.lemmatize(t);
+            POS[] pos = SemanticUtils.getPOS(t);
+            if (pos.length == 1 && pos[0].equals(POS.ADJECTIVE)) {
+                continue;
+            }
+            Double tf;
+            if (termDictionaray.containsKey(t)) {
+                tf = termDictionaray.get(t);
+                tf++;
+            } else {
+                tf = 1.0;
+            }
+            termDictionaray.put(t, tf);
+        }
+        List<String> ngrams = SemanticUtils.getNGrams(sb.toString(), maxNgrams);
+        for (String t : ngrams) {
+            Double tf;
+            if (termDictionaray.containsKey(t)) {
+                tf = termDictionaray.get(t);
+                tf++;
+            } else {
+                tf = 1.0;
+            }
+            termDictionaray.put(t, tf);
         }
         return termDictionaray;
     }

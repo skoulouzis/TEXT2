@@ -6,6 +6,7 @@
 package nl.uva.sne.classifiers;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class Kmeans implements Classifier {
         Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create terms");
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
-                terms.add(TermFactory.create(f.getAbsolutePath()));
+                terms.add(TermFactory.create(new FileReader(f)));
             }
         }
 
@@ -97,8 +98,7 @@ public class Kmeans implements Classifier {
             attributes.add(new Attribute(t));
         }
 
-        
-         Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
         Instances data = new Instances("Rel", attributes, terms.size());
         List<String> instancesMap = new ArrayList<>();
         int count = 0;
@@ -114,7 +114,6 @@ public class Kmeans implements Classifier {
             instancesMap.add(t);
             count++;
         }
-        
 
 //        weka.clusterers.HierarchicalClusterer hc = new HierarchicalClusterer();
 //        try {
@@ -144,12 +143,11 @@ public class Kmeans implements Classifier {
 //        } catch (Exception ex) {
 //            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-
-
         SimpleKMeans kmeans = new SimpleKMeans();
-        kmeans.setSeed(new Random().nextInt());
+        int seed = new Random(System.currentTimeMillis()).nextInt(100);
+        kmeans.setSeed(seed);
 
-          Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
         //important parameter to set: preserver order, number of cluster.
         kmeans.setPreserveInstancesOrder(true);
         try {

@@ -216,22 +216,21 @@ public class SemanticUtils {
     }
 
     public static List<String> tokenize(String text) throws IOException, JWNLException {
-        text = text.replaceAll("[^a-zA-Z\\s]", "");
         text = text.replaceAll("-+", "-0");
         text = text.replaceAll("’", "'");
+
         text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");
+
         text = text.replaceAll("(?:'(?:[tdsm]|[vr]e|ll))+\\b", "");
         text = text.toLowerCase();
 
         ArrayList<String> words = new ArrayList<>();
         Analyzer analyzer = new ArmenianAnalyzer(Version.LUCENE_42, getStopWords());
-        StringBuilder sb = new StringBuilder();
         try (TokenStream tokenStream = analyzer.tokenStream("field", new StringReader(text))) {
             CharTermAttribute term = tokenStream.addAttribute(CharTermAttribute.class);
             tokenStream.reset();
             while (tokenStream.incrementToken()) {
                 words.add(term.toString());
-                sb.append(term.toString()).append(" ");
             }
             tokenStream.end();
         }
@@ -266,6 +265,9 @@ public class SemanticUtils {
         List<String> tokens = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             for (String text; (text = br.readLine()) != null;) {
+                if (text.contains("softwarecompaniesofcanada")) {
+                    System.err.println(text);
+                }
                 tokens.addAll(tokenize(text));
             }
         }
