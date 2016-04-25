@@ -386,13 +386,15 @@ public class BabelNet implements Semantizator {
         }
         Iterator<String> it = sorted_map.keySet().iterator();
         winner = it.next();
-        String secondKey = it.next();
-        Double s1 = scoreMap.get(winner);
-        Double s2 = scoreMap.get(secondKey);
-        double diff = s1 - s2;
-        if (Math.abs(diff) <= 0.006) {
-            return null;
-        }
+//        Double s1 = scoreMap.get(winner);
+//        String secondKey = it.next();
+//        Double s2 = scoreMap.get(secondKey);
+//        String thirdKey = it.next();
+//        Double s3 = scoreMap.get(thirdKey);
+//        double diff = s1 - s2;
+//        if (Math.abs(diff) <= 0.006) {
+//            return null;
+//        }
 
         List<Term> terms = new ArrayList<>();
         for (Term t : possibleTerms) {
