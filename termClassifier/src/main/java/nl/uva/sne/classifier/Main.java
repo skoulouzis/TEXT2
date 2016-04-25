@@ -148,7 +148,7 @@ public class Main {
                 ValueComparator bvc = new ValueComparator(terms);
                 Map<String, Double> sorted_map = new TreeMap(bvc);
                 sorted_map.putAll(terms);
-                StringBuffer name = new StringBuffer();
+                StringBuilder name = new StringBuilder();
                 int count = 0;
                 for (String s : sorted_map.keySet()) {
                     name.append(s).append("_");
@@ -157,6 +157,7 @@ public class Main {
                     }
                     count++;
                 }
+                Logger.getLogger(Main.class.getName()).log(Level.INFO, "Writing cluster: {0}", name.toString());
                 FileUtils.writeDictionary2File(terms, clustersOutDir + File.separator + FilenameUtils.removeExtension(f.getName()) + name.toString() + ".csv");
             }
         }
