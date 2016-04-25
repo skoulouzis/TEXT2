@@ -145,10 +145,19 @@ public class Main {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                 Logger.getLogger(Main.class.getName()).log(Level.INFO, "Processing {0}", f.getAbsolutePath());
                 Map<String, Double> terms = termExtractor.termXtraction(f.getAbsolutePath());
-//                ValueComparator bvc = new ValueComparator(terms);
-//                Map<String, Double> sorted_map = new TreeMap(bvc);
-//                sorted_map.putAll(terms);
-                FileUtils.writeDictionary2File(terms, clustersOutDir + File.separator + FilenameUtils.removeExtension(f.getName()) + ".csv");
+                ValueComparator bvc = new ValueComparator(terms);
+                Map<String, Double> sorted_map = new TreeMap(bvc);
+                sorted_map.putAll(terms);
+                StringBuffer name = new StringBuffer();
+                int count = 0;
+                for (String s : sorted_map.keySet()) {
+                    name.append(s).append("_");
+                    if (count > 4) {
+                        break;
+                    }
+                    count++;
+                }
+                FileUtils.writeDictionary2File(terms, clustersOutDir + File.separator + FilenameUtils.removeExtension(f.getName()) + name.toString() + ".csv");
             }
         }
     }
