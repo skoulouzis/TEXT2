@@ -5,8 +5,6 @@
  */
 package nl.uva.sne.classifiers;
 
-import java.awt.Container;
-import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,22 +18,17 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
-import weka.clusterers.HierarchicalClusterer;
-import weka.clusterers.MakeDensityBasedClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
-import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.gui.hierarchyvisualizer.HierarchyVisualizer;
 
 /**
  *
@@ -57,12 +50,14 @@ public class Kmeans implements Classifier {
         List<List<String>> allDocs = new ArrayList<>();
         Map<String, List<String>> docs = new HashMap<>();
         List<Term> terms = new ArrayList<>();
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create terms");
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
                 terms.add(TermFactory.create(f.getAbsolutePath()));
             }
         }
 
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
         for (Term tv : terms) {
             try {
                 Set<String> doc = SemanticUtils.getDocument(tv);
@@ -73,6 +68,7 @@ public class Kmeans implements Classifier {
             }
         }
 
+        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
         Set<String> allWords = new HashSet<>();
         Map<String, Map<String, Double>> featureVectors = new HashMap<>();
         for (String k : docs.keySet()) {
@@ -101,6 +97,8 @@ public class Kmeans implements Classifier {
             attributes.add(new Attribute(t));
         }
 
+        
+         Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
         Instances data = new Instances("Rel", attributes, terms.size());
         List<String> instancesMap = new ArrayList<>();
         int count = 0;
@@ -147,9 +145,11 @@ public class Kmeans implements Classifier {
 //            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 
+
         SimpleKMeans kmeans = new SimpleKMeans();
         kmeans.setSeed(new Random().nextInt());
 
+          Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
         //important parameter to set: preserver order, number of cluster.
         kmeans.setPreserveInstancesOrder(true);
         try {
