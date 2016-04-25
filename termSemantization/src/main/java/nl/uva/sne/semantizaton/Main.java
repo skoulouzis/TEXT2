@@ -33,13 +33,13 @@ public class Main {
             allTermsDictionary = args[0];
             filterredDictionary = args[1];
             outDir = args[2];
-            
+
             props = args[args.length - 1];
             if (props.endsWith(".properties")) {
                 propertiesPath = props;
             }
         }
-
+        List<Term> terms = null;
         try {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
@@ -50,12 +50,18 @@ public class Main {
 
             semantizator.configure(FileUtils.getProperties(propertiesPath));
 
-            List<Term> terms = semantizator.semnatizeTerms(allTermsDictionary, filterredDictionary);
-            
-            writeTerms2Json(terms, outDir);
+            terms = semantizator.semnatizeTerms(allTermsDictionary, filterredDictionary);
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (terms != null) {
+                try {
+                    writeTerms2Json(terms, outDir);
+                } catch (IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
     }
 

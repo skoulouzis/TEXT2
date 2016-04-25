@@ -84,8 +84,8 @@ public class BabelNet implements Semantizator {
                     }
                 }
             }
-        } catch (JWNLException ex) {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            return terms;
         }
         return terms;
     }
