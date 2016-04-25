@@ -54,7 +54,7 @@ public class Main {
                 }
                 if (args[i].equals("-n")) {
                     name = true;
-                    clustersOutDir = args[i + 3];
+                    clustersOutDir = args[i + 1];
                     break;
                 }
 
