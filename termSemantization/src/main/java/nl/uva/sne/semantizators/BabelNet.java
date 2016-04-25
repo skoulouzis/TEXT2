@@ -243,7 +243,7 @@ public class BabelNet implements Semantizator {
                 keyIndex = 0;
             }
             key = keys[keyIndex];
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Switch to: {0}", keyIndex);
+            Logger.getLogger(BabelNet.class.getName()).log(Level.FINE, "Switch to: {0}", keyIndex);
             throw new IOException(genreJson);
         }
     }
