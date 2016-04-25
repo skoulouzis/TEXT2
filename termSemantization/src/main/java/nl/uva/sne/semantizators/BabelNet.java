@@ -75,12 +75,9 @@ public class BabelNet implements Semantizator {
                     if (count > limit) {
                         break;
                     }
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(term).append("->");
                     Term tt = getTerm(term, allTermsDictionary);
                     if (tt != null) {
                         terms.add(tt);
-                        sb.append(tt.getLemma());
                     }
                 }
             }
