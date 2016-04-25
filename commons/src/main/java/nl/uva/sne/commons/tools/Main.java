@@ -33,7 +33,7 @@ public class Main {
                             for (String s : args) {
                                 builder.append(s).append(" ");
                             }
-                            Logger.getLogger(Main.class.getName()).log(Level.INFO, "Command not found. " + builder);
+                            Logger.getLogger(Main.class.getName()).log(Level.INFO, "Command not found. {0}", builder);
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
