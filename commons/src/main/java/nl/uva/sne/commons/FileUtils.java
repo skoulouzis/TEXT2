@@ -78,7 +78,10 @@ public class FileUtils {
 
     private static List<String> getList(String jsonFile, String field) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader(jsonFile));
+        Object obj;
+        try (FileReader fr = new FileReader(jsonFile)) {
+            obj = parser.parse(fr);
+        }
         JSONObject jsonObject = (JSONObject) obj;
         org.json.simple.JSONArray ja = (org.json.simple.JSONArray) jsonObject.get(field);
         if (ja == null) {
