@@ -24,6 +24,31 @@ $ sed -i '/meeting/d' dictionaryPOS.csv
 $ sed -i '/bring/d' dictionaryPOS.csv
 $ sed -i '/leverage/d' dictionaryPOS.csv 
 $ sed -i '/day/d' dictionaryPOS.csv
+ sed -i '/cleanse/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/choice/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/obtain/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/likely/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/potentially/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/deeply/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/ahead/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/choose/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/highlight/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/arise/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/emphasis/d' term_dictionaryPOS_expert_validation.csv
+ sed -i '/let/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/day/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/easily/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/much/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/always/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/consider/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/therefore/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/continuously/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/per_annum/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/visit/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/respond/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/everything/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/strengthen/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/emerge/d' term_dictionaryPOS_expert_validation.csv
 
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
 $ grep ',FW,' dictionaryPOS.csv >> dictionaryREMOVE.csv

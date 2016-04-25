@@ -239,7 +239,7 @@ public class BabelNet implements Semantizator {
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
             saveCache();
             keyIndex++;
-            if(keyIndex > keys.length-1){
+            if (keyIndex > keys.length - 1) {
                 keyIndex = 0;
             }
             key = keys[keyIndex];
@@ -473,6 +473,7 @@ public class BabelNet implements Semantizator {
             try {
                 termPair = babelNetDisambiguation(language, lemma, clearNg);
             } catch (Exception ex) {
+//                System.err.println("");
             }
             if (termPair != null) {
                 termMap.put(termPair.first.getUID(), termPair.first);
@@ -521,14 +522,15 @@ public class BabelNet implements Semantizator {
         if (db == null || db.isClosed()) {
             loadCache();
         }
-        sentence = sentence.replaceAll("_", " ");
-        sentence = URLEncoder.encode(sentence, "UTF-8");
+        String query = lemma + " " + sentence.replaceAll("_", " ");
+
+        query = URLEncoder.encode(query, "UTF-8");
         String genreJson = disambiguateCache.get(sentence);
         if (genreJson != null && genreJson.equals("NON-EXISTING")) {
             return null;
         }
         if (genreJson == null) {
-            URL url = new URL("https://babelfy.io/v1/disambiguate?text=" + sentence + "&lang=" + language + "&key=" + key);
+            URL url = new URL("http://babelfy.io/v1/disambiguate?text=" + query + "&lang=" + language + "&key=" + key);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
             if (!genreJson.isEmpty() || genreJson.length() < 1) {
@@ -542,7 +544,6 @@ public class BabelNet implements Semantizator {
 //        Term term = null;
         if (obj instanceof JSONArray) {
             JSONArray ja = (JSONArray) obj;
-            TermFactory tvf = new TermFactory();
             for (Object o : ja) {
                 JSONObject jo = (JSONObject) o;
                 String id = (String) jo.get("babelSynsetID");
@@ -551,7 +552,7 @@ public class BabelNet implements Semantizator {
                 Double coherenceScore = (Double) jo.get("coherenceScore");
                 double someScore = (score + globalScore + coherenceScore) / 3.0;
                 String synet = getBabelnetSynset(id, language, keysStr);
-                Term t = tvf.create(synet, language, lemma, null);
+                Term t = TermFactory.create(synet, language, lemma, null);
                 if (t != null) {
                     List<Term> h = getHypernyms(language, t, keysStr);
                     t.setBroader(h);
