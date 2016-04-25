@@ -246,7 +246,7 @@ public class BabelNet implements Semantizator {
     }
 
     private void saveCache() throws FileNotFoundException, IOException {
-        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Saving cache");
+        Logger.getLogger(BabelNet.class.getName()).log(Level.FINE, "Saving cache");
         if (db != null) {
             if (!db.isClosed()) {
                 db.commit();
