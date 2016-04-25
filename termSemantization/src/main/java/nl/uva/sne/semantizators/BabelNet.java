@@ -241,6 +241,7 @@ public class BabelNet implements Semantizator {
             saveCache();
             keyIndex++;
             key = keys[keyIndex];
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Switch to: " + keyIndex);
             throw new IOException(genreJson);
         }
     }
@@ -403,7 +404,8 @@ public class BabelNet implements Semantizator {
         if (!terms.isEmpty()) {
             return terms;
         } else {
-            return null;//return possibleTerms;
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "No winner");
+            return null;
         }
     }
 
@@ -522,7 +524,7 @@ public class BabelNet implements Semantizator {
             return null;
         }
         if (genreJson == null) {
-            URL url = new URL("https://babelfy.io/v1/disambiguate?text=" + sentence + "&lang=" + language + "&key=" + keysStr);
+            URL url = new URL("https://babelfy.io/v1/disambiguate?text=" + sentence + "&lang=" + language + "&key=" + key);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
             if (!genreJson.isEmpty() || genreJson.length() < 1) {
