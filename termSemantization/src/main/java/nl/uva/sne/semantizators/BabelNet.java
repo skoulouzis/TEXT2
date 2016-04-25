@@ -479,7 +479,12 @@ public class BabelNet implements Semantizator {
             try {
                 termPair = babelNetDisambiguation(language, lemma, clearNg);
             } catch (Exception ex) {
-//                System.err.println("");
+                if (ex.getMessage().contains("Your key is not valid")) {
+                    try {
+                        termPair = babelNetDisambiguation(language, lemma, clearNg);
+                    } catch (Exception ex1) {
+                    }
+                }
             }
             if (termPair != null) {
                 termMap.put(termPair.first.getUID(), termPair.first);
