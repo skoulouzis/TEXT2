@@ -58,11 +58,10 @@ public class Main {
                     clustersOutDir = args[i + 1];
                     break;
                 }
-
-                props = args[args.length - 1];
-                if (props.endsWith(".properties")) {
-                    propertiesPath = props;
-                }
+            }
+            props = args[args.length - 1];
+            if (props.endsWith(".properties")) {
+                propertiesPath = props;
             }
         }
 
