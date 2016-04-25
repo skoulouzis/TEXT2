@@ -167,6 +167,7 @@ public class FileUtils {
         }
         Set<String> nGrams = nGramsMap.get(lemma);
         if (nGrams != null) {
+            Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
             return nGrams;
         }
 
@@ -174,7 +175,7 @@ public class FileUtils {
         nGrams = grep(new File(keywordsDictionarayFile), pattern, true);
 
         nGramsMap.put(lemma, nGrams);
-
+        Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
         return nGrams;
     }
 
