@@ -236,7 +236,6 @@ public class BabelNet implements Semantizator {
     }
 
     private void handleKeyLimitException(String genreJson) throws IOException {
-        Logger.getLogger(BabelNet.class.getName()).log(Level.WARNING, genreJson);
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
             saveCache();
             keyIndex++;
