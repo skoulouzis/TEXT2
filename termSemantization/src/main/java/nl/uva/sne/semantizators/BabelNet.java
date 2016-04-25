@@ -384,11 +384,18 @@ public class BabelNet implements Semantizator {
         ValueComparator bvc = new ValueComparator(scoreMap);
         TreeMap<String, Double> sorted_map = new TreeMap(bvc);
         sorted_map.putAll(scoreMap);
-        if (sorted_map.firstEntry().getValue() < highScore) {
-            return null;
-        }
+
         Iterator<String> it = sorted_map.keySet().iterator();
         winner = it.next();
+
+        Double s1 = scoreMap.get(winner);
+        String secondKey = it.next();
+        Double s2 = scoreMap.get(secondKey);
+
+        if (s1 < highScore && s2 > 0) {
+            return null;
+        }
+
 //        Double s1 = scoreMap.get(winner);
 //        String secondKey = it.next();
 //        Double s2 = scoreMap.get(secondKey);
@@ -398,7 +405,6 @@ public class BabelNet implements Semantizator {
 //        if (Math.abs(diff) <= 0.006) {
 //            return null;
 //        }
-
         List<Term> terms = new ArrayList<>();
         for (Term t : possibleTerms) {
             if (t.getUID().equals(winner)) {
