@@ -138,7 +138,7 @@ public class Main {
 //                ValueComparator bvc = new ValueComparator(terms);
 //                Map<String, Double> sorted_map = new TreeMap(bvc);
 //                sorted_map.putAll(terms);
-                FileUtils.writeDictionary2File(terms, "/home/alogo/Downloads/clusters/" + f.getName() + ".csv");
+                FileUtils.writeDictionary2File(terms, clustersOutDir + f.getName() + ".csv");
             }
         }
     }
