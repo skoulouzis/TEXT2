@@ -56,7 +56,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>nl.uva.sne.semantizaton.Main</mainClass>
+                            <mainClass>nl.uva.sne.commons.tools.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
