@@ -325,7 +325,11 @@ public class BabelNet implements Semantizator {
                 dis = possibleTerms.get(0);
             }
         }
-        Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Category: {1} alt: {2}", new Object[]{term, dis.getCategories(), dis.getAlternativeLables()});
+        if (dis != null) {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Category: {1} alt: {2}", new Object[]{term, dis.getCategories(), dis.getAlternativeLables()});
+        } else {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''t figure out what {0} means", term);
+        }
         return dis;
     }
 
