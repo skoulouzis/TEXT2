@@ -239,6 +239,9 @@ public class BabelNet implements Semantizator {
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
             saveCache();
             keyIndex++;
+            if(keyIndex > keys.length-1){
+                keyIndex = 0;
+            }
             key = keys[keyIndex];
             Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Switch to: {0}", keyIndex);
             throw new IOException(genreJson);
