@@ -144,7 +144,8 @@ public class Kmeans implements Classifier {
 //            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
 //        }
         SimpleKMeans kmeans = new SimpleKMeans();
-        int seed = new Random(System.currentTimeMillis()).nextInt(100);
+        Random rand = new Random(System.currentTimeMillis());
+        int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
         kmeans.setSeed(seed);
 
         Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");

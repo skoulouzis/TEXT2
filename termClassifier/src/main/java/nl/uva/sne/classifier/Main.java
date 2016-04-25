@@ -135,11 +135,10 @@ public class Main {
         for (File f : dir.listFiles()) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                 Map<String, Double> terms = termExtractor.termXtraction(f.getAbsolutePath());
-                ValueComparator bvc = new ValueComparator(terms);
-                Map<String, Double> sorted_map = new TreeMap(bvc);
-                sorted_map.putAll(terms);
-                System.err.println(f);
-                System.err.println(sorted_map);
+//                ValueComparator bvc = new ValueComparator(terms);
+//                Map<String, Double> sorted_map = new TreeMap(bvc);
+//                sorted_map.putAll(terms);
+                FileUtils.writeDictionary2File(terms, "/home/alogo/Downloads/clusters/" + f.getName() + ".csv");
             }
         }
     }
