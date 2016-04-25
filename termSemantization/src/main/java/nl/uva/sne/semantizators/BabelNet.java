@@ -241,7 +241,7 @@ public class BabelNet implements Semantizator {
             saveCache();
             keyIndex++;
             key = keys[keyIndex];
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Switch to: " + keyIndex);
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Switch to: {0}", keyIndex);
             throw new IOException(genreJson);
         }
     }
