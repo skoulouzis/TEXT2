@@ -37,7 +37,8 @@ public class Main {
     private static String props;
 
     public static void main(String args[]) {
-        boolean cluster = true;
+        boolean cluster = false;
+        boolean name = false;
         String className = null;
         String jsonTermsDir = null;
         String clustersOutDir = null;
@@ -51,6 +52,11 @@ public class Main {
                     clustersOutDir = args[i + 3];
                     break;
                 }
+                if (args[i].equals("-n")) {
+                    name = true;
+                    clustersOutDir = args[i + 3];
+                    break;
+                }
 
                 props = args[args.length - 1];
                 if (props.endsWith(".properties")) {
@@ -60,19 +66,22 @@ public class Main {
         }
 
         try {
-            className = "nl.uva.sne.classifiers.Kmeans";
-            Class c = Class.forName(className);
-            Object obj = c.newInstance();
-            Classifier classifier = (Classifier) obj;
+            if (cluster) {
+                className = "nl.uva.sne.classifiers.Kmeans";
+                Class c = Class.forName(className);
+                Object obj = c.newInstance();
+                Classifier classifier = (Classifier) obj;
 
-            classifier.configure(FileUtils.getProperties(propertiesPath));
+                classifier.configure(FileUtils.getProperties(propertiesPath));
 
-            Map<String, String> theCluster = classifier.cluster(jsonTermsDir);
-            copyTerms2Clusters(theCluster, clustersOutDir);
+                Map<String, String> theCluster = classifier.cluster(jsonTermsDir);
+                copyTerms2Clusters(theCluster, clustersOutDir);
+            }
+            if (name) {
+                writeClustersToOneFile(clustersOutDir);
+                nameClusters(clustersOutDir);
+            }
 
-            writeClustersToOneFile(clustersOutDir);
-
-            nameClusters(clustersOutDir);
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
