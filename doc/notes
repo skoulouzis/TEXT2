@@ -49,8 +49,13 @@ sed -i '/respond/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/everything/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/strengthen/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/emerge/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/one_/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/what/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/may_/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/increase/d' term_dictionaryPOS_expert_validation.csv
+sed -i '/ever/d' term_dictionaryPOS_expert_validation.csv
+opportunity
 
-one_
 
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
 $ grep ',FW,' dictionaryPOS.csv >> dictionaryREMOVE.csv

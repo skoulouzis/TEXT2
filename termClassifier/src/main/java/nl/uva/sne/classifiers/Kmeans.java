@@ -28,8 +28,10 @@ import org.json.simple.parser.ParseException;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.DistanceFunction;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.MinkowskiDistance;
 
 /**
  *
@@ -154,6 +156,9 @@ public class Kmeans implements Classifier {
         kmeans.setPreserveInstancesOrder(true);
         try {
             kmeans.setNumClusters(numOfClusters);
+//            DistanceFunction df = new MinkowskiDistance(data);
+//            kmeans.setDistanceFunction(df);
+
             kmeans.buildClusterer(data);
             // This array returns the cluster number (starting with 0) for each instance
             // The array has as many elements as the number of instances

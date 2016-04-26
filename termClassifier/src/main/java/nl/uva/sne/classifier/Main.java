@@ -86,13 +86,17 @@ public class Main {
         }
     }
 
-    private static void copyTerms2Clusters(Map<String, String> cluster, String outputDir) throws IOException {
+    private static void copyTerms2Clusters(Map<String, String> cluster, String outputDir) throws IOException, ParseException {
         for (String fileName : cluster.keySet()) {
             File dir = new File(outputDir + File.separator + cluster.get(fileName));
             if (!dir.exists()) {
                 dir.mkdir();
             }
             File file = new File(fileName + ".json");
+            
+            Term t = TermFactory.create(FileUtils.readFile(new FileReader(file)));
+            File term = new File(dir.getAbsolutePath() + File.separator + t.getLemma()+".term");
+            term.createNewFile();
             org.apache.commons.io.FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
         }
     }
