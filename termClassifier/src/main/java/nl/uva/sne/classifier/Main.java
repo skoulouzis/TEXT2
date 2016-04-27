@@ -89,7 +89,7 @@ public class Main {
         for (String fileName : cluster.keySet()) {
             File dir = new File(outputDir + File.separator + cluster.get(fileName));
             if (!dir.exists()) {
-                dir.mkdir();
+                org.apache.commons.io.FileUtils.forceMkdir(dir);
             }
             File file = new File(fileName + ".json");
 

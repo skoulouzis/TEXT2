@@ -69,6 +69,8 @@ landscape
 personally
 plenty
 recently
+something
+sounds
 
 
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
