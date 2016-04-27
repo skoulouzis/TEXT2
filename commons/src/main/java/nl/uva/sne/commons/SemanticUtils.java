@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -28,8 +29,13 @@ import net.didion.jwnl.data.IndexWordSet;
 import net.didion.jwnl.data.POS;
 import net.didion.jwnl.dictionary.Dictionary;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseTokenizer;
 import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.hy.ArmenianAnalyzer;
 import org.apache.lucene.analysis.shingle.ShingleFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -175,19 +181,19 @@ public class SemanticUtils {
         List<String> g = term.getGlosses();
         if (g != null) {
             for (String s : g) {
-                doc.addAll(tokenize(s));
+                doc.addAll(tokenize(s, true));
             }
         }
         List<String> al = term.getAlternativeLables();
         if (al != null) {
             for (String s : al) {
-                doc.addAll(tokenize(s));
+                doc.addAll(tokenize(s, true));
             }
         }
         List<String> cat = term.getCategories();
         if (cat != null) {
             for (String s : cat) {
-                doc.addAll(tokenize(s));
+                doc.addAll(tokenize(s, true));
             }
         }
         return doc;
@@ -215,23 +221,43 @@ public class SemanticUtils {
         return words;
     }
 
-    public static List<String> tokenize(String text) throws IOException, JWNLException {
+    public static TokenStream tokenStemStream(String fieldName, Reader reader) throws IOException {
+        TokenStream stream = new WhitespaceTokenizer(Version.LUCENE_42, reader);
+        stream = new StopFilter(Version.LUCENE_42, stream, getStopWords());
+        stream = new PorterStemFilter(stream);
+        return stream;
+    }
+
+    public static TokenStream tokenStream(String fieldName, Reader reader) throws IOException {
+        Analyzer analyzer = new ArmenianAnalyzer(Version.LUCENE_42, getStopWords());
+        TokenStream stream = analyzer.tokenStream("field", reader);
+        return stream;
+    }
+
+    public static List<String> tokenize(String text, boolean stem) throws IOException, JWNLException {
         text = text.replaceAll("’", "'");
 
         text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");
 
         text = text.replaceAll("(?:'(?:[tdsm]|[vr]e|ll))+\\b", "");
         text = text.toLowerCase();
+        TokenStream tokenStream;
+        if (stem) {
+            tokenStream = tokenStemStream("field", new StringReader(text));
+        } else {
+            tokenStream = tokenStream("field", new StringReader(text));
+        }
 
         ArrayList<String> words = new ArrayList<>();
-        Analyzer analyzer = new ArmenianAnalyzer(Version.LUCENE_42, getStopWords());
-        try (TokenStream tokenStream = analyzer.tokenStream("field", new StringReader(text))) {
+        try {
             CharTermAttribute term = tokenStream.addAttribute(CharTermAttribute.class);
             tokenStream.reset();
             while (tokenStream.incrementToken()) {
                 words.add(term.toString());
             }
             tokenStream.end();
+        } finally {
+            tokenStream.close();
         }
         return words;
     }
@@ -264,10 +290,7 @@ public class SemanticUtils {
         List<String> tokens = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             for (String text; (text = br.readLine()) != null;) {
-                if (text.contains("softwarecompaniesofcanada")) {
-                    System.err.println(text);
-                }
-                tokens.addAll(tokenize(text));
+                tokens.addAll(tokenize(text, true));
             }
         }
 

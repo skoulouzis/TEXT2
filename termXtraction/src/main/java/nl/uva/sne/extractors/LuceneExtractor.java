@@ -75,7 +75,7 @@ public class LuceneExtractor implements TermExtractor {
                 sb.append(text.toLowerCase()).append(" ");
             }
         }
-        List<String> tokens = SemanticUtils.tokenize(sb.toString());
+        List<String> tokens = SemanticUtils.tokenize(sb.toString(), false);
         for (String t : tokens) {
             t = SemanticUtils.lemmatize(t);
             POS[] pos = SemanticUtils.getPOS(t);
