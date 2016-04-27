@@ -27,16 +27,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
-import weka.core.ChebyshevDistance;
 import weka.core.DenseInstance;
 import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
-import weka.core.FilteredDistance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.ManhattanDistance;
-import weka.core.MinkowskiDistance;
-import weka.core.NormalizableDistance;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
 
@@ -161,9 +157,9 @@ public class Kmeans implements Classifier {
 //            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
 //        }
             SimpleKMeans kmeans = new SimpleKMeans();
-            Random rand = new Random(System.currentTimeMillis());
-            int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
-            kmeans.setSeed(seed);
+//            Random rand = new Random(System.currentTimeMillis());
+//            int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
+//            kmeans.setSeed(seed);
 
             Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
 //important parameter to set: preserver order, number of cluster.
@@ -171,16 +167,17 @@ public class Kmeans implements Classifier {
 
             kmeans.setNumClusters(numOfClusters);
             DistanceFunction df = null;
+//            SimpleKMeans currently only supports the Euclidean and Manhattan distances.
             switch (distanceFunction) {
-                case "Minkowski":
-                    df = new MinkowskiDistance(data);
-                    break;
+//                case "Minkowski":
+//                    df = new MinkowskiDistance(data);
+//                    break;
                 case " Euclidean":
                     df = new EuclideanDistance(data);
                     break;
-                case "Chebyshev":
-                    df = new ChebyshevDistance(data);
-                    break;
+//                case "Chebyshev":
+//                    df = new ChebyshevDistance(data);
+//                    break;
                 case "Manhattan":
                     df = new ManhattanDistance(data);
                     break;
