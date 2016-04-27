@@ -27,11 +27,18 @@ import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
+import weka.core.ChebyshevDistance;
 import weka.core.DenseInstance;
 import weka.core.DistanceFunction;
+import weka.core.EuclideanDistance;
+import weka.core.FilteredDistance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.ManhattanDistance;
 import weka.core.MinkowskiDistance;
+import weka.core.NormalizableDistance;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Normalize;
 
 /**
  *
@@ -40,83 +47,90 @@ import weka.core.MinkowskiDistance;
 public class Kmeans implements Classifier {
 
     private int numOfClusters;
+    private String distanceFunction;
 
     @Override
     public void configure(Properties properties) {
         numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
+        distanceFunction = properties.getProperty("distance.function", "Euclidean");
         Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "kmeans.num.of.clusters: {0}", numOfClusters);
     }
 
     @Override
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
-        File dir = new File(inDir);
+        try {
+            File dir = new File(inDir);
 
-        List<List<String>> allDocs = new ArrayList<>();
-        Map<String, List<String>> docs = new HashMap<>();
-        List<Term> terms = new ArrayList<>();
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create terms");
-        for (File f : dir.listFiles()) {
-            if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
-                terms.add(TermFactory.create(new FileReader(f)));
-            }
-        }
-
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
-        for (Term tv : terms) {
-            try {
-                Set<String> doc = SemanticUtils.getDocument(tv);
-                allDocs.add(new ArrayList<>(doc));
-                docs.put(tv.getUID(), new ArrayList<>(doc));
-            } catch (JWNLException ex) {
-                Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
-        Set<String> allWords = new HashSet<>();
-        Map<String, Map<String, Double>> featureVectors = new HashMap<>();
-        for (String k : docs.keySet()) {
-            List<String> doc = docs.get(k);
-            Map<String, Double> featureVector = new TreeMap<>();
-            for (String term : doc) {
-                allWords.add(term);
-                if (!featureVector.containsKey(term)) {
-                    double score = SemanticUtils.tfIdf(doc, allDocs, term);
-                    featureVector.put(term, score);
+            List<List<String>> allDocs = new ArrayList<>();
+            Map<String, List<String>> docs = new HashMap<>();
+            List<Term> terms = new ArrayList<>();
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create terms");
+            for (File f : dir.listFiles()) {
+                if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
+                    terms.add(TermFactory.create(new FileReader(f)));
                 }
             }
-            featureVectors.put(k, featureVector);
-        }
-        for (String t : featureVectors.keySet()) {
-            Map<String, Double> featureV = featureVectors.get(t);
-            for (String word : allWords) {
-                if (!featureV.containsKey(word)) {
-                    featureV.put(word, 0.0);
+
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
+            for (Term tv : terms) {
+                try {
+                    Set<String> doc = SemanticUtils.getDocument(tv);
+                    allDocs.add(new ArrayList<>(doc));
+                    docs.put(tv.getUID(), new ArrayList<>(doc));
+                } catch (JWNLException ex) {
+                    Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            featureVectors.put(t, featureV);
-        }
-        ArrayList<Attribute> attributes = new ArrayList<>();
-        for (String t : allWords) {
-            attributes.add(new Attribute(t));
-        }
 
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
-        Instances data = new Instances("Rel", attributes, terms.size());
-        List<String> instancesMap = new ArrayList<>();
-        int count = 0;
-        for (String t : featureVectors.keySet()) {
-            Map<String, Double> featureV = featureVectors.get(t);
-            Instance inst = new DenseInstance(featureV.size());
-            int index = 0;
-            for (String w : featureV.keySet()) {
-                inst.setValue(index, featureV.get(w));
-                index++;
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
+            Set<String> allWords = new HashSet<>();
+            Map<String, Map<String, Double>> featureVectors = new HashMap<>();
+            for (String k : docs.keySet()) {
+                List<String> doc = docs.get(k);
+                Map<String, Double> featureVector = new TreeMap<>();
+                for (String term : doc) {
+                    allWords.add(term);
+                    if (!featureVector.containsKey(term)) {
+                        double score = SemanticUtils.tfIdf(doc, allDocs, term);
+                        featureVector.put(term, score);
+                    }
+                }
+                featureVectors.put(k, featureVector);
             }
-            data.add(inst);
-            instancesMap.add(t);
-            count++;
-        }
+            for (String t : featureVectors.keySet()) {
+                Map<String, Double> featureV = featureVectors.get(t);
+                for (String word : allWords) {
+                    if (!featureV.containsKey(word)) {
+                        featureV.put(word, 0.0);
+                    }
+                }
+                featureVectors.put(t, featureV);
+            }
+            ArrayList<Attribute> attributes = new ArrayList<>();
+            for (String t : allWords) {
+                attributes.add(new Attribute(t));
+            }
+
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
+            Instances data = new Instances("Rel", attributes, terms.size());
+            List<String> instancesMap = new ArrayList<>();
+            int count = 0;
+            for (String t : featureVectors.keySet()) {
+                Map<String, Double> featureV = featureVectors.get(t);
+                Instance inst = new DenseInstance(featureV.size());
+                int index = 0;
+                for (String w : featureV.keySet()) {
+                    inst.setValue(index, featureV.get(w));
+                    index++;
+                }
+                data.add(inst);
+                instancesMap.add(t);
+                count++;
+            }
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Normalize vectors");
+            Normalize filter = new Normalize();
+            filter.setInputFormat(data);
+            Instances dataset = Filter.useFilter(data, filter);
 
 //        weka.clusterers.HierarchicalClusterer hc = new HierarchicalClusterer();
 //        try {
@@ -146,22 +160,40 @@ public class Kmeans implements Classifier {
 //        } catch (Exception ex) {
 //            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        SimpleKMeans kmeans = new SimpleKMeans();
-        Random rand = new Random(System.currentTimeMillis());
-        int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
-        kmeans.setSeed(seed);
+            SimpleKMeans kmeans = new SimpleKMeans();
+            Random rand = new Random(System.currentTimeMillis());
+            int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
+            kmeans.setSeed(seed);
 
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
-        //important parameter to set: preserver order, number of cluster.
-        kmeans.setPreserveInstancesOrder(true);
-        try {
+            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
+//important parameter to set: preserver order, number of cluster.
+            kmeans.setPreserveInstancesOrder(true);
+
             kmeans.setNumClusters(numOfClusters);
-//            DistanceFunction df = new MinkowskiDistance(data);
-//            kmeans.setDistanceFunction(df);
+            DistanceFunction df = null;
+            switch (distanceFunction) {
+                case "Minkowski":
+                    df = new MinkowskiDistance(data);
+                    break;
+                case " Euclidean":
+                    df = new EuclideanDistance(data);
+                    break;
+                case "Chebyshev":
+                    df = new ChebyshevDistance(data);
+                    break;
+                case "Manhattan":
+                    df = new ManhattanDistance(data);
+                    break;
+                default:
+                    df = new EuclideanDistance(data);
+                    break;
+            }
 
-            kmeans.buildClusterer(data);
-            // This array returns the cluster number (starting with 0) for each instance
-            // The array has as many elements as the number of instances
+            kmeans.setDistanceFunction(df);
+
+            kmeans.buildClusterer(dataset);
+// This array returns the cluster number (starting with 0) for each instance
+// The array has as many elements as the number of instances
             int[] assignments = kmeans.getAssignments();
 
             int i = 0;
@@ -173,6 +205,7 @@ public class Kmeans implements Classifier {
                 i++;
             }
             return clusters;
+
         } catch (Exception ex) {
             Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
         }
