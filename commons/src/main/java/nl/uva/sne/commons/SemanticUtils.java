@@ -216,7 +216,6 @@ public class SemanticUtils {
     }
 
     public static List<String> tokenize(String text) throws IOException, JWNLException {
-        text = text.replaceAll("-+", "-0");
         text = text.replaceAll("’", "'");
 
         text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");

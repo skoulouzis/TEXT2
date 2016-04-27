@@ -16,7 +16,6 @@ import nl.uva.sne.classifiers.Classifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
-import nl.uva.sne.classifiers.Kmeans;
 import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
@@ -24,7 +23,6 @@ import nl.uva.sne.commons.TermFactory;
 import nl.uva.sne.commons.ValueComparator;
 import nl.uva.sne.extractors.JtopiaExtractor;
 import nl.uva.sne.extractors.TermExtractor;
-import static nl.uva.sne.term.extraction.Main.propertiesPath;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
 
@@ -67,7 +65,8 @@ public class Main {
 
         try {
             if (cluster) {
-                className = "nl.uva.sne.classifiers.Kmeans";
+//                className = "nl.uva.sne.classifiers.Kmeans";
+//                      className = "nl.uva.sne.classifiers.Hierarchical";
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
                 Classifier classifier = (Classifier) obj;
@@ -93,9 +92,9 @@ public class Main {
                 dir.mkdir();
             }
             File file = new File(fileName + ".json");
-            
+
             Term t = TermFactory.create(FileUtils.readFile(new FileReader(file)));
-            File term = new File(dir.getAbsolutePath() + File.separator + t.getLemma()+".term");
+            File term = new File(dir.getAbsolutePath() + File.separator + t.getLemma() + ".term");
             term.createNewFile();
             org.apache.commons.io.FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
         }

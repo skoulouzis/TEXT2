@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -26,14 +25,15 @@ import nl.uva.sne.commons.TermFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
 import weka.clusterers.HierarchicalClusterer;
-import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
+import weka.core.ChebyshevDistance;
 import weka.core.DenseInstance;
 import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.ManhattanDistance;
+import weka.core.MinkowskiDistance;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
 
@@ -41,7 +41,7 @@ import weka.filters.unsupervised.attribute.Normalize;
  *
  * @author S. Koulouzis
  */
-public class Kmeans implements Classifier {
+public class Hierarchical implements Classifier {
 
     private int numOfClusters;
     private String distanceFunction;
@@ -50,7 +50,7 @@ public class Kmeans implements Classifier {
     public void configure(Properties properties) {
         numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
         distanceFunction = properties.getProperty("distance.function", "Euclidean");
-        Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "kmeans.num.of.clusters: {0}", numOfClusters);
+        Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "kmeans.num.of.clusters: {0}", numOfClusters);
     }
 
     @Override
@@ -61,25 +61,25 @@ public class Kmeans implements Classifier {
             List<List<String>> allDocs = new ArrayList<>();
             Map<String, List<String>> docs = new HashMap<>();
             List<Term> terms = new ArrayList<>();
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create terms");
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Create terms");
             for (File f : dir.listFiles()) {
                 if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
                     terms.add(TermFactory.create(new FileReader(f)));
                 }
             }
 
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Create documents");
             for (Term tv : terms) {
                 try {
                     Set<String> doc = SemanticUtils.getDocument(tv);
                     allDocs.add(new ArrayList<>(doc));
                     docs.put(tv.getUID(), new ArrayList<>(doc));
                 } catch (JWNLException ex) {
-                    Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Hierarchical.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
 
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Extract features");
             Set<String> allWords = new HashSet<>();
             Map<String, Map<String, Double>> featureVectors = new HashMap<>();
             for (String k : docs.keySet()) {
@@ -110,7 +110,7 @@ public class Kmeans implements Classifier {
                 attributes.add(new Attribute(t));
             }
 
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Create Instances");
             Instances data = new Instances("Rel", attributes, terms.size());
             Map<String, Instance> instancesMap = new HashMap();
             for (String t : featureVectors.keySet()) {
@@ -124,22 +124,23 @@ public class Kmeans implements Classifier {
                 data.add(inst);
                 instancesMap.put(t, inst);
             }
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Normalize vectors");
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Normalize vectors");
             Normalize filter = new Normalize();
             filter.setInputFormat(data);
             Instances dataset = Filter.useFilter(data, filter);
             DistanceFunction df;
 //            SimpleKMeans currently only supports the Euclidean and Manhattan distances.
             switch (distanceFunction) {
-//                case "Minkowski":
-//                    df = new MinkowskiDistance(data);
-//                    break;
+                case "Minkowski":
+                    df = new MinkowskiDistance(data);
+                    break;
                 case " Euclidean":
                     df = new EuclideanDistance(data);
                     break;
-//                case "Chebyshev":
-//                    df = new ChebyshevDistance(data);
-//                    break;
+                //Bad results 
+                case "Chebyshev":
+                    df = new ChebyshevDistance(data);
+                    break;
                 case "Manhattan":
                     df = new ManhattanDistance(data);
                     break;
@@ -148,37 +149,16 @@ public class Kmeans implements Classifier {
                     break;
             }
 
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Start clusteing");
             weka.clusterers.HierarchicalClusterer hc = new HierarchicalClusterer();
-            try {
-                hc.setOptions(new String[]{"-L", "COMPLETE"});
-                hc.setDebug(true);
-                hc.setNumClusters(numOfClusters);
+            hc.setOptions(new String[]{"-L", "COMPLETE"});
+            hc.setDebug(true);
+            hc.setNumClusters(numOfClusters);
 
-                hc.setDistanceFunction(df);
-                hc.setDistanceIsBranchLength(true);
-                hc.buildClusterer(data);
-                hc.setPrintNewick(false);
-
-            } catch (Exception ex) {
-                Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            SimpleKMeans kmeans = new SimpleKMeans();
-            Random rand = new Random(System.currentTimeMillis());
-            int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
-            kmeans.setSeed(seed);
-
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
-//important parameter to set: preserver order, number of cluster.
-            kmeans.setPreserveInstancesOrder(true);
-
-            kmeans.setNumClusters(numOfClusters);
-
-            kmeans.setDistanceFunction(df);
-
-            kmeans.buildClusterer(dataset);
-// This array returns the cluster number (starting with 0) for each instance
-// The array has as many elements as the number of instances
-//            int[] assignments = kmeans.getAssignments();
+            hc.setDistanceFunction(df);
+            hc.setDistanceIsBranchLength(true);
+            hc.buildClusterer(data);
+            hc.setPrintNewick(false);
 
             Map<String, String> clusters = new HashMap<>();
             for (String s : instancesMap.keySet()) {
@@ -187,18 +167,11 @@ public class Kmeans implements Classifier {
                 clusters.put(inDir + File.separator + s, String.valueOf(theClass));
             }
 
-//            for (int clusterNum : assignments) {
-////                System.out.printf("Instance %d -> Cluster %d \n", i, clusterNum);
-//                clusters.put(inDir + File.separator + instancesMap.get(i), String.valueOf(clusterNum));
-//                System.err.println(inDir + File.separator + instancesMap.get(i) + "," + clusterNum);
-//                i++;
-//            }
             return clusters;
 
         } catch (Exception ex) {
-            Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Hierarchical.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
-
 }

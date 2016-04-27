@@ -54,7 +54,21 @@ sed -i '/what/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/may_/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/increase/d' term_dictionaryPOS_expert_validation.csv
 sed -i '/ever/d' term_dictionaryPOS_expert_validation.csv
+typically
 opportunity
+atten
+_else
+else_
+often
+capacity    
+concept
+connection
+feel
+home
+landscape
+personally
+plenty
+recently
 
 
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
