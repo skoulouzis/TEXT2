@@ -43,7 +43,8 @@ public class Main {
         try {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
-            String className = "nl.uva.sne.semantizators.BabelNet";
+//            String className = "nl.uva.sne.semantizators.BabelNet";
+            String className = "nl.uva.sne.semantizators.Wikipedia";
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             Semantizator semantizator = (Semantizator) obj;
