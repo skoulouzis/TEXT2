@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -162,4 +165,17 @@ public class TermFactory {
 
     }
 
+    public static Term create(JSONObject page) {
+        String title = (String) page.get("title");
+        Long pageid = (Long) page.get("pageid");
+        String extract = (String) page.get("extract");
+        if (extract != null) {
+            Term t = new Term(title);
+            List<String> glosses = new ArrayList<>();
+            glosses.add(extract);
+            t.setGlosses(glosses);
+            t.setUID(String.valueOf(pageid));
+        }
+        return null;
+    }
 }
