@@ -45,7 +45,7 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class BabelNet implements Semantizator {
+public class BabelNet implements Semantizatior {
 
     private String keysStr;
     private DB db;
@@ -70,12 +70,12 @@ public class BabelNet implements Semantizator {
                 String[] parts = line.split(",");
                 String term = parts[0];
 //                Integer score = Integer.valueOf(parts[1]);
-                if (term.length() > 1) {
+                if (term.length() >= 1) {
                     count++;
                     if (count > limit) {
                         break;
                     }
-                    Term tt = getTerm(term, allTermsDictionary);
+                    Term tt = getTerm(term, allTermsDictionary, 0.010);
                     if (tt != null) {
                         terms.add(tt);
                     }
@@ -87,20 +87,21 @@ public class BabelNet implements Semantizator {
         return terms;
     }
 
-    private Term getTerm(String term, String allTermsDictionary) throws IOException, ParseException, JWNLException {
-        List<Term> possibleTerms = getTermNodeByLemma(term);
+    @Override
+    public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException {
+        Set<Term> possibleTerms = getTermNodeByLemma(term);
         if (possibleTerms != null & possibleTerms.size() > 1) {
-            return disambiguate(term, possibleTerms, allTermsDictionary);
+            return disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
         } else if (possibleTerms.size() == 1) {
-            return possibleTerms.get(0);
+            return possibleTerms.iterator().next();
         }
         return null;
     }
 
-    private List<Term> getTermNodeByLemma(String term) throws IOException, ParseException {
+    private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException {
         String language = "EN";
         List<String> ids = getcandidateWordIDs(language, term, key);
-        List<Term> nodes = new ArrayList<>();
+        Set<Term> nodes = new HashSet<>();
         if (ids != null) {
             for (String id : ids) {
                 String synet = getBabelnetSynset(id, language, key);
@@ -314,109 +315,24 @@ public class BabelNet implements Semantizator {
         return map;
     }
 
-    private Term disambiguate(String term, List<Term> possibleTerms, String termDictionaryFile) throws IOException, JWNLException {
-        Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, termDictionaryFile);
-        possibleTerms = tf_idf_Disambiguation(possibleTerms, ngarms, term);
-        Term dis = null;
+    private Term disambiguate(String term, Set<Term> possibleTerms, String termDictionaryFile, double minimumSimilarity) throws IOException, JWNLException {
+        Term dis = SemanticUtils.disambiguate(term, possibleTerms, termDictionaryFile, minimumSimilarity, false);
         if (possibleTerms != null && possibleTerms.size() == 1) {
-            dis = possibleTerms.get(0);
+            dis = possibleTerms.iterator().next();
         } else if (possibleTerms == null || possibleTerms.size() < 1) {
+            Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, termDictionaryFile);
             possibleTerms = babelNetDisambiguation("EN", term, ngarms);
             if (possibleTerms != null && possibleTerms.size() == 1) {
-                dis = possibleTerms.get(0);
+                dis = possibleTerms.iterator().next();
             }
         }
-        if (dis != null) {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Category: {1} alt: {2}", new Object[]{term, dis.getCategories(), dis.getAlternativeLables()});
-        } else {
+        if (dis == null) {
             Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         }
         return dis;
     }
 
-    private List<Term> tf_idf_Disambiguation(List<Term> possibleTerms, Set<String> nGrams, String lemma) throws IOException, JWNLException {
-
-        List<List<String>> allDocs = new ArrayList<>();
-        Map<String, List<String>> docs = new HashMap<>();
-        for (Term tv : possibleTerms) {
-            Set<String> doc = SemanticUtils.getDocument(tv);
-            allDocs.add(new ArrayList<>(doc));
-            docs.put(tv.getUID(), new ArrayList<>(doc));
-        }
-
-        Set<String> contextDoc = new HashSet<>();
-        for (String s : nGrams) {
-            String[] parts = s.split("_");
-            for (String token : parts) {
-                if (token.length() > 1 && !token.contains(lemma)) {
-                    contextDoc.add(token);
-                }
-            }
-        }
-        docs.put("context", new ArrayList<>(contextDoc));
-
-        Map<String, Map<String, Double>> featureVectors = new HashMap<>();
-        for (String k : docs.keySet()) {
-            List<String> doc = docs.get(k);
-            Map<String, Double> featureVector = new TreeMap<>();
-            for (String term : doc) {
-                if (!featureVector.containsKey(term)) {
-                    double score = SemanticUtils.tfIdf(doc, allDocs, term);
-                    featureVector.put(term, score);
-                }
-            }
-            featureVectors.put(k, featureVector);
-        }
-
-        double highScore = 0.032;
-        String winner = null;
-        Map<String, Double> contextVector = featureVectors.remove("context");
-
-        Map<String, Double> scoreMap = new HashMap<>();
-        for (String key : featureVectors.keySet()) {
-            Double similarity = SemanticUtils.cosineSimilarity(contextVector, featureVectors.get(key));
-            scoreMap.put(key, similarity);
-        }
-
-        ValueComparator bvc = new ValueComparator(scoreMap);
-        TreeMap<String, Double> sorted_map = new TreeMap(bvc);
-        sorted_map.putAll(scoreMap);
-
-        Iterator<String> it = sorted_map.keySet().iterator();
-        winner = it.next();
-
-        Double s1 = scoreMap.get(winner);
-        String secondKey = it.next();
-        Double s2 = scoreMap.get(secondKey);
-
-        if (s1 < highScore && s2 > 0) {
-            return null;
-        }
-
-//        Double s1 = scoreMap.get(winner);
-//        String secondKey = it.next();
-//        Double s2 = scoreMap.get(secondKey);
-//        String thirdKey = it.next();
-//        Double s3 = scoreMap.get(thirdKey);
-//        double diff = s1 - s2;
-//        if (Math.abs(diff) <= 0.006) {
-//            return null;
-//        }
-        List<Term> terms = new ArrayList<>();
-        for (Term t : possibleTerms) {
-            if (t.getUID().equals(winner)) {
-                terms.add(t);
-            }
-        }
-        if (!terms.isEmpty()) {
-            return terms;
-        } else {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "No winner");
-            return null;
-        }
-    }
-
-    private List<Term> babelNetDisambiguation(String language, String lemma, Set<String> ngarms) {
+    private Set<Term> babelNetDisambiguation(String language, String lemma, Set<String> ngarms) {
         if (ngarms.isEmpty()) {
             return null;
         }
@@ -426,7 +342,7 @@ public class BabelNet implements Semantizator {
 
         HashMap<String, Double> idsMap = new HashMap<>();
         Map<String, Term> termMap = new HashMap<>();
-        List<Term> terms = new ArrayList<>();
+        Set<Term> terms = new HashSet<>();
         int count = 0;
         int breaklimit = 1000;
         int oneElementlimit = 65;

@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.FileUtils;
-import nl.uva.sne.semantizators.Semantizator;
 import nl.uva.sne.commons.Term;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import nl.uva.sne.semantizators.Semantizatior;
 
 /**
  *
@@ -44,10 +44,11 @@ public class Main {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
 //            String className = "nl.uva.sne.semantizators.BabelNet";
-            String className = "nl.uva.sne.semantizators.Wikipedia";
+//            String className = "nl.uva.sne.semantizators.Wikipedia";
+            String className = "nl.uva.sne.semantizators.MetaSemanitizer";
             Class c = Class.forName(className);
             Object obj = c.newInstance();
-            Semantizator semantizator = (Semantizator) obj;
+            Semantizatior semantizator = (Semantizatior) obj;
 
             semantizator.configure(FileUtils.getProperties(propertiesPath));
 
