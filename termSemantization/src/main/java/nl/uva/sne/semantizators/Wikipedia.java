@@ -111,6 +111,7 @@ public class Wikipedia implements Semantizatior {
             jsonString = IOUtils.toString(url);
             titlesList = getTitles(jsonString, lemma);
             titlesCache.put(lemma, titlesList);
+            db.commit();
         }
 
         StringBuilder titles = new StringBuilder();
@@ -128,6 +129,7 @@ public class Wikipedia implements Semantizatior {
                     System.err.println(url);
                     jsonString = IOUtils.toString(url);
                     extractsCache.put(titles.toString(), jsonString);
+                    db.commit();
                     titles = new StringBuilder();
                 }
                 terms.addAll(getCandidateTerms(jsonString, lemma));
