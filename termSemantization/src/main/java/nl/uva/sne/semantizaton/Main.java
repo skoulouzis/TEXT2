@@ -5,6 +5,7 @@
  */
 package nl.uva.sne.semantizaton;
 
+import edu.stanford.nlp.io.EncodingPrintWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -91,6 +92,7 @@ public class Main {
 //                    obj.put("narrower", t.getNarrower());
         obj.put("narrowerUIDS", t.getNarrowerUIDS());
 //  obj.put("narrowerUIDS", t.getSynonyms());
+        obj.put("oiginalTerm", t.getOriginalTerm());
         return obj;
     }
 }

@@ -90,12 +90,12 @@ public class BabelNet implements Semantizatior {
     @Override
     public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = getTermNodeByLemma(term);
-        if (possibleTerms != null & possibleTerms.size() > 1) {
+//        if (possibleTerms != null & possibleTerms.size() > 1) {
             return disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
-        } else if (possibleTerms.size() == 1) {
-            return possibleTerms.iterator().next();
-        }
-        return null;
+//        } else if (possibleTerms.size() == 1) {
+//            return possibleTerms.iterator().next();
+//        }
+//        return null;
     }
 
     private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException {

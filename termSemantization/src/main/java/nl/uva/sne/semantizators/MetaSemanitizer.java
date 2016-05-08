@@ -50,7 +50,7 @@ public class MetaSemanitizer implements Semantizatior {
                     if (count > limit) {
                         break;
                     }
-                    Term tt = getTerm(term, allTermsDictionary, 0.010);
+                    Term tt = getTerm(term, allTermsDictionary, 10);
                     if (tt != null) {
                         terms.add(tt);
                     }
@@ -90,7 +90,7 @@ public class MetaSemanitizer implements Semantizatior {
     public Term getTerm(String term, String allTermsDictionaryPath, double minimumSimilarity) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = new HashSet();
         for (Semantizatior s : semantizators) {
-            Term t = s.getTerm(term, allTermsDictionaryPath, minimumSimilarity);
+            Term t = s.getTerm(term, allTermsDictionaryPath, minimumSimilarity / semantizators.size());
             if (t != null) {
                 possibleTerms.add(t);
             }

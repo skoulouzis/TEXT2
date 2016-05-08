@@ -40,14 +40,14 @@ import org.mapdb.Serializer;
  * @author S. Koulouzis
  */
 public class Wikipedia implements Semantizatior {
-    
+
     private Integer limit;
-    
+
     private DB db;
     private String cachePath;
     private static Map<String, String> extractsCache;
     private static Map<String, List<String>> titlesCache;
-    
+
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
@@ -63,7 +63,7 @@ public class Wikipedia implements Semantizatior {
                     if (count > limit) {
                         break;
                     }
-                    Term tt = getTerm(term, allTermsDictionary, 0.010);
+                    Term tt = getTerm(term, allTermsDictionary, 0.30);
                     if (tt != null) {
                         terms.add(tt);
                     }
@@ -77,24 +77,24 @@ public class Wikipedia implements Semantizatior {
         }
         return terms;
     }
-    
+
     @Override
     public void configure(Properties properties) {
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
         cachePath = properties.getProperty("cache.path");
     }
-    
+
     @Override
-    public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException {
+    public Term getTerm(String term, String allTermsDictionary, double confidence) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = getTermNodeByLemma(term);
-        if (possibleTerms != null & possibleTerms.size() > 1) {
-            return SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionary, 0.010, false);
-        } else if (possibleTerms.size() == 1) {
-            return possibleTerms.iterator().next();
-        }
-        return null;
+//        if (possibleTerms != null & possibleTerms.size() > 1) {
+        return SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionary, confidence, false);
+//        } else if (possibleTerms.size() == 1) {
+//            return possibleTerms.iterator().next();
+//        }
+//        return null;
     }
-    
+
     private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException {
         if (db == null || db.isClosed()) {
             loadCache();
@@ -112,7 +112,7 @@ public class Wikipedia implements Semantizatior {
             titlesList = getTitles(jsonString, lemma);
             titlesCache.put(lemma, titlesList);
         }
-        
+
         StringBuilder titles = new StringBuilder();
         Set<Term> terms = new HashSet<>();
         for (int i = 0; i < titlesList.size(); i++) {
@@ -130,12 +130,12 @@ public class Wikipedia implements Semantizatior {
                     extractsCache.put(titles.toString(), jsonString);
                     titles = new StringBuilder();
                 }
-                terms.addAll(getCandidateTerms(jsonString));
+                terms.addAll(getCandidateTerms(jsonString, lemma));
             }
         }
         return terms;
     }
-    
+
     private List<String> getTitles(String jsonString, String lemma) throws ParseException, UnsupportedEncodingException {
         List<String> titles = new ArrayList<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
@@ -164,14 +164,14 @@ public class Wikipedia implements Semantizatior {
                         titles.add(title);
                     }
                 }
-                
+
             }
         }
         titles.add(lemma);
         return titles;
     }
-    
-    private Set<Term> getCandidateTerms(String jsonString) throws ParseException {
+
+    private Set<Term> getCandidateTerms(String jsonString, String oiginalTerm) throws ParseException {
         Set<Term> terms = new HashSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONObject query = (JSONObject) jsonObj.get("query");
@@ -186,12 +186,12 @@ public class Wikipedia implements Semantizatior {
         }
         return terms;
     }
-    
+
     private void loadCache() {
         File cacheDBFile = new File(cachePath);
         db = DBMaker.newFileDB(cacheDBFile).make();
         extractsCache = db.getHashMap("extractsCacheDB");
-        
+
         if (extractsCache == null) {
             extractsCache = db.createHashMap("extractsCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
         }
@@ -200,7 +200,7 @@ public class Wikipedia implements Semantizatior {
             titlesCache = db.createHashMap("titlesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
         }
     }
-    
+
     private void saveCache() throws FileNotFoundException, IOException {
         Logger.getLogger(Wikipedia.class.getName()).log(Level.FINE, "Saving cache");
         if (db != null) {
