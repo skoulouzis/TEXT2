@@ -5,7 +5,6 @@
  */
 package nl.uva.sne.semantizaton;
 
-import edu.stanford.nlp.io.EncodingPrintWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.Term;
+import nl.uva.sne.commons.TermFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import nl.uva.sne.semantizators.Semantizatior;
@@ -71,7 +71,7 @@ public class Main {
     private static void writeTerms2Json(List<Term> terms, String outputDir) throws IOException {
 
         for (Term t : terms) {
-            JSONObject json = term2Json(t);
+            JSONObject json = TermFactory.term2Json(t);
             try (FileWriter file = new FileWriter(outputDir + File.separator + t.getUID() + ".json")) {
                 file.write(json.toJSONString());
                 file.flush();
@@ -79,20 +79,4 @@ public class Main {
         }
     }
 
-    private static JSONObject term2Json(Term t) {
-        JSONObject obj = new JSONObject();
-        obj.put("uid", t.getUID());
-        obj.put("lemma", t.getLemma());
-        obj.put("alternativeLables", t.getAlternativeLables());
-        obj.put("broaderUIDS", t.getBroaderUIDS());
-        obj.put("categories", t.getCategories());
-        obj.put("foreignKey", t.getForeignKey());
-        obj.put("glosses", t.getGlosses());
-        obj.put("isFromDictionary", t.getIsFromDictionary());
-//                    obj.put("narrower", t.getNarrower());
-        obj.put("narrowerUIDS", t.getNarrowerUIDS());
-//  obj.put("narrowerUIDS", t.getSynonyms());
-        obj.put("oiginalTerm", t.getOriginalTerm());
-        return obj;
-    }
 }

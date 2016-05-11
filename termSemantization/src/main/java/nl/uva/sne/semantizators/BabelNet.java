@@ -59,6 +59,7 @@ public class BabelNet implements Semantizatior {
     private String key;
     private String[] keys;
     private int keyIndex = 0;
+    private Double minimumSimilarity;
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -75,13 +76,14 @@ public class BabelNet implements Semantizatior {
                     if (count > limit) {
                         break;
                     }
-                    Term tt = getTerm(term, allTermsDictionary, 0.010);
+                    Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
                     if (tt != null) {
                         terms.add(tt);
                     }
                 }
             }
         } catch (Exception ex) {
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.WARNING, null, ex);
             return terms;
         }
         return terms;
@@ -91,11 +93,17 @@ public class BabelNet implements Semantizatior {
     public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = getTermNodeByLemma(term);
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
-            return disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
+        Term dis = disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
 //        } else if (possibleTerms.size() == 1) {
 //            return possibleTerms.iterator().next();
 //        }
 //        return null;
+        if (dis == null) {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
+        } else {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
+        }
+        return dis;
     }
 
     private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException {
@@ -116,6 +124,7 @@ public class BabelNet implements Semantizatior {
                             }
                         }
                     } catch (Exception ex) {
+                        Logger.getLogger(SemanticUtils.class.getName()).log(Level.WARNING, null, ex);
                     }
                     nodes.add(node);
                 }
@@ -139,6 +148,10 @@ public class BabelNet implements Semantizatior {
             URL url = new URL("http://babelnet.io/v2/getSynset?id=" + id + "&filterLangs=" + lan + "&langs=" + lan + "&key=" + key);
             json = IOUtils.toString(url);
             handleKeyLimitException(json);
+            if (db.isClosed()) {
+                loadCache();
+            }
+
             if (json != null) {
                 synsetCache.put(id, json);
                 db.commit();
@@ -156,8 +169,9 @@ public class BabelNet implements Semantizatior {
         keysStr = properties.getProperty("bablenet.key");
         keys = keysStr.split(",");
         key = keys[keyIndex];
-        cachePath = properties.getProperty("cache.path");
+        cachePath = properties.getProperty("babel.cache.path");
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
 
     private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException {
@@ -195,6 +209,10 @@ public class BabelNet implements Semantizatior {
                     ids.add(id);
                 }
             }
+            if (db.isClosed()) {
+                loadCache();
+            }
+
             if (ids.isEmpty()) {
                 ids.add("NON-EXISTING");
                 wordIDCache.put(word, ids);
@@ -316,18 +334,15 @@ public class BabelNet implements Semantizatior {
     }
 
     private Term disambiguate(String term, Set<Term> possibleTerms, String termDictionaryFile, double minimumSimilarity) throws IOException, JWNLException {
-        Term dis = SemanticUtils.disambiguate(term, possibleTerms, termDictionaryFile, minimumSimilarity, false);
-        if (possibleTerms != null && possibleTerms.size() == 1) {
-            dis = possibleTerms.iterator().next();
-        } else if (possibleTerms == null || possibleTerms.size() < 1) {
+        Term dis = SemanticUtils.disambiguate(term, possibleTerms, termDictionaryFile, minimumSimilarity, true);
+        if (dis != null) {
+            return dis;
+        } else {
             Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, termDictionaryFile);
             possibleTerms = babelNetDisambiguation("EN", term, ngarms);
             if (possibleTerms != null && possibleTerms.size() == 1) {
                 dis = possibleTerms.iterator().next();
             }
-        }
-        if (dis == null) {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         }
         return dis;
     }
@@ -392,11 +407,14 @@ public class BabelNet implements Semantizatior {
             try {
                 termPair = babelNetDisambiguation(language, lemma, clearNg);
             } catch (Exception ex) {
-                if (ex.getMessage().contains("Your key is not valid")) {
+                if (ex.getMessage() != null && ex.getMessage().contains("Your key is not valid")) {
                     try {
                         termPair = babelNetDisambiguation(language, lemma, clearNg);
                     } catch (Exception ex1) {
+//                        Logger.getLogger(BabelNet.class.getName()).log(Level.WARNING, ex1, null);
                     }
+                } else {
+                    Logger.getLogger(SemanticUtils.class.getName()).log(Level.WARNING, null, ex);
                 }
             }
             if (termPair != null) {
@@ -457,6 +475,9 @@ public class BabelNet implements Semantizatior {
             URL url = new URL("http://babelfy.io/v1/disambiguate?text=" + query + "&lang=" + language + "&key=" + key);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
+            if (db.isClosed()) {
+                loadCache();
+            }
             if (!genreJson.isEmpty() || genreJson.length() < 1) {
                 disambiguateCache.put(sentence, genreJson);
             } else {
