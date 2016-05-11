@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -74,6 +75,9 @@ public class Main {
 
                 Map<String, String> theCluster = classifier.cluster(jsonTermsDir);
                 copyTerms2Clusters(theCluster, clustersOutDir);
+
+                nameClusterFolders(clustersOutDir);
+
             }
             if (name) {
                 writeClustersToOneFile(clustersOutDir);
@@ -93,9 +97,9 @@ public class Main {
             }
             File file = new File(fileName + ".json");
 
-            Term t = TermFactory.create(FileUtils.readFile(new FileReader(file)));
+            Term t = TermFactory.create( file );
             File term = new File(dir.getAbsolutePath() + File.separator + t.getLemma() + ".term");
-            term.createNewFile();
+            org.apache.commons.io.FileUtils.touch(term);
             org.apache.commons.io.FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
         }
     }
@@ -163,6 +167,29 @@ public class Main {
                 Logger.getLogger(Main.class.getName()).log(Level.INFO, "Writing cluster: {0}", name.toString());
                 FileUtils.writeDictionary2File(terms, clustersOutDir + File.separator + FilenameUtils.removeExtension(f.getName()) + name.toString() + ".csv");
             }
+        }
+    }
+
+    private static void nameClusterFolders(String clustersOutDir) {
+        File clusterDir = new File(clustersOutDir);
+        Map<File, File> fromTo = new HashMap<>();
+        for (File cluster : clusterDir.listFiles()) {
+            if (cluster.isDirectory()) {
+                int count = 0;
+                String termName = null;
+                for (File f : cluster.listFiles()) {
+                    if (FilenameUtils.getExtension(f.getName()).endsWith("term")) {
+                        count++;
+                        termName = FilenameUtils.removeExtension(f.getName());
+                    }
+                }
+                if (count == 1) {
+                    fromTo.put(cluster, new File(cluster.getParent() + File.separator + termName));
+                }
+            }
+        }
+        for (File f : fromTo.keySet()) {
+            f.renameTo(fromTo.get(f));
         }
     }
 }
