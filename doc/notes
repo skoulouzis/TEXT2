@@ -71,7 +71,15 @@ plenty
 recently
 something
 sounds
-
+send
+audience
+towards
+comfortable
+engage
+whilst
+thrive
+stay
+third
 
 $ grep ',DT,' dictionaryPOS.csv > dictionaryREMOVE.csv
 $ grep ',FW,' dictionaryPOS.csv >> dictionaryREMOVE.csv

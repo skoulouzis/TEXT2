@@ -115,6 +115,14 @@
             <name>JLangDetect Maven repository</name>
             <url>https://jlangdetect.googlecode.com/svn/repo</url>
         </repository>
+        
+        
+        <repository>
+            <id>galan-maven-repo</id>
+            <name>galan-maven-repo-releases</name>
+            <url>http://galan.ehu.es/artifactory/ext-release-local</url>
+        </repository>
+ 
 
     </repositories>
     
