@@ -28,6 +28,8 @@ public class Term {
     private Set<String> nuids;
     private String fKey;
     private List<Term> narrower;
+    private double confidence;
+    private String originalTerm;
 
     public Term(String lemma) {
         this.lemma = lemma;
@@ -172,4 +174,34 @@ public class Term {
         }
         this.broader.add(tv);
     }
+
+    /**
+     * @return the confidence
+     */
+    public double getConfidence() {
+        return confidence;
+    }
+
+    /**
+     * @param confidence the confidence to set
+     */
+    public void setConfidence(double confidence) {
+        this.confidence = confidence;
+    }
+
+    /**
+     * @return the originalTerm
+     */
+    public String getOriginalTerm() {
+        return originalTerm;
+    }
+
+    /**
+     * @param originalTerm the originalTerm to set
+     */
+    public void setOriginalTerm(String originalTerm) {
+        this.originalTerm = originalTerm;
+    }
+
+   
 }

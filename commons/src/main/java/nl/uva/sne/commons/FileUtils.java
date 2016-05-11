@@ -98,6 +98,15 @@ public class FileUtils {
         return (Boolean) jsonObject.get(field);
     }
 
+    private static double getDouble(String jsonStr, String field) throws ParseException {
+        if (parser == null) {
+            parser = new JSONParser();
+        }
+        Object obj = parser.parse(jsonStr);
+        JSONObject jsonObject = (JSONObject) obj;
+        return (Double) jsonObject.get(field);
+    }
+
     private static boolean getBoolean(FileReader fr, String field) throws IOException, ParseException {
         if (parser == null) {
             parser = new JSONParser();
@@ -185,6 +194,14 @@ public class FileUtils {
         return getBoolean(fr, "isFromDictionary");
     }
 
+    static String getOriginalTerm(String jsonStr) throws IOException, ParseException {
+        return getString(jsonStr, "originalTerm");
+    }
+
+    static double getConfidence(String jsonStr) throws ParseException {
+        return getDouble(jsonStr, "confidence");
+    }
+
     public static Set<String> grep(File f, Pattern pattern, boolean removePattern) throws IOException {
 
         // Open the file and then get a channel from the stream
@@ -238,21 +255,53 @@ public class FileUtils {
         return nGrams;
     }
 
-    public static Set<String> getNGramsFromTermDictionary(String lemma, String keywordsDictionarayFile) throws IOException {
+//    public static Set<String> getNGramsFromTermDictionary(String lemma, String keywordsDictionarayFile) throws IOException {
+//        if (nGramsMap == null) {
+//            nGramsMap = new HashMap<>();
+//        }
+//        Set<String> nGrams = nGramsMap.get(lemma);
+//        if (nGrams != null) {
+//            Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
+//            return nGrams;
+//        }
+//
+//        Pattern pattern = Pattern.compile(lemma);
+//        nGrams = grep(new File(keywordsDictionarayFile), pattern, true);
+//
+//        nGramsMap.put(lemma, nGrams);
+//        Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
+//        return nGrams;
+//    }
+    public static Set<String> getNGramsFromTermDictionary(String lemma, String keywordsDictionarayFile) throws FileNotFoundException, IOException {
         if (nGramsMap == null) {
             nGramsMap = new HashMap<>();
         }
         Set<String> nGrams = nGramsMap.get(lemma);
         if (nGrams != null) {
-            Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
             return nGrams;
         }
-
-        Pattern pattern = Pattern.compile(lemma);
-        nGrams = grep(new File(keywordsDictionarayFile), pattern, true);
-
+        nGrams = new HashSet<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(keywordsDictionarayFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String keyword = line.split(",")[0];
+                if (keyword.contains("_") && keyword.contains(lemma)) {
+                    String[] parts = keyword.split(lemma);
+                    for (String p : parts) {
+                        if (p.length() >= 1) {
+                            String[] defs = p.split("_");
+                            for (String d : defs) {
+                                if (d.length() >= 1) {
+                                    nGrams.add(d);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         nGramsMap.put(lemma, nGrams);
-        Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGramsMap.size(), lemma});
+        Logger.getLogger(FileUtils.class.getName()).log(Level.INFO, "Loaded {0} N-grams for: {1}", new Object[]{nGrams.size(), lemma});
         return nGrams;
     }
 

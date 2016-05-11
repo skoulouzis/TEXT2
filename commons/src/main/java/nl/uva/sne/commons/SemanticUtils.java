@@ -17,9 +17,11 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNL;
@@ -29,10 +31,7 @@ import net.didion.jwnl.data.IndexWordSet;
 import net.didion.jwnl.data.POS;
 import net.didion.jwnl.dictionary.Dictionary;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.analysis.core.LowerCaseTokenizer;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.en.PorterStemFilter;
@@ -364,6 +363,113 @@ public class SemanticUtils {
             pos[i] = words[i].getPOS();
         }
         return pos;
+    }
+
+    public static Set<Term> tf_idf_Disambiguation(Set<Term> possibleTerms, Set<String> nGrams, String lemma, double confidence, boolean matchTitle) throws IOException, JWNLException {
+        List<List<String>> allDocs = new ArrayList<>();
+        Map<String, List<String>> docs = new HashMap<>();
+        for (Term tv : possibleTerms) {
+            Set<String> doc = SemanticUtils.getDocument(tv);
+            allDocs.add(new ArrayList<>(doc));
+            docs.put(tv.getUID(), new ArrayList<>(doc));
+        }
+
+        Set<String> contextDoc = new HashSet<>();
+        for (String s : nGrams) {
+            String[] parts = s.split("_");
+            for (String token : parts) {
+
+                if (token.length() >= 1 && !token.contains(lemma)) {
+                    contextDoc.add(token);
+                }
+            }
+        }
+        docs.put("context", new ArrayList<>(contextDoc));
+
+        Map<String, Map<String, Double>> featureVectors = new HashMap<>();
+        for (String k : docs.keySet()) {
+            List<String> doc = docs.get(k);
+            Map<String, Double> featureVector = new TreeMap<>();
+            for (String term : doc) {
+                if (!featureVector.containsKey(term)) {
+                    double tfidf = SemanticUtils.tfIdf(doc, allDocs, term);
+                    featureVector.put(term, tfidf);
+                }
+            }
+            featureVectors.put(k, featureVector);
+        }
+
+        Map<String, Double> contextVector = featureVectors.remove("context");
+
+        Map<String, Double> scoreMap = new HashMap<>();
+        for (String key : featureVectors.keySet()) {
+            Double similarity = SemanticUtils.cosineSimilarity(contextVector, featureVectors.get(key));
+
+            for (Term t : possibleTerms) {
+                if (t.getUID().equals(key)) {
+                    if (t.getLemma().toLowerCase().contains(lemma) && matchTitle) {
+                        int dist;
+                        if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(")) {
+                            int index = t.getLemma().toLowerCase().indexOf("(") - 1;
+                            String sub = t.getLemma().toLowerCase().substring(0, index);
+                            dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, sub);
+                        } else {
+                            dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, t.getLemma().toLowerCase());
+                        }
+//                        if (similarity <= 0) {
+                        similarity += 0.02;
+//                        }
+                        similarity = similarity - (dist * 0.02);
+//                        System.err.println(lemma + " more liklly to be: " + t + " similarity: " + similarity + " dist: " + dist);
+                    }
+                    t.setConfidence(similarity);
+                }
+            }
+            scoreMap.put(key, similarity);
+        }
+        if (scoreMap.isEmpty()) {
+            return null;
+        }
+
+        ValueComparator bvc = new ValueComparator(scoreMap);
+        TreeMap<String, Double> sorted_map = new TreeMap(bvc);
+        sorted_map.putAll(scoreMap);
+
+        Iterator<String> it = sorted_map.keySet().iterator();
+        String winner = it.next();
+
+        Double s1 = scoreMap.get(winner);
+        if (s1 < confidence) {
+            return null;
+        }
+
+        Set<Term> terms = new HashSet<>();
+        for (Term t : possibleTerms) {
+            if (t.getUID().equals(winner)) {
+                terms.add(t);
+            }
+        }
+        if (!terms.isEmpty()) {
+            return terms;
+        } else {
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "No winner");
+            return null;
+        }
+    }
+
+    public static Term disambiguate(String term, Set<Term> possibleTerms, String allTermsDictionary, double confidence, boolean matchTitle) throws IOException, JWNLException {
+        Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, allTermsDictionary);
+        possibleTerms = SemanticUtils.tf_idf_Disambiguation(possibleTerms, ngarms, term, confidence, matchTitle);
+        Term dis = null;
+        if (possibleTerms != null && possibleTerms.size() == 1) {
+            dis = possibleTerms.iterator().next();
+        }
+//        if (dis != null) {
+//            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
+//        } else {
+//            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
+//        }
+        return dis;
     }
 
 }
