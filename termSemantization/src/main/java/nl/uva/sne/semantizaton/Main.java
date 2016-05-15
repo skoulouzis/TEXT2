@@ -46,7 +46,9 @@ public class Main {
 
 //            String className = "nl.uva.sne.semantizators.BabelNet";
 //            String className = "nl.uva.sne.semantizators.Wikipedia";
+//            String className = "nl.uva.sne.semantizators.WordNet";
             String className = "nl.uva.sne.semantizators.MetaSemanitizer";
+
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             Semantizatior semantizator = (Semantizatior) obj;
