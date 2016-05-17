@@ -52,6 +52,15 @@ public class Wikipedia implements Semantizatior {
     private static Map<String, Set<String>> titlesCache;
     private Double minimumSimilarity;
 
+    private static final String[] EXCLUDED_CAT = new String[]{
+        "Category:All Wikipedia articles needing",
+        "Category:All articles lacking",
+        "Category:All articles needing",
+        "Category:All articles with unsourced statements",
+        "Category:Articles containing video clips",
+        "Category:Pages using citations with accessdate and no URL"
+    };
+
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
@@ -152,7 +161,6 @@ public class Wikipedia implements Semantizatior {
                     jsonString = IOUtils.toString(url);
                     titles = new StringBuilder();
                 }
-
                 terms.addAll(getCandidateTerms(jsonString, lemma));
             }
             i++;
@@ -174,7 +182,7 @@ public class Wikipedia implements Semantizatior {
             for (Object o : search) {
                 JSONObject res = (JSONObject) o;
                 String title = (String) res.get("title");
-                if (title != null) {
+                if (title != null && !title.toLowerCase().contains("(disambiguation)")) {
                     title = title.replaceAll("%(?![0-9a-fA-F]{2})", "%25");
                     title = title.replaceAll("\\+", "%2B");
                     title = java.net.URLDecoder.decode(title, "UTF-8");
@@ -200,20 +208,48 @@ public class Wikipedia implements Semantizatior {
         return titles;
     }
 
-    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException {
+    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException {
         Set<Term> terms = new HashSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONObject query = (JSONObject) jsonObj.get("query");
         JSONObject pages = (JSONObject) query.get("pages");
         Set<String> keys = pages.keySet();
+
         for (String key : keys) {
             JSONObject page = (JSONObject) pages.get(key);
             Term t = TermFactory.create(page, originalTerm);
             if (t != null) {
+                List<String> cat = getCategories(t.getUID());
+                t.setCategories(cat);
                 terms.add(t);
+
             }
         }
         return terms;
+    }
+
+    private List<String> getCategories(String uid) throws MalformedURLException, IOException, ParseException {
+        URL url = new URL("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=categories&pageids=" + uid);
+        System.err.println(url);
+        List<String> categoriesList = new ArrayList<>();
+        String jsonString = IOUtils.toString(url);
+        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
+        JSONObject query = (JSONObject) jsonObj.get("query");
+        JSONObject pages = (JSONObject) query.get("pages");
+        Set<String> keys = pages.keySet();
+        for (String key : keys) {
+            JSONObject p = (JSONObject) pages.get(key);
+            JSONArray categories = (JSONArray) p.get("categories");
+            for (Object obj : categories) {
+                JSONObject jObj = (JSONObject) obj;
+                String cat = (String) jObj.get("title");
+                if (addCategory(cat)) {
+
+                    categoriesList.add(cat.substring("Category:".length()).toLowerCase());
+                }
+            }
+        }
+        return categoriesList;
     }
 
     private void loadCache() {
@@ -243,4 +279,14 @@ public class Wikipedia implements Semantizatior {
             }
         }
     }
+
+    private boolean addCategory(String cat) {
+        for (String s : EXCLUDED_CAT) {
+            if (s.startsWith(s)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

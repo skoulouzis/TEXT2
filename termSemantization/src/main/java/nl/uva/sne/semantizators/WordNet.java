@@ -89,7 +89,6 @@ public class WordNet implements Semantizatior {
             Term t = new Term(iw.getLemma().toLowerCase());
             t.setOriginalTerm(term);
             t.setUID(String.valueOf(Math.abs(iw.hashCode())));
-
             List<String> glosses = new ArrayList<>();
             for (Synset s : iw.getSenses()) {
                 glosses.add(s.getGloss().toLowerCase());
