@@ -57,8 +57,10 @@ public class Wikipedia implements Semantizatior {
         "Category:All articles lacking",
         "Category:All articles needing",
         "Category:All articles with unsourced statements",
+        "Category:Articles with unsourced",
         "Category:Articles containing video clips",
-        "Category:Pages using citations with accessdate and no URL"
+        "Category:Pages using citations with accessdate and no URL",
+        "Category:Wikipedia articles needing"
     };
 
     @Override
@@ -243,8 +245,7 @@ public class Wikipedia implements Semantizatior {
             for (Object obj : categories) {
                 JSONObject jObj = (JSONObject) obj;
                 String cat = (String) jObj.get("title");
-                if (addCategory(cat)) {
-
+                if (shouldAddCategory(cat)) {
                     categoriesList.add(cat.substring("Category:".length()).toLowerCase());
                 }
             }
@@ -280,9 +281,9 @@ public class Wikipedia implements Semantizatior {
         }
     }
 
-    private boolean addCategory(String cat) {
+    private boolean shouldAddCategory(String cat) {
         for (String s : EXCLUDED_CAT) {
-            if (s.startsWith(s)) {
+            if (cat.startsWith(s)) {
                 return false;
             }
         }
