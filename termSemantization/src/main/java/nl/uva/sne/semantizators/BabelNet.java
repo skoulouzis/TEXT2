@@ -32,6 +32,7 @@ import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import nl.uva.sne.commons.ValueComparator;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -169,7 +170,7 @@ public class BabelNet implements Semantizatior {
         keysStr = properties.getProperty("bablenet.key");
         keys = keysStr.split(",");
         key = keys[keyIndex];
-        cachePath = properties.getProperty("babel.cache.path");
+        cachePath = properties.getProperty("cache.path");
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
@@ -226,7 +227,9 @@ public class BabelNet implements Semantizatior {
     }
 
     private void loadCache() throws FileNotFoundException, IOException {
-
+        String fName = FilenameUtils.getName(cachePath);
+        String newName = this.getClass().getSimpleName() + "." + fName;
+        cachePath = cachePath.replaceAll(fName, newName);
         File cacheDBFile = new File(cachePath);
         db = DBMaker.newFileDB(cacheDBFile).make();
         synsetCache = db.getHashMap("synsetCacheDB");

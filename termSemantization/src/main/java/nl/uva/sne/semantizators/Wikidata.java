@@ -42,7 +42,7 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class Wikipedia implements Semantizatior {
+public class Wikidata implements Semantizatior {
 
     private Integer limit;
 
@@ -85,14 +85,7 @@ public class Wikipedia implements Semantizatior {
         "wikipedia spam",
         "on wikidata"
     };
-    private String page = "https://en.wikipedia.org/w/api.php";
-
-    @Override
-    public void configure(Properties properties) {
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        cachePath = properties.getProperty("cache.path");
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
-    }
+    private String page = "https://www.wikidata.org/w/api.php";
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -116,12 +109,19 @@ public class Wikipedia implements Semantizatior {
                 }
             }
         } catch (Exception ex) {
-            Logger.getLogger(Wikipedia.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(Wikidata.class.getName()).log(Level.WARNING, null, ex);
             return terms;
         } finally {
             saveCache();
         }
         return terms;
+    }
+
+    @Override
+    public void configure(Properties properties) {
+        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+        cachePath = properties.getProperty("cache.path");
+        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
 
     @Override
@@ -134,9 +134,9 @@ public class Wikipedia implements Semantizatior {
 //        }
 //        return null;
         if (dis == null) {
-            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
+            Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {
-            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
+            Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
         }
         return dis;
     }
@@ -150,47 +150,15 @@ public class Wikipedia implements Semantizatior {
         if (termsStr != null) {
             return TermFactory.create(termsStr);
         }
-
         Set<Term> terms = new HashSet<>();
-        Set<String> titlesList = titlesCache.get(lemma);
-        URL url;
-        String jsonString;
-        if (titlesList == null || titlesList.isEmpty()) {
-            String query = lemma.replaceAll("_", " ");
-            query = URLEncoder.encode(query, "UTF-8");
-//sroffset=10
-            url = new URL(page + "?action=query&format=json&redirects&list=search&srlimit=500&srsearch=" + query);
-            System.err.println(url);
-            jsonString = IOUtils.toString(url);
-            titlesList = getTitles(jsonString, lemma);
-            if (db.isClosed()) {
-                loadCache();
-            }
-            titlesCache.put(lemma, titlesList);
-            db.commit();
-        }
-        StringBuilder titles = new StringBuilder();
-
-        Iterator<String> it = titlesList.iterator();
+        String query = lemma.replaceAll("_", " ");
+        query = URLEncoder.encode(query, "UTF-8");
         int i = 0;
-        while (it.hasNext()) {
-            String t = it.next();
-            t = URLEncoder.encode(t, "UTF-8");
-            titles.append(t).append("|");
-            if ((i % 20 == 0 && i > 0) || i >= titlesList.size() - 1) {
-                titles.deleteCharAt(titles.length() - 1);
-                titles.setLength(titles.length());
-                jsonString = null; //extractsCache.get(titles.toString());
-                if (jsonString == null) {
-                    url = new URL(page+"?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles.toString());
-                    System.err.println(url);
-                    jsonString = IOUtils.toString(url);
-                    titles = new StringBuilder();
-                }
-                terms.addAll(getCandidateTerms(jsonString, lemma));
-            }
-            i++;
-        }
+        URL url = new URL(page + "?action=wbsearchentities&format=json&language=en&continue=" + i + "&limit=50&search=" + query);
+        System.err.println(url);
+        String jsonString = IOUtils.toString(url);
+        terms = getCandidateTerms(jsonString, lemma);
+
         if (db.isClosed()) {
             loadCache();
         }
@@ -199,91 +167,65 @@ public class Wikipedia implements Semantizatior {
         return terms;
     }
 
-    private Set<String> getTitles(String jsonString, String lemma) throws ParseException, UnsupportedEncodingException {
-        Set<String> titles = new TreeSet<>();
-        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
-        JSONObject query = (JSONObject) jsonObj.get("query");
-        JSONArray search = (JSONArray) query.get("search");
-        if (search != null) {
-            for (Object o : search) {
-                JSONObject res = (JSONObject) o;
-                String title = (String) res.get("title");
-                if (title != null && !title.toLowerCase().contains("(disambiguation)")) {
-                    title = title.replaceAll("%(?![0-9a-fA-F]{2})", "%25");
-                    title = title.replaceAll("\\+", "%2B");
-                    title = java.net.URLDecoder.decode(title, "UTF-8");
-                    title = title.replaceAll("_", " ").toLowerCase();
-                    lemma = java.net.URLDecoder.decode(lemma, "UTF-8");
-                    lemma = lemma.replaceAll("_", " ");
-                    int dist;
-                    if (!title.startsWith("(") && title.contains("(")) {
-                        int index = title.indexOf("(") - 1;
-                        String sub = title.substring(0, index);
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, sub);
-                    } else {
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, title);
-                    }
-                    if (title.contains(lemma) && dist <= 7) {
-                        titles.add(title);
-                    }
-                }
-
-            }
-        }
-        titles.add(lemma);
-        return titles;
-    }
-
     private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException {
         Set<Term> terms = new HashSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
-        JSONObject query = (JSONObject) jsonObj.get("query");
-        JSONObject pages = (JSONObject) query.get("pages");
-        Set<String> keys = pages.keySet();
+        JSONArray search = (JSONArray) jsonObj.get("search");
+        for (Object obj : search) {
+            JSONObject jObj = (JSONObject) obj;
+            String label = (String) jObj.get("label");
+            if (label != null && !label.toLowerCase().contains("(disambiguation)")) {
 
-        for (String key : keys) {
-            JSONObject page = (JSONObject) pages.get(key);
-            Term t = TermFactory.create(page, originalTerm);
-            if (t != null) {
-                List<String> cat = getCategories(t.getUID());
-                t.setCategories(cat);
-                terms.add(t);
+                label = label.replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+                label = label.replaceAll("\\+", "%2B");
+                label = java.net.URLDecoder.decode(label, "UTF-8");
+                label = label.replaceAll("_", " ").toLowerCase();
+                originalTerm = java.net.URLDecoder.decode(originalTerm, "UTF-8");
+                originalTerm = originalTerm.replaceAll("_", " ");
+                int dist;
+                if (!label.startsWith("(") && label.contains("(")) {
+                    int index = label.indexOf("(") - 1;
+                    String sub = label.substring(0, index);
+                    dist = edu.stanford.nlp.util.StringUtils.editDistance(originalTerm, sub);
+                } else {
+                    dist = edu.stanford.nlp.util.StringUtils.editDistance(originalTerm, label);
+                }
+                if (label.contains(originalTerm) && dist <= 7) {
+                    Term t = new Term(label);
+
+                    JSONArray aliases = (JSONArray) jObj.get("aliases");
+                    if (aliases != null) {
+                        List<String> altLables = new ArrayList<>();
+                        for (Object aObj : aliases) {
+                            String alt = (String) aObj;
+                            altLables.add(alt);
+                        }
+                        t.setAlternativeLables(altLables);
+                    }
+
+                    String description = (String) jObj.get("description");
+                    String id = (String) jObj.get("id");
+
+                    List<String> glosses = new ArrayList<>();
+                    glosses.add(description);
+                    t.setGlosses(glosses);
+                    t.setUID(id);
+
+                    terms.add(t);
+                }
 
             }
+
         }
         return terms;
-    }
-
-    private List<String> getCategories(String uid) throws MalformedURLException, IOException, ParseException {
-        URL url = new URL(page+"?action=query&format=json&prop=categories&pageids=" + uid);
-        System.err.println(url);
-        List<String> categoriesList = new ArrayList<>();
-        String jsonString = IOUtils.toString(url);
-        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
-        JSONObject query = (JSONObject) jsonObj.get("query");
-        JSONObject pages = (JSONObject) query.get("pages");
-        Set<String> keys = pages.keySet();
-        for (String key : keys) {
-            JSONObject p = (JSONObject) pages.get(key);
-            JSONArray categories = (JSONArray) p.get("categories");
-            for (Object obj : categories) {
-                JSONObject jObj = (JSONObject) obj;
-                String cat = (String) jObj.get("title");
-                if (shouldAddCategory(cat)) {
-                    System.err.println(cat.substring("Category:".length()).toLowerCase());
-                    categoriesList.add(cat.substring("Category:".length()).toLowerCase());
-                }
-            }
-        }
-        return categoriesList;
     }
 
     private void loadCache() throws MalformedURLException {
         String fName = FilenameUtils.getName(cachePath);
         String newName = new URL(page).getHost() + "." + fName;
         cachePath = cachePath.replaceAll(fName, newName);
-        File cacheDBFile = new File(cachePath);
 
+        File cacheDBFile = new File(cachePath);
         db = DBMaker.newFileDB(cacheDBFile).make();
 //        extractsCache = db.getHashMap("extractsCacheDB");
 
@@ -301,7 +243,7 @@ public class Wikipedia implements Semantizatior {
     }
 
     private void saveCache() throws FileNotFoundException, IOException {
-        Logger.getLogger(Wikipedia.class.getName()).log(Level.FINE, "Saving cache");
+        Logger.getLogger(Wikidata.class.getName()).log(Level.FINE, "Saving cache");
         if (db != null) {
             if (!db.isClosed()) {
                 db.commit();

@@ -45,9 +45,10 @@ public class Main {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
 //            String className = "nl.uva.sne.semantizators.BabelNet";
-            String className = "nl.uva.sne.semantizators.Wikipedia";
+//            String className = "nl.uva.sne.semantizators.Wikipedia";
+//            String className = "nl.uva.sne.semantizators.Wikidata";
 //            String className = "nl.uva.sne.semantizators.WordNet";
-//            String className = "nl.uva.sne.semantizators.MetaSemanitizer";
+            String className = "nl.uva.sne.semantizators.MetaSemanitizer";
 
             Class c = Class.forName(className);
             Object obj = c.newInstance();

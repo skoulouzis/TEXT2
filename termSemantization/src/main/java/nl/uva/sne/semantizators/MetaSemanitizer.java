@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
-import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import org.json.simple.parser.ParseException;
 import org.mapdb.DB;
@@ -34,8 +33,7 @@ public class MetaSemanitizer implements Semantizatior {
     private Integer limit;
     private DB db;
     private double minimumSimilarity;
-    private String wikiCachePath;
-    private String babelCachePath;
+    private String cachePath;
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -60,9 +58,10 @@ public class MetaSemanitizer implements Semantizatior {
             }
         } catch (Exception ex) {
             Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.WARNING, null, ex);
+
             return terms;
         } finally {
-            saveCache();
+//            saveCache();
         }
         return terms;
     }
@@ -70,8 +69,7 @@ public class MetaSemanitizer implements Semantizatior {
     @Override
     public void configure(Properties properties) {
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        wikiCachePath = properties.getProperty("wiki.cache.path");
-        babelCachePath = properties.getProperty("babel.cache.path");
+        cachePath = properties.getProperty("cache.path");
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
         String semantizatiorClassNames = properties.getProperty("semantizatiors", "nl.uva.sne.semantizators.BabelNet,nl.uva.sne.semantizators.Wikipedia");
         String[] classes = semantizatiorClassNames.split(",");
@@ -114,28 +112,32 @@ public class MetaSemanitizer implements Semantizatior {
 //        }
     }
 
-    private void saveCache() throws FileNotFoundException, IOException {
-        Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.FINE, "Saving cache");
-        File cacheDBFile = new File(wikiCachePath);
-        db = DBMaker.newFileDB(cacheDBFile).make();
-        if (db != null) {
-            if (!db.isClosed()) {
-                db.commit();
-                db.close();
-            }
-        }
-
-        cacheDBFile = new File(babelCachePath);
-        db = DBMaker.newFileDB(cacheDBFile).make();
-        if (db != null) {
-            if (!db.isClosed()) {
-                db.commit();
-                db.close();
-            }
-        }
-
-    }
-
+//    private void saveCache() throws FileNotFoundException, IOException {
+//        Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.FINE, "Saving cache");
+//
+//        File cacheDBFile = new File(cachePath);
+//        if (cacheDBFile.isFile() && cacheDBFile.exists()) {
+//            db = DBMaker.newFileDB(cacheDBFile).make();
+//            if (db != null) {
+//                if (!db.isClosed()) {
+//                    db.commit();
+//                    db.close();
+//                }
+//            }
+//        } else if (!cacheDBFile.exists()) {
+//            File[] files = cacheDBFile.getParentFile().listFiles();
+//            for (File f : files) {
+//                db = DBMaker.newFileDB(f).make();
+//                if (db != null) {
+//                    if (!db.isClosed()) {
+//                        db.commit();
+//                        db.close();
+//                    }
+//                }
+//            }
+//        }
+//
+//    }
     private Term getWinner(Set<Term> possibleTerms, double minimumSimilarity) {
         double highScore = minimumSimilarity;
         String id = null;
