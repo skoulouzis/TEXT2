@@ -150,7 +150,7 @@ public class Wikidata implements Semantizatior {
         if (termsStr != null) {
             return TermFactory.create(termsStr);
         }
-        Set<Term> terms = new HashSet<>();
+        Set<Term> terms = null;
         String query = lemma.replaceAll("_", " ");
         query = URLEncoder.encode(query, "UTF-8");
         int i = 0;
@@ -165,6 +165,12 @@ public class Wikidata implements Semantizatior {
         termCache.put(lemma, TermFactory.terms2Json(terms));
         db.commit();
         return terms;
+    }
+
+    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
+
+        return getNumProperty(id, "P31");
+
     }
 
     private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException {
@@ -205,11 +211,16 @@ public class Wikidata implements Semantizatior {
 
                     String description = (String) jObj.get("description");
                     String id = (String) jObj.get("id");
-
                     List<String> glosses = new ArrayList<>();
                     glosses.add(description);
                     t.setGlosses(glosses);
                     t.setUID(id);
+
+                    List<String> broaderID = getBroaderID(id);
+                    t.setBroaderUIDS(broaderID);
+
+                    List<String> cat = getCategories(id);
+                    t.setCategories(cat);
 
                     terms.add(t);
                 }
@@ -259,6 +270,71 @@ public class Wikidata implements Semantizatior {
             }
         }
         return true;
+    }
+
+    private List<String> getNumProperty(String id, String prop) throws MalformedURLException, IOException, ParseException {
+        URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + id);
+        System.err.println(url);
+        String jsonString = IOUtils.toString(url);
+        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
+
+        JSONObject claims = (JSONObject) jsonObj.get("claims");
+
+        JSONArray Jprop = (JSONArray) claims.get(prop);
+        List<String> ids = new ArrayList<>();
+        if (Jprop != null) {
+            for (Object obj : Jprop) {
+                JSONObject jobj = (JSONObject) obj;
+
+                JSONObject mainsnak = (JSONObject) jobj.get("mainsnak");
+//            System.err.println(mainsnak);
+                JSONObject datavalue = (JSONObject) mainsnak.get("datavalue");
+//            System.err.println(datavalue);
+                JSONObject value = (JSONObject) datavalue.get("value");
+//            System.err.println(value);
+                java.lang.Long numericID = (java.lang.Long) value.get("numeric-id");
+//                System.err.println(id + " -> Q" + numericID);
+                ids.add("Q" + numericID);
+            }
+        }
+
+        return ids;
+    }
+
+    private List<String> getCategories(String id) throws IOException, MalformedURLException, ParseException {
+        List<String> ids = getNumProperty(id, "P910");
+        List<String> lables = new ArrayList();
+        if (ids != null) {
+            for (String s : ids) {
+                String l = getLabel(s);
+                lables.add(l);
+            }
+        }
+
+        return lables;
+    }
+
+    private String getLabel(String id) throws MalformedURLException, IOException, ParseException {
+
+        URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + id);
+        System.err.println(url);
+        String jsonString = IOUtils.toString(url);
+        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
+
+        JSONObject entities = (JSONObject) jsonObj.get("entities");
+//        System.err.println(entities);
+        JSONObject jID = (JSONObject) entities.get(id);
+
+        JSONObject labels = (JSONObject) jID.get("labels");
+//        System.err.println(labels);
+        JSONObject en = (JSONObject) labels.get("en");
+//        System.err.println(en);
+        if (en != null) {
+            String value = (String) en.get("value");
+
+            return value.substring("Category:".length()).toLowerCase();
+        }
+        return null;
     }
 
 }
