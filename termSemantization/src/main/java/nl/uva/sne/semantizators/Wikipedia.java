@@ -182,7 +182,7 @@ public class Wikipedia implements Semantizatior {
                 titles.setLength(titles.length());
                 jsonString = null; //extractsCache.get(titles.toString());
                 if (jsonString == null) {
-                    url = new URL(page+"?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles.toString());
+                    url = new URL(page + "?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles.toString());
                     System.err.println(url);
                     jsonString = IOUtils.toString(url);
                     titles = new StringBuilder();
@@ -255,7 +255,7 @@ public class Wikipedia implements Semantizatior {
     }
 
     private List<String> getCategories(String uid) throws MalformedURLException, IOException, ParseException {
-        URL url = new URL(page+"?action=query&format=json&prop=categories&pageids=" + uid);
+        URL url = new URL(page + "?action=query&format=json&prop=categories&pageids=" + uid);
         System.err.println(url);
         List<String> categoriesList = new ArrayList<>();
         String jsonString = IOUtils.toString(url);
@@ -270,8 +270,8 @@ public class Wikipedia implements Semantizatior {
                 JSONObject jObj = (JSONObject) obj;
                 String cat = (String) jObj.get("title");
                 if (shouldAddCategory(cat)) {
-                    System.err.println(cat.substring("Category:".length()).toLowerCase());
-                    categoriesList.add(cat.substring("Category:".length()).toLowerCase());
+//                    System.err.println(cat.substring("Category:".length()).toLowerCase());
+                    categoriesList.add(cat.substring("Category:".length()).toLowerCase().replaceAll(" ", "_"));
                 }
             }
         }

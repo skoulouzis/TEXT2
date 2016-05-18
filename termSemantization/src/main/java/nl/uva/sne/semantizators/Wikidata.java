@@ -331,8 +331,7 @@ public class Wikidata implements Semantizatior {
 //        System.err.println(en);
         if (en != null) {
             String value = (String) en.get("value");
-
-            return value.substring("Category:".length()).toLowerCase();
+            return value.substring("Category:".length()).toLowerCase().replaceAll(" ", "_");
         }
         return null;
     }
