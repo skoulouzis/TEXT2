@@ -198,7 +198,7 @@ public class Wikidata implements Semantizatior {
                 }
                 if (label.contains(originalTerm) && dist <= 7) {
                     Term t = new Term(label);
-
+                    t.setOriginalTerm(originalTerm);
                     JSONArray aliases = (JSONArray) jObj.get("aliases");
                     if (aliases != null) {
                         List<String> altLables = new ArrayList<>();
