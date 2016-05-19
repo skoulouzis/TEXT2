@@ -25,7 +25,6 @@ import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
-import weka.clusterers.HierarchicalClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -147,21 +146,7 @@ public class Kmeans implements Classifier {
                     df = new EuclideanDistance(data);
                     break;
             }
-
-            weka.clusterers.HierarchicalClusterer hc = new HierarchicalClusterer();
-            try {
-                hc.setOptions(new String[]{"-L", "COMPLETE"});
-                hc.setDebug(true);
-                hc.setNumClusters(numOfClusters);
-
-                hc.setDistanceFunction(df);
-                hc.setDistanceIsBranchLength(true);
-                hc.buildClusterer(data);
-                hc.setPrintNewick(false);
-
-            } catch (Exception ex) {
-                Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            
             SimpleKMeans kmeans = new SimpleKMeans();
             Random rand = new Random(System.currentTimeMillis());
             int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
@@ -183,7 +168,7 @@ public class Kmeans implements Classifier {
             Map<String, String> clusters = new HashMap<>();
             for (String s : instancesMap.keySet()) {
                 Instance in = instancesMap.get(s);
-                int theClass = hc.clusterInstance(in);
+                int theClass = kmeans.clusterInstance(in);
                 clusters.put(inDir + File.separator + s, String.valueOf(theClass));
             }
 
