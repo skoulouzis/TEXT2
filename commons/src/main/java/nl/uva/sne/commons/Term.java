@@ -94,7 +94,7 @@ public class Term {
         this.categories = categories;
     }
 
-    void setAlternativeLables(List<String> altLables) {
+    public void setAlternativeLables(List<String> altLables) {
         this.altLables = altLables;
     }
 
