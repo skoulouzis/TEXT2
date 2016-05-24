@@ -20,11 +20,14 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
+import nl.uva.sne.commons.ClusterUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
+import weka.classifiers.meta.FilteredClassifier;
+import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -35,6 +38,8 @@ import weka.core.Instances;
 import weka.core.ManhattanDistance;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
+import weka.filters.unsupervised.attribute.Remove;
+import weka.filters.unsupervised.attribute.RemoveType;
 
 /**
  *
@@ -55,6 +60,7 @@ public class Kmeans implements Classifier {
     @Override
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
+
             File dir = new File(inDir);
 
             List<List<String>> allDocs = new ArrayList<>();
@@ -66,79 +72,77 @@ public class Kmeans implements Classifier {
                     terms.add(TermFactory.create(new FileReader(f)));
                 }
             }
+            Instances data = ClusterUtils.terms2Instances(terms);
+//
+//            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
+//            for (Term tv : terms) {
+//                try {
+//                    Set<String> doc = SemanticUtils.getDocument(tv);
+//                    allDocs.add(new ArrayList<>(doc));
+//                    docs.put(tv.getUID(), new ArrayList<>(doc));
+//                } catch (JWNLException ex) {
+//                    Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            }
+//
+//            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
+//            Set<String> allWords = new HashSet<>();
+//            Map<String, Map<String, Double>> featureVectors = new HashMap<>();
+//            for (String k : docs.keySet()) {
+//                List<String> doc = docs.get(k);
+//                Map<String, Double> featureVector = new TreeMap<>();
+//                for (String term : doc) {
+//                    allWords.add(term);
+//
+//                    if (!featureVector.containsKey(term)) {
+//                        double score = SemanticUtils.tfIdf(doc, allDocs, term);
+//                        featureVector.put(term, score);
+//                    }
+//                }
+//                featureVectors.put(k, featureVector);
+//            }
+//            for (String t : featureVectors.keySet()) {
+//                Map<String, Double> featureV = featureVectors.get(t);
+//                for (String word : allWords) {
+//                    if (!featureV.containsKey(word)) {
+//                        featureV.put(word, 0.0);
+//                    }
+//                }
+////                System.err.println(t + " " + featureV);
+//                featureVectors.put(t, featureV);
+//            }
+//            ArrayList<Attribute> attributes = new ArrayList<>();
+//            for (String t : allWords) {
+//                attributes.add(new Attribute(t));
+//            }
+//
+//            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
+//            Instances data = new Instances("Rel", attributes, terms.size());
+//           
+////            Map<String, Instance> instancesMap = new HashMap();
+//            for (String t : featureVectors.keySet()) {
+//                Map<String, Double> featureV = featureVectors.get(t);
+//                Instance inst = new DenseInstance(featureV.size());
+//                int index = 0;
+//                for (String w : featureV.keySet()) {
+//                    inst.setValue(index, featureV.get(w));
+//                    index++;
+//                }
+//                data.add(inst);
+////                instancesMap.put(t, inst);
+//            }
 
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create documents");
-            for (Term tv : terms) {
-                try {
-                    Set<String> doc = SemanticUtils.getDocument(tv);
-                    allDocs.add(new ArrayList<>(doc));
-                    docs.put(tv.getUID(), new ArrayList<>(doc));
-                } catch (JWNLException ex) {
-                    Logger.getLogger(Kmeans.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Extract features");
-            Set<String> allWords = new HashSet<>();
-            Map<String, Map<String, Double>> featureVectors = new HashMap<>();
-            for (String k : docs.keySet()) {
-                List<String> doc = docs.get(k);
-                Map<String, Double> featureVector = new TreeMap<>();
-                for (String term : doc) {
-                    allWords.add(term);
-
-                    if (!featureVector.containsKey(term)) {
-                        double score = SemanticUtils.tfIdf(doc, allDocs, term);
-                        featureVector.put(term, score);
-                    }
-                }
-                featureVectors.put(k, featureVector);
-            }
-            for (String t : featureVectors.keySet()) {
-                Map<String, Double> featureV = featureVectors.get(t);
-                for (String word : allWords) {
-                    if (!featureV.containsKey(word)) {
-                        featureV.put(word, 0.0);
-                    }
-                }
-//                System.err.println(t + " " + featureV);
-                featureVectors.put(t, featureV);
-            }
-            ArrayList<Attribute> attributes = new ArrayList<>();
-            for (String t : allWords) {
-                attributes.add(new Attribute(t));
-            }
-
-            Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Create Instances");
-            Instances data = new Instances("Rel", attributes, terms.size());
-            Map<String, Instance> instancesMap = new HashMap();
-            for (String t : featureVectors.keySet()) {
-                Map<String, Double> featureV = featureVectors.get(t);
-                Instance inst = new DenseInstance(featureV.size());
-                int index = 0;
-                for (String w : featureV.keySet()) {
-                    inst.setValue(index, featureV.get(w));
-                    index++;
-                }
-                data.add(inst);
-                instancesMap.put(t, inst);
-            }
             Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Normalize vectors");
             Normalize filter = new Normalize();
             filter.setInputFormat(data);
-            Instances dataset = Filter.useFilter(data, filter);
+            data = Filter.useFilter(data, filter);
             DistanceFunction df;
+
 //            SimpleKMeans currently only supports the Euclidean and Manhattan distances.
             switch (distanceFunction) {
-//                case "Minkowski":
-//                    df = new MinkowskiDistance(data);
-//                    break;
-                case " Euclidean":
+                case "Euclidean":
                     df = new EuclideanDistance(data);
                     break;
-//                case "Chebyshev":
-//                    df = new ChebyshevDistance(data);
-//                    break;
                 case "Manhattan":
                     df = new ManhattanDistance(data);
                     break;
@@ -146,38 +150,57 @@ public class Kmeans implements Classifier {
                     df = new EuclideanDistance(data);
                     break;
             }
-            
-            SimpleKMeans kmeans = new SimpleKMeans();
-            Random rand = new Random(System.currentTimeMillis());
-            int seed = rand.nextInt((Integer.MAX_VALUE - 100) + 1) + 100;
-            kmeans.setSeed(seed);
 
+            FilteredClusterer fc = new FilteredClusterer();
+            SimpleKMeans kmeans = new SimpleKMeans();
+            String[] options = new String[2];
+            options[0] = "-R"; // "range"
+            options[1] = "1"; // we want to ignore the attribute that is in the position '1'
+            Remove remove = new Remove(); // new instance of filter
+            remove.setOptions(options); // set options
+
+            remove.setInputFormat(data); // inform filter about dataset
+            fc.setFilter(remove); //add filter to remove attributes
+            fc.setClusterer(kmeans); //bind FilteredClusterer to original clusterer
+
+            Random rand = new Random(System.currentTimeMillis());
+            int seed = rand.nextInt((Integer.MAX_VALUE - 1000000) + 1) + 1000000;
+            kmeans.setSeed(seed);
+            kmeans.setMaxIterations(1000000000);
             Logger.getLogger(Kmeans.class.getName()).log(Level.INFO, "Start clusteing");
-//important parameter to set: preserver order, number of cluster.
             kmeans.setPreserveInstancesOrder(true);
 
             kmeans.setNumClusters(numOfClusters);
-
             kmeans.setDistanceFunction(df);
-
-            kmeans.buildClusterer(dataset);
+            fc.buildClusterer(data);
 // This array returns the cluster number (starting with 0) for each instance
 // The array has as many elements as the number of instances
 //            int[] assignments = kmeans.getAssignments();
 
+//            for (String s : instancesMap.keySet()) {
+//                Instance in = instancesMap.get(s);
+//                int theClass = kmeans.clusterInstance(in);
+//                System.err.println(s + " is in " + theClass);
+//                clusters.put(inDir + File.separator + s, String.valueOf(theClass));
+//            }
+//            int j = 0;
+//            for (int clusterNum : assignments) {
+//                System.out.printf("Instance %d -> Cluster %d \n", j, clusterNum);
+//                Instance ins = data.get(j);
+//                j++;
+//            }
             Map<String, String> clusters = new HashMap<>();
-            for (String s : instancesMap.keySet()) {
-                Instance in = instancesMap.get(s);
-                int theClass = kmeans.clusterInstance(in);
+            for (int i = 0; i < data.numInstances(); i++) {
+                Instance inst = data.instance(i);
+//                Attribute att = inst.attribute(0);
+//                System.err.println(inst.attribute(0).value(0));
+                int theClass = fc.clusterInstance(inst);
+                String s = data.attribute(0).value(i);
                 clusters.put(inDir + File.separator + s, String.valueOf(theClass));
+                System.err.println(s + " is in cluster " + theClass);
+
             }
 
-//            for (int clusterNum : assignments) {
-////                System.out.printf("Instance %d -> Cluster %d \n", i, clusterNum);
-//                clusters.put(inDir + File.separator + instancesMap.get(i), String.valueOf(clusterNum));
-//                System.err.println(inDir + File.separator + instancesMap.get(i) + "," + clusterNum);
-//                i++;
-//            }
             return clusters;
 
         } catch (Exception ex) {
