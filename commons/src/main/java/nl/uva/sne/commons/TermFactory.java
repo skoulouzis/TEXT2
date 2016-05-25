@@ -247,7 +247,12 @@ public class TermFactory {
     public static Set<Term> create(Set<String> terms) throws IOException, ParseException {
         Set<Term> te = new HashSet<>();
         for (String s : terms) {
-            te.add(create(s));
+            Term t = create(s);
+            te.add(t);
+//            System.err.print(t);
+//            for (String g : t.getGlosses()) {
+//                System.err.println("\t: " + g);
+//            }
         }
         return te;
     }

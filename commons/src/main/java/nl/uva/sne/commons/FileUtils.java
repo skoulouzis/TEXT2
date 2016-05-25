@@ -55,8 +55,8 @@ public class FileUtils {
         return getList(fr, "glosses");
     }
 
-    protected static String getUID(String path) throws IOException, org.json.simple.parser.ParseException {
-        return getString(path, "uid");
+    protected static String getUID(String jsonString) throws IOException, org.json.simple.parser.ParseException {
+        return getString(jsonString, "uid");
     }
 
     static String getUID(FileReader fr) throws IOException, ParseException {
