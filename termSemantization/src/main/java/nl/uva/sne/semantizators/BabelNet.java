@@ -50,7 +50,7 @@ public class BabelNet implements Semantizatior {
 
     private String keysStr;
     private DB db;
-    private String cachePath;
+
     private static Map<String, String> synsetCache;
     private static Map<String, List<String>> wordIDCache;
     private static Map<String, String> disambiguateCache;
@@ -61,6 +61,7 @@ public class BabelNet implements Semantizatior {
     private String[] keys;
     private int keyIndex = 0;
     private Double minimumSimilarity;
+    private File cacheDBFile;
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -170,7 +171,12 @@ public class BabelNet implements Semantizatior {
         keysStr = properties.getProperty("bablenet.key");
         keys = keysStr.split(",");
         key = keys[keyIndex];
-        cachePath = properties.getProperty("cache.path");
+        String cachePath = properties.getProperty("cache.path");
+        String fName = FilenameUtils.getName(cachePath);
+        String newName = this.getClass().getSimpleName() + "." + fName;
+        cachePath = cachePath.replaceAll(fName, newName);
+        cacheDBFile = new File(cachePath);
+
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
@@ -227,10 +233,7 @@ public class BabelNet implements Semantizatior {
     }
 
     private void loadCache() throws FileNotFoundException, IOException {
-        String fName = FilenameUtils.getName(cachePath);
-        String newName = this.getClass().getSimpleName() + "." + fName;
-        cachePath = cachePath.replaceAll(fName, newName);
-        File cacheDBFile = new File(cachePath);
+
         db = DBMaker.newFileDB(cacheDBFile).make();
         synsetCache = db.getHashMap("synsetCacheDB");
         if (synsetCache == null) {

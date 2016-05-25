@@ -10,18 +10,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -47,7 +44,6 @@ public class Wikidata implements Semantizatior {
     private Integer limit;
 
     private DB db;
-    private String cachePath;
 //    private static Map<String, String> extractsCache;
     private static Map<String, Set<String>> termCache;
     private static Map<String, Set<String>> titlesCache;
@@ -86,6 +82,7 @@ public class Wikidata implements Semantizatior {
         "on wikidata"
     };
     private String page = "https://www.wikidata.org/w/api.php";
+    private File cacheDBFile;
 
     @Override
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
@@ -119,9 +116,20 @@ public class Wikidata implements Semantizatior {
 
     @Override
     public void configure(Properties properties) {
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        cachePath = properties.getProperty("cache.path");
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+        try {
+            limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+            String cachePath = properties.getProperty("cache.path");
+            minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+
+            String fName = FilenameUtils.getName(cachePath);
+            String newName = new URL(page).getHost() + "." + fName;
+            cachePath = cachePath.replaceAll(fName, newName);
+
+            cacheDBFile = new File(cachePath);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(Wikidata.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     @Override
@@ -145,12 +153,26 @@ public class Wikidata implements Semantizatior {
         if (db == null || db.isClosed()) {
             loadCache();
         }
-
+        Set<Term> terms = null;
         Set<String> termsStr = termCache.get(lemma);
         if (termsStr != null) {
-            return TermFactory.create(termsStr);
+            terms = TermFactory.create(termsStr);
+            Set<Term> possibleTerms = new HashSet<>();
+            for (Term t : terms) {
+                boolean add = true;
+                for (String g : t.getGlosses()) {
+                    if (g != null && g.contains("Wikimedia disambiguation page")) {
+                        add = false;
+                        break;
+                    }
+                }
+                if (add) {
+                    possibleTerms.add(t);
+                }
+            }
+            return possibleTerms;
         }
-        Set<Term> terms = null;
+
         String query = lemma.replaceAll("_", " ");
         query = URLEncoder.encode(query, "UTF-8");
         int i = 0;
@@ -168,7 +190,6 @@ public class Wikidata implements Semantizatior {
     }
 
     private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
-
         return getNumProperty(id, "P31");
 
     }
@@ -232,11 +253,7 @@ public class Wikidata implements Semantizatior {
     }
 
     private void loadCache() throws MalformedURLException {
-        String fName = FilenameUtils.getName(cachePath);
-        String newName = new URL(page).getHost() + "." + fName;
-        cachePath = cachePath.replaceAll(fName, newName);
 
-        File cacheDBFile = new File(cachePath);
         db = DBMaker.newFileDB(cacheDBFile).make();
 //        extractsCache = db.getHashMap("extractsCacheDB");
 

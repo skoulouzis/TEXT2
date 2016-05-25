@@ -47,10 +47,9 @@ public class Wikipedia implements Semantizatior {
     private Integer limit;
 
     private DB db;
-    private String cachePath;
 //    private static Map<String, String> extractsCache;
     private static Map<String, Set<String>> termCache;
-    private static Map<String, Set<String>> titlesCache;
+//    private static Map<String, Set<String>> titlesCache;
     private Double minimumSimilarity;
 
     private static final String[] EXCLUDED_CAT = new String[]{
@@ -86,12 +85,23 @@ public class Wikipedia implements Semantizatior {
         "on wikidata"
     };
     private String page = "https://en.wikipedia.org/w/api.php";
+    private File cacheDBFile;
 
     @Override
     public void configure(Properties properties) {
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        cachePath = properties.getProperty("cache.path");
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+        try {
+            limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+            String cachePath = properties.getProperty("cache.path");
+            minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+
+            String fName = FilenameUtils.getName(cachePath);
+            String newName = new URL(page).getHost() + "." + fName;
+            newName = cachePath.replaceAll(fName, newName);
+            cacheDBFile = new File(newName);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     @Override
@@ -152,23 +162,18 @@ public class Wikipedia implements Semantizatior {
         }
 
         Set<Term> terms = new HashSet<>();
-        Set<String> titlesList = titlesCache.get(lemma);
+//        Set<String> titlesList = titlesCache.get(lemma);
         URL url;
         String jsonString;
-        if (titlesList == null || titlesList.isEmpty()) {
-            String query = lemma.replaceAll("_", " ");
-            query = URLEncoder.encode(query, "UTF-8");
+
+        String query = lemma.replaceAll("_", " ");
+        query = URLEncoder.encode(query, "UTF-8");
 //sroffset=10
-            url = new URL(page + "?action=query&format=json&redirects&list=search&srlimit=500&srsearch=" + query);
-            System.err.println(url);
-            jsonString = IOUtils.toString(url);
-            titlesList = getTitles(jsonString, lemma);
-            if (db.isClosed()) {
-                loadCache();
-            }
-            titlesCache.put(lemma, titlesList);
-            db.commit();
-        }
+        url = new URL(page + "?action=query&format=json&redirects&list=search&srlimit=500&srsearch=" + query);
+        System.err.println(url);
+        jsonString = IOUtils.toString(url);
+        Set<String> titlesList = getTitles(jsonString, lemma);
+
         StringBuilder titles = new StringBuilder();
 
         Iterator<String> it = titlesList.iterator();
@@ -223,7 +228,7 @@ public class Wikipedia implements Semantizatior {
                     } else {
                         dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, title);
                     }
-                    if (title.contains(lemma) && dist <= 7) {
+                    if (title.contains(lemma) && dist <= 10) {
                         titles.add(title);
                     }
                 }
@@ -242,13 +247,21 @@ public class Wikipedia implements Semantizatior {
         Set<String> keys = pages.keySet();
 
         for (String key : keys) {
-            JSONObject page = (JSONObject) pages.get(key);
-            Term t = TermFactory.create(page, originalTerm);
+            JSONObject jsonpage = (JSONObject) pages.get(key);
+            Term t = TermFactory.create(jsonpage, originalTerm);
+            boolean add = true;
             if (t != null) {
                 List<String> cat = getCategories(t.getUID());
                 t.setCategories(cat);
-                terms.add(t);
-
+                for (String g : t.getGlosses()) {
+                    if (g != null && g.contains("may refer to:")) {
+                        add = false;
+                        break;
+                    }
+                }
+                if (add) {
+                    terms.add(t);
+                }
             }
         }
         return terms;
@@ -279,21 +292,7 @@ public class Wikipedia implements Semantizatior {
     }
 
     private void loadCache() throws MalformedURLException {
-        String fName = FilenameUtils.getName(cachePath);
-        String newName = new URL(page).getHost() + "." + fName;
-        cachePath = cachePath.replaceAll(fName, newName);
-        File cacheDBFile = new File(cachePath);
-
         db = DBMaker.newFileDB(cacheDBFile).make();
-//        extractsCache = db.getHashMap("extractsCacheDB");
-
-//        if (extractsCache == null) {
-//            extractsCache = db.createHashMap("extractsCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
-//        }
-        titlesCache = db.get("titlesCacheDB");
-        if (titlesCache == null) {
-            titlesCache = db.createHashMap("titlesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
-        }
         termCache = db.get("termCacheDB");
         if (termCache == null) {
             termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
