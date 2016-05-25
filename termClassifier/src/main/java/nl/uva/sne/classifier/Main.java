@@ -68,6 +68,8 @@ public class Main {
             if (cluster) {
 //                className = "nl.uva.sne.classifiers.Kmeans";
 //                      className = "nl.uva.sne.classifiers.Hierarchical";
+//className = "nl.uva.sne.classifiers.EM";
+
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
                 Classifier classifier = (Classifier) obj;
