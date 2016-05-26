@@ -12,9 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.ClusterUtils;
 import org.json.simple.parser.ParseException;
-import weka.clusterers.FilteredClusterer;
 import weka.core.Instances;
-import weka.filters.unsupervised.attribute.Remove;
 
 /**
  *
@@ -24,7 +22,6 @@ public class Cobweb implements Classifier {
 
     @Override
     public void configure(Properties properties) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -34,7 +31,11 @@ public class Cobweb implements Classifier {
             Instances data = ClusterUtils.terms2Instances(inDir);
 
             weka.clusterers.Cobweb clusterer = new weka.clusterers.Cobweb();
-            
+//             Acuity is set to be the minimal standard deviation of a cluster attribute. The default value of acuity is 0.1.
+// clusterer.setAcuity(0.9);
+//         Cuttoff is set to be minimal category utility. The default value of Cutoff is 0.002
+// clusterer.setCutoff(0.01);
+
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
 
         } catch (Exception ex) {

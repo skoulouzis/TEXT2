@@ -5,23 +5,14 @@
  */
 package nl.uva.sne.classifiers;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.ClusterUtils;
-import nl.uva.sne.commons.Term;
-import nl.uva.sne.commons.TermFactory;
-import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
-import weka.clusterers.FilteredClusterer;
 import weka.core.Instances;
-import weka.filters.unsupervised.attribute.Remove;
 
 /**
  *

@@ -13,14 +13,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.ClusterUtils;
 import org.json.simple.parser.ParseException;
-import weka.clusterers.ClusterEvaluation;
-import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instances;
 import weka.core.ManhattanDistance;
-import weka.filters.unsupervised.attribute.Remove;
 
 /**
  *
@@ -52,6 +49,9 @@ public class Kmeans implements Classifier {
                     break;
                 case "Manhattan":
                     df = new ManhattanDistance(data);
+                    break;
+                                    case "Cosine":
+                    df = new CosineSimilarity(data);
                     break;
                 default:
                     df = new EuclideanDistance(data);
