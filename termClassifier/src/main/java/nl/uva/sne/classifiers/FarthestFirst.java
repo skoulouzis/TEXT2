@@ -18,35 +18,26 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class EM implements Classifier {
+public class FarthestFirst implements Classifier {
 
     private Integer numOfClusters;
 
     @Override
     public void configure(Properties properties) {
         numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
-//        distanceFunction = properties.getProperty("distance.function", "Euclidean");
-        Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "kmeans.num.of.clusters: {0}", numOfClusters);
     }
 
     @Override
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
-            Instances data = ClusterUtils.terms2Instances(inDir);
-
-            weka.clusterers.EM clusterer = new weka.clusterers.EM();
- 
-            clusterer.setMaxIterations(10000);
+            weka.clusterers.FarthestFirst clusterer = new weka.clusterers.FarthestFirst();
             clusterer.setNumClusters(numOfClusters);
-            clusterer.setNumKMeansRuns(10000);
-
+            Instances data = ClusterUtils.terms2Instances(inDir);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
-
         } catch (Exception ex) {
-            Logger.getLogger(EM.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FarthestFirst.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
-
     }
 
 }

@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import nl.uva.sne.commons.ClusterUtils;
 import org.json.simple.parser.ParseException;
 
-import weka.clusterers.FilteredClusterer;
 import weka.clusterers.HierarchicalClusterer;
 import weka.core.ChebyshevDistance;
 import weka.core.DistanceFunction;
@@ -21,7 +20,6 @@ import weka.core.EuclideanDistance;
 import weka.core.Instances;
 import weka.core.ManhattanDistance;
 import weka.core.MinkowskiDistance;
-import weka.filters.unsupervised.attribute.Remove;
 
 /**
  *

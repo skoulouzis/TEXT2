@@ -59,7 +59,7 @@ class CosineSimilarity extends NormalizableDistance implements DistanceFunction 
 
     @Override
     public double distance(Instance instnc, Instance instnc1) {
-        return Math.sqrt(distance(instnc, instnc1, Double.POSITIVE_INFINITY));
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -69,7 +69,7 @@ class CosineSimilarity extends NormalizableDistance implements DistanceFunction 
 
     @Override
     public double distance(Instance instnc, Instance instnc1, double d, PerformanceStats ps) {
-        return Math.sqrt(distance(instnc, instnc1, Double.POSITIVE_INFINITY, ps));
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
