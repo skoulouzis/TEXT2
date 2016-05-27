@@ -18,25 +18,21 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class FarthestFirst implements Classifier {
-
-    private Integer numOfClusters;
+public class FilteredClusterer implements Classifier {
 
     @Override
     public void configure(Properties properties) {
-        numOfClusters = Integer.valueOf(properties.getProperty("kmeans.num.of.clusters", "6"));
+
     }
 
     @Override
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
-            weka.clusterers.FarthestFirst clusterer = new weka.clusterers.FarthestFirst();
-           
-            clusterer.setNumClusters(numOfClusters);
+            weka.clusterers.FilteredClusterer clusterer = new weka.clusterers.FilteredClusterer();
             Instances data = ClusterUtils.terms2Instances(inDir);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
         } catch (Exception ex) {
-            Logger.getLogger(FarthestFirst.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FilteredClusterer.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }

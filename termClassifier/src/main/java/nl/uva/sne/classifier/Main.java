@@ -86,7 +86,7 @@ public class Main {
                 nameClusters(clustersOutDir);
             }
 
-        } catch (Exception ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException | JWNLException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -99,7 +99,7 @@ public class Main {
             }
             File file = new File(fileName + ".json");
 
-            Term t = TermFactory.create( file );
+            Term t = TermFactory.create(file);
             File term = new File(dir.getAbsolutePath() + File.separator + t.getLemma() + ".term");
             org.apache.commons.io.FileUtils.touch(term);
             org.apache.commons.io.FileUtils.copyFile(file, new File(dir.getAbsolutePath() + File.separator + file.getName()));
