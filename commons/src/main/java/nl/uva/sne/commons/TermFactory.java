@@ -36,7 +36,7 @@ public class TermFactory {
 //        term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonFile));
 //        return term;
 //    }
-    public static Term create(String synet, String language, String lemma, String theID) throws ParseException, UnsupportedEncodingException {
+    public static Term create(String synet, String language, String lemma, String theID, String url) throws ParseException, UnsupportedEncodingException {
         Term node;
         language = language.toLowerCase();
         JSONObject jSynet = (JSONObject) JSONValue.parseWithException(synet);
@@ -88,7 +88,7 @@ public class TermFactory {
                     jlemma = jlemma.toLowerCase().replaceAll("(\\d+,\\d+)|\\d+", "");
                     altLables.add(jlemma);
                     if (theID != null && babelNetID.equals(theID)) {
-                        node = new Term(jlemma);
+                        node = new Term(jlemma, url);
                         node.setUID(babelNetID);
                         node.setCategories(categories);
                         node.setAlternativeLables(altLables);
@@ -108,7 +108,7 @@ public class TermFactory {
                     }
 //                    dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, jlemma);
                     if (dist <= 0) {
-                        node = new Term(jlemma);
+                        node = new Term(jlemma, url);
                         node.setUID(babelNetID);
                         node.setCategories(categories);
                         node.setAlternativeLables(altLables);
@@ -138,7 +138,7 @@ public class TermFactory {
                         lemma1 = jlemma;
                     }
                     if (dist <= 3 && lemma2.contains(lemma1)) {
-                        node = new Term(jlemma);
+                        node = new Term(jlemma, url);
                         node.setUID(babelNetID);
                         node.setCategories(categories);
                         node.setAlternativeLables(altLables);
@@ -155,7 +155,7 @@ public class TermFactory {
 
     public static Term create(FileReader fr) throws IOException, ParseException {
         String jsonStr = FileUtils.readFile(fr);
-        Term term = new Term(FileUtils.getLemma(jsonStr));
+        Term term = new Term(FileUtils.getLemma(jsonStr), FileUtils.getURL(jsonStr));
         term.setUID(FileUtils.getUID(jsonStr));
         term.setAlternativeLables(FileUtils.getAltLables(jsonStr));
         term.setBroaderUIDS(FileUtils.getBroaderUIDS(jsonStr));
@@ -182,7 +182,7 @@ public class TermFactory {
 //        return term;
 //    }
     public static Term create(String jsonStr) throws IOException, ParseException {
-        Term term = new Term(FileUtils.getLemma(jsonStr));
+        Term term = new Term(FileUtils.getLemma(jsonStr), FileUtils.getURL(jsonStr));
         term.setUID(FileUtils.getUID(jsonStr));
         term.setAlternativeLables(FileUtils.getAltLables(jsonStr));
         term.setBroaderUIDS(FileUtils.getBroaderUIDS(jsonStr));
@@ -218,6 +218,7 @@ public class TermFactory {
 //  obj.put("narrowerUIDS", t.getSynonyms());
         obj.put("confidence", t.getConfidence());
         obj.put("originalTerm", t.getOriginalTerm());
+        obj.put("url", t.getUrl());
         return obj;
     }
 
@@ -225,13 +226,16 @@ public class TermFactory {
         String title = (String) page.get("title");
         Long pageid = (Long) page.get("pageid");
         String extract = (String) page.get("extract");
+        String url = null;
         Term t = null;
         if (extract != null) {
-            t = new Term(title.toLowerCase());
+            t = new Term(title.toLowerCase(), url);
             List<String> glosses = new ArrayList<>();
             glosses.add(extract.toLowerCase());
             t.setGlosses(glosses);
             t.setUID(String.valueOf(pageid));
+            url = "https://en.wikipedia.org/?curid=" + t.getUID();
+            t.setUrl(url);
             t.setOriginalTerm(originalTerm);
         }
         return t;

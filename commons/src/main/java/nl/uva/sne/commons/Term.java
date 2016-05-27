@@ -30,9 +30,11 @@ public class Term {
     private List<Term> narrower;
     private double confidence;
     private String originalTerm;
+    private String url;
 
-    public Term(String lemma) {
+    public Term(String lemma, String url) {
         this.lemma = lemma;
+        this.url = url;
     }
 
     public void setBroader(List<Term> broader) {
@@ -203,5 +205,18 @@ public class Term {
         this.originalTerm = originalTerm;
     }
 
-   
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
 }

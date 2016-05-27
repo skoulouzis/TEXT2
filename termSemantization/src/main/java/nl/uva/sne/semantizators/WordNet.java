@@ -86,7 +86,8 @@ public class WordNet implements Semantizatior {
         IndexWordSet ws = wordNetdictionary.lookupAllIndexWords(term);
         Set<Term> possibleTerms = new HashSet<>();
         for (IndexWord iw : ws.getIndexWordArray()) {
-            Term t = new Term(iw.getLemma().toLowerCase());
+            String url = null;
+            Term t = new Term(iw.getLemma().toLowerCase(), url);
             t.setOriginalTerm(term);
             t.setUID(String.valueOf(Math.abs(iw.hashCode())));
             List<String> glosses = new ArrayList<>();

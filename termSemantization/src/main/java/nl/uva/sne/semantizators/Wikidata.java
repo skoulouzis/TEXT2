@@ -218,7 +218,8 @@ public class Wikidata implements Semantizatior {
                     dist = edu.stanford.nlp.util.StringUtils.editDistance(originalTerm, label);
                 }
                 if (label.contains(originalTerm) && dist <= 7) {
-                    Term t = new Term(label);
+                    String url = null;
+                    Term t = new Term(label, url);
                     t.setOriginalTerm(originalTerm);
                     JSONArray aliases = (JSONArray) jObj.get("aliases");
                     if (aliases != null) {
@@ -232,6 +233,8 @@ public class Wikidata implements Semantizatior {
 
                     String description = (String) jObj.get("description");
                     String id = (String) jObj.get("id");
+                    url = "https://www.wikidata.org/wiki/" + id;
+                    t.setUrl(url);
                     List<String> glosses = new ArrayList<>();
                     glosses.add(description);
                     t.setGlosses(glosses);

@@ -26,6 +26,9 @@ import weka.core.Instances;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
 import org.apache.commons.io.FilenameUtils;
+import org.carrot2.core.Document;
+import org.carrot2.core.LanguageCode;
+import org.json.simple.parser.ParseException;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
 import weka.filters.unsupervised.attribute.Remove;
@@ -37,15 +40,8 @@ import weka.filters.unsupervised.attribute.Remove;
 public class ClusterUtils {
 
     public static Instances terms2Instances(String inDir) throws IOException, Exception {
-        File dir = new File(inDir);
 
-        List<Term> terms = new ArrayList<>();
-        Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "Create terms");
-        for (File f : dir.listFiles()) {
-            if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
-                terms.add(TermFactory.create(new FileReader(f)));
-            }
-        }
+        List<Term> terms = dir2Terms(inDir);
 
         Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "Create documents");
 
@@ -79,11 +75,11 @@ public class ClusterUtils {
 
         for (String t : featureVectors.keySet()) {
             Map<String, Double> featureV = featureVectors.get(t);
-            for (String word : allWords) {
-                if (!featureV.containsKey(word)) {
-                    featureV.put(word, 0.0);
-                }
-            }
+//            for (String word : allWords) {
+//                if (!featureV.containsKey(word)) {
+//                    featureV.put(word, 0.0);
+//                }
+//            }
             featureVectors.put(t, featureV);
         }
 
@@ -147,6 +143,38 @@ public class ClusterUtils {
         Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "clusterResults: {0}", eval.clusterResultsToString());
 
         return clusters;
+    }
+
+    public static List<org.carrot2.core.Document> terms2Documets(String inDir) throws IOException, ParseException {
+          List<Term> terms = dir2Terms(inDir);
+          List<org.carrot2.core.Document> docs = new ArrayList<>();
+          for(Term t : terms){
+              String title = t.getLemma();
+              String summary="";
+              for(String s : t.getGlosses()){
+                  summary+=s;
+              }
+              String url = t.getUrl();
+              String uid = t.getUID();
+              Document d = new org.carrot2.core.Document(title, summary.replaceAll("_", " ") , url, LanguageCode.ENGLISH, uid);
+              docs.add(d);
+          }
+          
+          return docs;
+    }
+
+    private static List<Term> dir2Terms(String inDir) throws IOException, ParseException {
+        File dir = new File(inDir);
+
+        List<Term> terms = new ArrayList<>();
+        Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "Create terms");
+        for (File f : dir.listFiles()) {
+            if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
+                terms.add(TermFactory.create(new FileReader(f)));
+            }
+        }
+
+        return terms;
     }
 
 }

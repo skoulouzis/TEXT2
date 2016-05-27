@@ -259,6 +259,8 @@ public class Wikipedia implements Semantizatior {
                         break;
                     }
                 }
+                String url = "https://en.wikipedia.org/?curid=" + t.getUID();
+                t.setUrl(url);
                 if (add) {
                     terms.add(t);
                 }

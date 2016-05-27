@@ -115,9 +115,12 @@ public class BabelNet implements Semantizatior {
         if (ids != null) {
             for (String id : ids) {
                 String synet = getBabelnetSynset(id, language, key);
-                Term node = TermFactory.create(synet, language, term, null);
+                String url = null;
+                Term node = TermFactory.create(synet, language, term, null, url);
                 if (node != null) {
                     try {
+                        url = "http://babelnet.org/synset?word=" + URLEncoder.encode(node.getUID(), "UTF-8");
+                        node.setUrl(url);
                         List<Term> h = getHypernyms(language, node, key);
                         if (h != null && !h.isEmpty()) {
                             node.setBroader(h);
@@ -295,7 +298,8 @@ public class BabelNet implements Semantizatior {
             }
 
             String synetHyper = getBabelnetSynset(uid, language, key);
-            Term hypernym = TermFactory.create(synetHyper, language, null, uid);
+            String url = "http://babelnet.org/synset?word=" + URLEncoder.encode(uid, "UTF-8");
+            Term hypernym = TermFactory.create(synetHyper, language, null, uid, url);
             if (hypernym != null) {
                 hypernyms.add(hypernym);
             }
@@ -503,7 +507,8 @@ public class BabelNet implements Semantizatior {
                 Double coherenceScore = (Double) jo.get("coherenceScore");
                 double someScore = (score + globalScore + coherenceScore) / 3.0;
                 String synet = getBabelnetSynset(id, language, keysStr);
-                Term t = TermFactory.create(synet, language, lemma, null);
+                String url = "http://babelnet.org/synset?word=" + URLEncoder.encode(id, "UTF-8");
+                Term t = TermFactory.create(synet, language, lemma, null, url);
                 if (t != null) {
                     List<Term> h = getHypernyms(language, t, keysStr);
                     t.setBroader(h);

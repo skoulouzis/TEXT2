@@ -186,6 +186,10 @@ public class FileUtils {
         return getString(fr, "foreignKey");
     }
 
+    static String getURL(String jsonStr) throws IOException, ParseException {
+        return getString(jsonStr, "url");
+    }
+
     static boolean IsFromDictionary(String jsonString) throws IOException, ParseException {
         return getBoolean(jsonString, "isFromDictionary");
     }
