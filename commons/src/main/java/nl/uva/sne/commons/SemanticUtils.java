@@ -423,7 +423,7 @@ public class SemanticUtils {
                             dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, t.getLemma().toLowerCase());
                         }
 //                        if (similarity <= 0) {
-                        similarity += 0.03;
+//                        similarity += 0.03;
 //                        }
                         similarity = similarity - (dist * 0.02);
 //                        System.err.println(lemma + " more liklly to be: " + t + " similarity: " + similarity + " dist: " + dist);

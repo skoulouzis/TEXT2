@@ -50,16 +50,16 @@ public class RAKE implements TermExtractor {
 //            Document doc=new Document(full_path,name);
 //    doc.setSentenceList(sentences);
 //    doc.setTokenList(tokenized_sentences); 
-//edu.ehu.galan.rake.RakeAlgorithm ex = new edu.ehu.galan.rake.RakeAlgorithm.RakeAlgorit
+edu.ehu.galan.rake.RakeAlgorithm ex = new edu.ehu.galan.rake.RakeAlgorithm();
         
-//        ex.loadStopWordsList("resources/lite/stopWordLists/RakeStopLists/SmartStopListEn");
-//        ex.loadPunctStopWord("resources/lite/stopWordLists/RakeStopLists/RakePunctDefaultStopList");
-//    PlainTextDocumentReaderLBJEn parser = new PlainTextDocumentReaderLBJEn();
+        ex.loadStopWordsList("resources/lite/stopWordLists/RakeStopLists/SmartStopListEn");
+        ex.loadPunctStopWord("resources/lite/stopWordLists/RakeStopLists/RakePunctDefaultStopList");
+    
 //    parser.readSource("testCorpus/textAstronomy");
-//    Document doc = new Document("full_path", "name");
-//    ex.init(doc);
-//    ex.runAlgorithm();
-//    doc.getTermList();
+    edu.ehu.galan.rake.model.Document doc = new edu.ehu.galan.rake.model.Document("full_path", "name");
+    ex.init(doc, pPropsDir);
+    ex.runAlgorithm();
+    doc.getTermList();
 return null;
     }
 

@@ -281,14 +281,17 @@ public class Wikipedia implements Semantizatior {
         for (String key : keys) {
             JSONObject p = (JSONObject) pages.get(key);
             JSONArray categories = (JSONArray) p.get("categories");
-            for (Object obj : categories) {
-                JSONObject jObj = (JSONObject) obj;
-                String cat = (String) jObj.get("title");
-                if (shouldAddCategory(cat)) {
+            if (categories != null) {
+                for (Object obj : categories) {
+                    JSONObject jObj = (JSONObject) obj;
+                    String cat = (String) jObj.get("title");
+                    if (shouldAddCategory(cat)) {
 //                    System.err.println(cat.substring("Category:".length()).toLowerCase());
-                    categoriesList.add(cat.substring("Category:".length()).toLowerCase().replaceAll(" ", "_"));
+                        categoriesList.add(cat.substring("Category:".length()).toLowerCase().replaceAll(" ", "_"));
+                    }
                 }
             }
+
         }
         return categoriesList;
     }
