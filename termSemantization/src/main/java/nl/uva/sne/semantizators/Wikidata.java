@@ -144,7 +144,7 @@ public class Wikidata implements Semantizatior {
         if (dis == null) {
             Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {
-            Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
+            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {2}", new Object[]{dis, dis.getConfidence(), dis.getUrl()});
         }
         return dis;
     }
