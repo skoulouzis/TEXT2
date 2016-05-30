@@ -7,7 +7,6 @@ package nl.uva.sne.semantizators;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +20,6 @@ import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.Term;
 import org.json.simple.parser.ParseException;
 import org.mapdb.DB;
-import org.mapdb.DBMaker;
 
 /**
  *
@@ -142,8 +140,8 @@ public class MetaSemanitizer implements Semantizatior {
         double highScore = minimumSimilarity;
         String id = null;
         for (Term t : possibleTerms) {
-            System.err.println(t + " " + t.getConfidence());
-            if (t.getConfidence() > highScore) {
+//            System.err.println(t + " " + t.getConfidence());
+            if (t.getConfidence() >= highScore) {
                 highScore = t.getConfidence();
                 id = t.getUID();
             }
