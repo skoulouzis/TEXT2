@@ -60,6 +60,13 @@
             <version>1.0-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
+        
+        <dependency>
+            <groupId>edu.ehu.galan.rake</groupId>
+            <artifactId>RAKE</artifactId>
+            <version>1.0</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
     
     
@@ -123,7 +130,7 @@
             <url>http://galan.ehu.es/artifactory/ext-release-local</url>
         </repository>
  
-
+ 
     </repositories>
     
 </project>
