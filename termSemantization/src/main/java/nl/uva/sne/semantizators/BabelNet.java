@@ -343,7 +343,7 @@ public class BabelNet implements Semantizatior {
         return map;
     }
 
-    private Term disambiguate(String term, Set<Term> possibleTerms, String termDictionaryFile, double minimumSimilarity) throws IOException, JWNLException {
+    private Term disambiguate(String term, Set<Term> possibleTerms, String termDictionaryFile, double minimumSimilarity) throws IOException, JWNLException, ParseException {
         Term dis = SemanticUtils.disambiguate(term, possibleTerms, termDictionaryFile, minimumSimilarity, true);
         if (dis != null) {
             return dis;

@@ -100,7 +100,7 @@ public class MetaSemanitizer implements Semantizatior {
         if (dis == null) {
             Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1}", new Object[]{dis, dis.getConfidence()});
+            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} {2}", new Object[]{dis, dis.getConfidence(),dis.getGlosses()});
         }
 
 //        if (possibleTerms.size() > 1) {

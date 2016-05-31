@@ -21,7 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNL;
@@ -63,6 +65,7 @@ public class SemanticUtils {
             System.getProperty("user.home")
             + File.separator + "workspace" + File.separator + "TEXT2"
             + File.separator + "termXtraction" + File.separator + "etc" + File.separator + "nonLematizedWords");
+    private static Map<String, String> stemCache = new HashMap<>();
 
     static {
         try {
@@ -85,7 +88,7 @@ public class SemanticUtils {
                 result++;
             }
         }
-        return result / doc.size();
+        return result / (double) doc.size();
     }
 
     private static double idf(List<List<String>> docs, String term) {
@@ -149,6 +152,17 @@ public class SemanticUtils {
      */
     private static Set<String> getIntersection(Map<String, Double> leftVector,
             Map<String, Double> rightVector) {
+
+//        ValueComparator bvc = new ValueComparator(leftVector);
+//        TreeMap<String, Double> Lsorted_map = new TreeMap(bvc);
+//        Lsorted_map.putAll(leftVector);
+//
+//        bvc = new ValueComparator(rightVector);
+//        TreeMap<String, Double> Rsorted_map = new TreeMap(bvc);
+//        Rsorted_map.putAll(rightVector);
+//
+//        SortedSet<String> Lkeys = new TreeSet<>(leftVector.keySet());
+//        SortedSet<String> Rkeys = new TreeSet<>(rightVector.keySet());
         Set<String> intersection = new HashSet<>(leftVector.keySet());
         intersection.retainAll(rightVector.keySet());
         return intersection;
@@ -173,7 +187,7 @@ public class SemanticUtils {
         return dotProduct;
     }
 
-    public static Set<String> getDocument(Term term) throws IOException, JWNLException {
+    public static Set<String> getDocument(Term term) throws IOException, JWNLException, MalformedURLException, ParseException {
 
         Set<String> doc = new HashSet<>();
 
@@ -242,10 +256,13 @@ public class SemanticUtils {
     public static List<String> tokenize(String text, boolean stem) throws IOException, JWNLException {
         text = text.replaceAll("’", "'");
 
+        text = text.replaceAll("_", " ");
+        text = text.replaceAll("[0-9]", "");
         text = text.replaceAll("[\\p{Punct}&&[^'-]]+", " ");
 
         text = text.replaceAll("(?:'(?:[tdsm]|[vr]e|ll))+\\b", "");
         text = text.toLowerCase();
+
         TokenStream tokenStream;
         if (stem) {
             tokenStream = tokenStemStream("field", new StringReader(text));
@@ -371,7 +388,7 @@ public class SemanticUtils {
         return pos;
     }
 
-    public static Set<Term> tf_idf_Disambiguation(Set<Term> possibleTerms, Set<String> nGrams, String lemma, double confidence, boolean matchTitle) throws IOException, JWNLException {
+    public static Set<Term> tf_idf_Disambiguation(Set<Term> possibleTerms, Set<String> nGrams, String lemma, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
         List<List<String>> allDocs = new ArrayList<>();
         Map<String, List<String>> docs = new HashMap<>();
         for (Term tv : possibleTerms) {
@@ -382,12 +399,15 @@ public class SemanticUtils {
 
         Set<String> contextDoc = new HashSet<>();
         for (String s : nGrams) {
-            String[] parts = s.split("_");
-            for (String token : parts) {
-
-                if (token.length() >= 1 && !token.contains(lemma)) {
-                    contextDoc.add(token);
+            if (s.contains("_")) {
+                String[] parts = s.split("_");
+                for (String token : parts) {
+                    if (token.length() >= 1 && !token.contains(lemma)) {
+                        contextDoc.add(token);
+                    }
                 }
+            } else if (s.length() >= 1 && !s.contains(lemma)) {
+                contextDoc.add(s);
             }
         }
         docs.put("context", new ArrayList<>(contextDoc));
@@ -398,7 +418,8 @@ public class SemanticUtils {
             Map<String, Double> featureVector = new TreeMap<>();
             for (String term : doc) {
                 if (!featureVector.containsKey(term)) {
-                    double tfidf = SemanticUtils.tfIdf(doc, allDocs, term);
+                    double tfidf = tfIdf(doc, allDocs, term);
+//  double tf = SemanticUtils.tf(doc, allDocs, term);
                     featureVector.put(term, tfidf);
                 }
             }
@@ -409,25 +430,52 @@ public class SemanticUtils {
 
         Map<String, Double> scoreMap = new HashMap<>();
         for (String key : featureVectors.keySet()) {
-            Double similarity = SemanticUtils.cosineSimilarity(contextVector, featureVectors.get(key));
+            Double similarity = cosineSimilarity(contextVector, featureVectors.get(key));
 
             for (Term t : possibleTerms) {
                 if (t.getUID().equals(key)) {
-                    if (t.getLemma().toLowerCase().contains(lemma) && matchTitle) {
-                        int dist;
-                        if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(")) {
-                            int index = t.getLemma().toLowerCase().indexOf("(") - 1;
-                            String sub = t.getLemma().toLowerCase().substring(0, index);
-                            dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, sub);
-                        } else {
-                            dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, t.getLemma().toLowerCase());
+                    String stemTitle = stem(t.getLemma().toLowerCase());
+                    String stemLema = stem(lemma);
+
+                    if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(") && t.getLemma().toLowerCase().contains(")")) {
+                        int index1 = t.getLemma().toLowerCase().indexOf("(") + 1;
+                        int index2 = t.getLemma().toLowerCase().indexOf(")");
+                        String sub = t.getLemma().toLowerCase().substring(index1, index2);
+
+                        List<String> subTokens = tokenize(sub, true);
+                        List<String> nTokens = new ArrayList<>();
+                        for (String s : nGrams) {
+                            if (s.contains("_")) {
+                                String[] parts = s.split("_");
+                                for (String token : parts) {
+                                    nTokens.addAll(tokenize(token, true));
+                                }
+                            } else {
+                                nTokens.addAll(tokenize(s, true));
+                            }
                         }
-//                        if (similarity <= 0) {
-                        similarity += 0.03;
-//                        }
-                        similarity = similarity - (dist * 0.05);
-//                        System.err.println(lemma + " more liklly to be: " + t + " similarity: " + similarity + " dist: " + dist);
+
+                        Set<String> intersection = new HashSet<>(nTokens);
+                        intersection.retainAll(subTokens);
+                        if (intersection.isEmpty()) {
+                            similarity -= 0.1;
+                        }
                     }
+
+                    String shorter;
+                    String longer;
+                    if (stemTitle.length() > stemLema.length()) {
+                        longer = stemTitle;
+                        shorter = stemLema;
+                    } else {
+                        longer = stemLema;
+                        shorter = stemTitle;
+                    }
+//                    if (longer.contains(shorter)) {
+//                        similarity += 0.02;
+//                    }
+                    int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemTitle, stemLema);
+                    similarity = similarity - (dist * 0.03);
                     t.setConfidence(similarity);
                 }
             }
@@ -463,7 +511,7 @@ public class SemanticUtils {
         }
     }
 
-    public static Term disambiguate(String term, Set<Term> possibleTerms, String allTermsDictionary, double confidence, boolean matchTitle) throws IOException, JWNLException {
+    public static Term disambiguate(String term, Set<Term> possibleTerms, String allTermsDictionary, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
         Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, allTermsDictionary);
         possibleTerms = SemanticUtils.tf_idf_Disambiguation(possibleTerms, ngarms, term, confidence, matchTitle);
         Term dis = null;
@@ -476,6 +524,29 @@ public class SemanticUtils {
 //            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
 //        }
         return dis;
+    }
+
+    public static String stem(String string) throws IOException, JWNLException {
+        if (string.length() < 1) {
+            return string;
+        }
+        String res = stemCache.get(string);
+        if (res != null) {
+            return res;
+        }
+
+        List<String> stems = SemanticUtils.tokenize(string, true);
+        StringBuilder stem = new StringBuilder();
+        for (String s : stems) {
+            stem.append(s).append(" ");
+        }
+        if (stem.length() > 1) {
+            stem.deleteCharAt(stem.length() - 1);
+            stem.setLength(stem.length());
+        }
+
+        stemCache.put(string, stem.toString());
+        return stem.toString();
     }
 
 }

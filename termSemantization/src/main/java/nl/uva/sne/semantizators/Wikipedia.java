@@ -82,7 +82,9 @@ public class Wikipedia implements Semantizatior {
         "wikipedia external",
         "wikipedia indefinitely",
         "wikipedia spam",
-        "on wikidata"
+        "on wikidata",
+        "vague or ambiguous time from",
+        "stubs"
     };
     private String page = "https://en.wikipedia.org/w/api.php";
     private File cacheDBFile;
@@ -151,7 +153,7 @@ public class Wikipedia implements Semantizatior {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException {
+    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -204,7 +206,7 @@ public class Wikipedia implements Semantizatior {
         return terms;
     }
 
-    private Set<String> getTitles(String jsonString, String lemma) throws ParseException, UnsupportedEncodingException {
+    private Set<String> getTitles(String jsonString, String lemma) throws ParseException, UnsupportedEncodingException, IOException, JWNLException {
         Set<String> titles = new TreeSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONObject query = (JSONObject) jsonObj.get("query");
@@ -213,22 +215,22 @@ public class Wikipedia implements Semantizatior {
             for (Object o : search) {
                 JSONObject res = (JSONObject) o;
                 String title = (String) res.get("title");
+//                System.err.println(title);
                 if (title != null && !title.toLowerCase().contains("(disambiguation)")) {
+//                if (title != null) {
                     title = title.replaceAll("%(?![0-9a-fA-F]{2})", "%25");
                     title = title.replaceAll("\\+", "%2B");
                     title = java.net.URLDecoder.decode(title, "UTF-8");
                     title = title.replaceAll("_", " ").toLowerCase();
                     lemma = java.net.URLDecoder.decode(lemma, "UTF-8");
                     lemma = lemma.replaceAll("_", " ");
+
+                    String stemTitle = SemanticUtils.stem(title);
+                    String stemLema = SemanticUtils.stem(lemma);
+
                     int dist;
-                    if (!title.startsWith("(") && title.contains("(")) {
-                        int index = title.indexOf("(") - 1;
-                        String sub = title.substring(0, index);
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, sub);
-                    } else {
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, title);
-                    }
-                    if (title.contains(lemma) && dist <= 10) {
+                    dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
+                    if (stemTitle.contains(stemLema) && dist <= 10) {
                         titles.add(title);
                     }
                 }
