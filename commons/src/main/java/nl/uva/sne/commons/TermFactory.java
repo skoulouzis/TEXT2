@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.didion.jwnl.JWNLException;
+import static nl.uva.sne.commons.SemanticUtils.stem;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -36,7 +38,7 @@ public class TermFactory {
 //        term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonFile));
 //        return term;
 //    }
-    public static Term create(String synet, String language, String lemma, String theID, String url) throws ParseException, UnsupportedEncodingException {
+    public static Term create(String synet, String language, String lemma, String theID, String url) throws ParseException, UnsupportedEncodingException, IOException, JWNLException {
         Term node;
         language = language.toLowerCase();
         JSONObject jSynet = (JSONObject) JSONValue.parseWithException(synet);
@@ -98,15 +100,11 @@ public class TermFactory {
                     }
                     lemma = java.net.URLDecoder.decode(lemma, "UTF-8");
                     lemma = lemma.replaceAll(" ", "_");
-                    int dist;
-                    if (!jlemma.startsWith("(") && jlemma.contains("(")) {
-                        int index = jlemma.indexOf("(") - 1;
-                        String sub = jlemma.substring(0, index);
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, sub);
-                    } else {
-                        dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, jlemma);
-                    }
-//                    dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, jlemma);
+
+                    String stemjlemma = stem(jlemma);
+                    String stemLema = stem(lemma);
+                    int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemjlemma);
+
                     if (dist <= 0) {
                         node = new Term(jlemma, url);
                         node.setUID(babelNetID);
@@ -116,28 +114,30 @@ public class TermFactory {
                         node.setOriginalTerm(lemma);
                         return node;
                     }
-                    if (jlemma.contains(lemma) && jlemma.contains("_")) {
-                        String[] parts = jlemma.split("_");
-                        for (String p : parts) {
-                            if (lemma.contains(p)) {
-                                jlemma = p;
-                                break;
-                            }
-                            if (p.contains(lemma)) {
-                                jlemma = lemma;
-                                break;
-                            }
-                        }
-                    }
+//                    if (jlemma.contains(lemma) && jlemma.contains("_")) {
+//                        String[] parts = jlemma.split("_");
+//                        for (String p : parts) {
+//                            if (lemma.contains(p)) {
+//                                jlemma = p;
+//                                break;
+//                            }
+//                            if (p.contains(lemma)) {
+//                                jlemma = lemma;
+//                                break;
+//                            }
+//                        }
+//                    }
                     dist = edu.stanford.nlp.util.StringUtils.editDistance(lemma, jlemma);
-                    if (lemma.length() < jlemma.length()) {
-                        lemma1 = lemma;
-                        lemma2 = jlemma;
+                    String shorter, longer;
+                    if (stemjlemma.length() > stemLema.length()) {
+                        shorter = stemLema;
+                        longer = stemjlemma;
                     } else {
-                        lemma2 = lemma;
-                        lemma1 = jlemma;
+                        shorter = stemjlemma;
+                        longer = stemLema;
                     }
-                    if (dist <= 3 && lemma2.contains(lemma1)) {
+
+                    if (dist <= 4 && longer.contains(shorter)) {
                         node = new Term(jlemma, url);
                         node.setUID(babelNetID);
                         node.setCategories(categories);

@@ -430,6 +430,9 @@ public class SemanticUtils {
 
         Map<String, Double> scoreMap = new HashMap<>();
         for (String key : featureVectors.keySet()) {
+            if (key.equals("20268")) {
+                System.err.println("");
+            }
             Double similarity = cosineSimilarity(contextVector, featureVectors.get(key));
 
             for (Term t : possibleTerms) {
@@ -462,20 +465,22 @@ public class SemanticUtils {
                         }
                     }
 
-                    String shorter;
-                    String longer;
-                    if (stemTitle.length() > stemLema.length()) {
-                        longer = stemTitle;
-                        shorter = stemLema;
-                    } else {
-                        longer = stemLema;
-                        shorter = stemTitle;
-                    }
+//                    String shorter;
+//                    String longer;
+//                    if (stemTitle.length() > stemLema.length()) {
+//                        longer = stemTitle;
+//                        shorter = stemLema;
+//                    } else {
+//                        longer = stemLema;
+//                        shorter = stemTitle;
+//                    }
 //                    if (longer.contains(shorter)) {
 //                        similarity += 0.02;
 //                    }
                     int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemTitle, stemLema);
-                    similarity = similarity - (dist * 0.03);
+                    similarity = similarity - (dist * 0.001);
+                    double logSim = Math.log(similarity - (dist * 0.001));
+                    System.err.println(similarity + " " + logSim);
                     t.setConfidence(similarity);
                 }
             }
