@@ -11,8 +11,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -159,9 +161,16 @@ public class MetaSemanitizer implements Semantizatior {
     }
 
     private List<Term> removeIrrelevant(List<Term> terms) throws IOException, JWNLException, MalformedURLException, ParseException {
-        for(Term t: terms){
-            Set<String> doc = SemanticUtils.getDocument(t);
+
+        List<List<String>> allDocs = new ArrayList<>();
+        Map<String, List<String>> docs = new HashMap<>();
+        for (Term tv : terms) {
+            Set<String> doc = SemanticUtils.getDocument(tv);
+            allDocs.add(new ArrayList<>(doc));
+            docs.put(tv.getUID(), new ArrayList<>(doc));
         }
+
+
         return terms;
     }
 
