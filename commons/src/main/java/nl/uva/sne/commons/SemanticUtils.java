@@ -434,42 +434,42 @@ public class SemanticUtils {
                 if (t.getUID().equals(key)) {
                     String stemTitle = stem(t.getLemma().toLowerCase());
                     String stemLema = stem(lemma);
-
+                    List<String> subTokens = new ArrayList<>();
                     if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(") && t.getLemma().toLowerCase().contains(")")) {
                         int index1 = t.getLemma().toLowerCase().indexOf("(") + 1;
                         int index2 = t.getLemma().toLowerCase().indexOf(")");
                         String sub = t.getLemma().toLowerCase().substring(index1, index2);
+                        subTokens.addAll(tokenize(sub, true));
+                    }
 
-                        List<String> subTokens = tokenize(sub, true);
-                        List<String> nTokens = new ArrayList<>();
-                        for (String s : nGrams) {
-                            if (s.contains("_")) {
+                    List<String> nTokens = new ArrayList<>();
+                    for (String s : nGrams) {
+                        if (s.contains("_")) {
+                            String[] parts = s.split("_");
+                            for (String token : parts) {
+                                nTokens.addAll(tokenize(token, true));
+                            }
+                        } else {
+                            nTokens.addAll(tokenize(s, true));
+                        }
+                    }
+                    if (t.getCategories() != null) {
+                        for (String s : t.getCategories()) {
+                            if (s != null && s.contains("_")) {
                                 String[] parts = s.split("_");
                                 for (String token : parts) {
-                                    nTokens.addAll(tokenize(token, true));
+                                    subTokens.addAll(tokenize(token, true));
                                 }
-                            } else {
-                                nTokens.addAll(tokenize(s, true));
+                            } else if (s != null) {
+                                subTokens.addAll(tokenize(s, true));
                             }
                         }
-                        if (t.getCategories() != null) {
-                            for (String s : t.getCategories()) {
-                                if (s.contains("_")) {
-                                    String[] parts = s.split("_");
-                                    for (String token : parts) {
-                                        subTokens.addAll(tokenize(token, true));
-                                    }
-                                } else {
-                                    subTokens.addAll(tokenize(s, true));
-                                }
-                            }
-                        }
+                    }
 
-                        Set<String> intersection = new HashSet<>(nTokens);
-                        intersection.retainAll(subTokens);
-                        if (intersection.isEmpty()) {
-                            similarity -= 0.2;
-                        }
+                    Set<String> intersection = new HashSet<>(nTokens);
+                    intersection.retainAll(subTokens);
+                    if (intersection.isEmpty()) {
+                        similarity -= 0.1;
                     }
 
 //                    String shorter;
