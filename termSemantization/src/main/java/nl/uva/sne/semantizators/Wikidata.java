@@ -149,7 +149,7 @@ public class Wikidata implements Semantizatior {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException {
+    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, JWNLException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -194,7 +194,7 @@ public class Wikidata implements Semantizatior {
 
     }
 
-    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException {
+    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException, JWNLException {
         Set<Term> terms = new HashSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONArray search = (JSONArray) jsonObj.get("search");
@@ -209,15 +209,12 @@ public class Wikidata implements Semantizatior {
                 label = label.replaceAll("_", " ").toLowerCase();
                 originalTerm = java.net.URLDecoder.decode(originalTerm, "UTF-8");
                 originalTerm = originalTerm.replaceAll("_", " ");
-                int dist;
-                if (!label.startsWith("(") && label.contains("(")) {
-                    int index = label.indexOf("(") - 1;
-                    String sub = label.substring(0, index);
-                    dist = edu.stanford.nlp.util.StringUtils.editDistance(originalTerm, sub);
-                } else {
-                    dist = edu.stanford.nlp.util.StringUtils.editDistance(originalTerm, label);
-                }
-                if (label.contains(originalTerm) && dist <= 7) {
+
+                String stemTitle = SemanticUtils.stem(label);
+                String stemLema = SemanticUtils.stem(originalTerm);
+
+                int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
+                if (stemTitle.contains(stemLema) && dist <= 10) {
                     String url = null;
                     Term t = new Term(label, url);
                     t.setOriginalTerm(originalTerm);
@@ -230,27 +227,27 @@ public class Wikidata implements Semantizatior {
                         }
                         t.setAlternativeLables(altLables);
                     }
-
                     String description = (String) jObj.get("description");
-                    String id = (String) jObj.get("id");
-                    url = "https://www.wikidata.org/wiki/" + id;
-                    t.setUrl(url);
-                    List<String> glosses = new ArrayList<>();
-                    glosses.add(description);
-                    t.setGlosses(glosses);
-                    t.setUID(id);
+                    if (description == null || !description.toLowerCase().contains("wikipedia disambiguation page")) {
+                        String id = (String) jObj.get("id");
+                        url = "https://www.wikidata.org/wiki/" + id;
+                        t.setUrl(url);
+                        List<String> glosses = new ArrayList<>();
+                        glosses.add(description);
+                        t.setGlosses(glosses);
+                        t.setUID(id);
 
-                    List<String> broaderID = getBroaderID(id);
-                    t.setBroaderUIDS(broaderID);
+                        List<String> broaderID = getBroaderID(id);
+                        t.setBroaderUIDS(broaderID);
 
-                    List<String> cat = getCategories(id);
-                    t.setCategories(cat);
+                        List<String> cat = getCategories(id);
+                        t.setCategories(cat);
 
-                    terms.add(t);
+                        terms.add(t);
+                    }
+
                 }
-
             }
-
         }
         return terms;
     }

@@ -227,10 +227,17 @@ public class Wikipedia implements Semantizatior {
 
                     String stemTitle = SemanticUtils.stem(title);
                     String stemLema = SemanticUtils.stem(lemma);
+                    String shorter, longer;
+                    if (stemTitle.length() > stemLema.length()) {
+                        shorter = stemLema;
+                        longer = stemTitle;
+                    } else {
+                        shorter = stemTitle;
+                        longer = stemLema;
+                    }
 
-                    int dist;
-                    dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
-                    if (stemTitle.contains(stemLema) && dist <= 10) {
+                    int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
+                    if (longer.contains(shorter) && dist <= 10) {
                         titles.add(title);
                     }
                 }
@@ -257,6 +264,15 @@ public class Wikipedia implements Semantizatior {
                 t.setCategories(cat);
                 for (String g : t.getGlosses()) {
                     if (g != null && g.contains("may refer to:")) {
+                        Set<Term> referToTerms = getReferToTerms(g, originalTerm);
+                        if (referToTerms != null) {
+                            for (Term rt : referToTerms) {
+                                String url = "https://en.wikipedia.org/?curid=" + rt.getUID();
+                                rt.setUrl(url);
+                                terms.add(rt);
+                            }
+                        }
+
                         add = false;
                         break;
                     }
@@ -323,6 +339,34 @@ public class Wikipedia implements Semantizatior {
             }
         }
         return true;
+    }
+
+    private Set<Term> getReferToTerms(String g, String lemma) throws IOException, ParseException {
+        String titles = getReferToTitles(g);
+        if (titles.length() > 0) {
+            URL url = new URL(page + "?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles);
+            System.err.println(url);
+            String jsonString = IOUtils.toString(url);
+            return getCandidateTerms(jsonString, lemma);
+        }
+
+        return null;
+    }
+
+    private String getReferToTitles(String g) throws UnsupportedEncodingException {
+        String[] titlesArray = g.split("\n");
+        StringBuilder titles = new StringBuilder();
+        for (String t : titlesArray) {
+            if (!t.toLowerCase().contains("may refer to:")) {
+                t = URLEncoder.encode(t.split(",")[0], "UTF-8");
+                titles.append(t).append("|");
+            }
+        }
+        if (titles.length() > 1) {
+            titles.deleteCharAt(titles.length() - 1);
+            titles.setLength(titles.length());
+        }
+        return titles.toString();
     }
 
 }

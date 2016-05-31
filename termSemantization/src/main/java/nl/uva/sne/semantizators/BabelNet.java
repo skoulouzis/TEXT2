@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -108,7 +109,7 @@ public class BabelNet implements Semantizatior {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException {
+    private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException, UnsupportedEncodingException, JWNLException {
         String language = "EN";
         List<String> ids = getcandidateWordIDs(language, term, key);
         Set<Term> nodes = new HashSet<>();
