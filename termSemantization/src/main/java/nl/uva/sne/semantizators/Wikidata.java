@@ -191,7 +191,6 @@ public class Wikidata implements Semantizatior {
 
     private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
         return getNumProperty(id, "P31");
-
     }
 
     private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException, JWNLException {
@@ -304,14 +303,17 @@ public class Wikidata implements Semantizatior {
                 JSONObject jobj = (JSONObject) obj;
 
                 JSONObject mainsnak = (JSONObject) jobj.get("mainsnak");
-//            System.err.println(mainsnak);
+//                System.err.println(mainsnak);
                 JSONObject datavalue = (JSONObject) mainsnak.get("datavalue");
-//            System.err.println(datavalue);
-                JSONObject value = (JSONObject) datavalue.get("value");
+//                System.err.println(datavalue);
+                if (datavalue != null) {
+                    JSONObject value = (JSONObject) datavalue.get("value");
 //            System.err.println(value);
-                java.lang.Long numericID = (java.lang.Long) value.get("numeric-id");
+                    java.lang.Long numericID = (java.lang.Long) value.get("numeric-id");
 //                System.err.println(id + " -> Q" + numericID);
-                ids.add("Q" + numericID);
+                    ids.add("Q" + numericID);
+                }
+
             }
         }
 

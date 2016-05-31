@@ -21,9 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNL;
@@ -430,9 +428,6 @@ public class SemanticUtils {
 
         Map<String, Double> scoreMap = new HashMap<>();
         for (String key : featureVectors.keySet()) {
-            if (key.equals("20268")) {
-                System.err.println("");
-            }
             Double similarity = cosineSimilarity(contextVector, featureVectors.get(key));
 
             for (Term t : possibleTerms) {
@@ -457,11 +452,23 @@ public class SemanticUtils {
                                 nTokens.addAll(tokenize(s, true));
                             }
                         }
+                        if (t.getCategories() != null) {
+                            for (String s : t.getCategories()) {
+                                if (s.contains("_")) {
+                                    String[] parts = s.split("_");
+                                    for (String token : parts) {
+                                        subTokens.addAll(tokenize(token, true));
+                                    }
+                                } else {
+                                    subTokens.addAll(tokenize(s, true));
+                                }
+                            }
+                        }
 
                         Set<String> intersection = new HashSet<>(nTokens);
                         intersection.retainAll(subTokens);
                         if (intersection.isEmpty()) {
-                            similarity -= 0.1;
+                            similarity -= 0.2;
                         }
                     }
 
@@ -477,10 +484,14 @@ public class SemanticUtils {
 //                    if (longer.contains(shorter)) {
 //                        similarity += 0.02;
 //                    }
+//                    if(possibleTerms.size()==1){
+//                         similarity += 0.02;
+//                    }
                     int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemTitle, stemLema);
-                    similarity = similarity - (dist * 0.001);
-                    double logSim = Math.log(similarity - (dist * 0.001));
-                    System.err.println(similarity + " " + logSim);
+                    similarity = similarity - (dist * 0.005);
+//                    similarity = similarity - (dist * 0.5);
+//                    double logSim = Math.log(similarity - (dist * 0.001));
+//                    System.err.println(similarity + " " + logSim);
                     t.setConfidence(similarity);
                 }
             }
@@ -493,6 +504,7 @@ public class SemanticUtils {
         ValueComparator bvc = new ValueComparator(scoreMap);
         TreeMap<String, Double> sorted_map = new TreeMap(bvc);
         sorted_map.putAll(scoreMap);
+//        System.err.println(sorted_map);
 
         Iterator<String> it = sorted_map.keySet().iterator();
         String winner = it.next();

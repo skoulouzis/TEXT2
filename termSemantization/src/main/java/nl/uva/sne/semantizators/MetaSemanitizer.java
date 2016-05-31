@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
+import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
 import org.json.simple.parser.ParseException;
 import org.mapdb.DB;
@@ -54,9 +56,9 @@ public class MetaSemanitizer implements Semantizatior {
                     }
                 }
             }
+            terms = removeIrrelevant(terms);
         } catch (Exception ex) {
             Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.WARNING, null, ex);
-
             return terms;
         } finally {
 //            saveCache();
@@ -154,6 +156,13 @@ public class MetaSemanitizer implements Semantizatior {
             }
         }
         return null;
+    }
+
+    private List<Term> removeIrrelevant(List<Term> terms) throws IOException, JWNLException, MalformedURLException, ParseException {
+        for(Term t: terms){
+            Set<String> doc = SemanticUtils.getDocument(t);
+        }
+        return terms;
     }
 
 }

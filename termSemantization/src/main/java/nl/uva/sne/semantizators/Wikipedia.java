@@ -86,8 +86,9 @@ public class Wikipedia implements Semantizatior {
         "vague or ambiguous time from",
         "stubs"
     };
-    private String page = "https://en.wikipedia.org/w/api.php";
+    private final String page = "https://en.wikipedia.org/w/api.php";
     private File cacheDBFile;
+    private Object prevTitles = "";
 
     @Override
     public void configure(Properties properties) {
@@ -236,10 +237,10 @@ public class Wikipedia implements Semantizatior {
                         longer = stemLema;
                     }
 
-                    int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
-                    if (longer.contains(shorter) && dist <= 10) {
-                        titles.add(title);
-                    }
+//                    int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemLema, stemTitle);
+//                    if (longer.contains(shorter) && dist <= 10) {
+                    titles.add(title);
+//                    }
                 }
 
             }
@@ -272,14 +273,14 @@ public class Wikipedia implements Semantizatior {
                                 terms.add(rt);
                             }
                         }
-
                         add = false;
                         break;
                     }
                 }
-                String url = "https://en.wikipedia.org/?curid=" + t.getUID();
-                t.setUrl(url);
+
                 if (add) {
+                    String url = "https://en.wikipedia.org/?curid=" + t.getUID();
+                    t.setUrl(url);
                     terms.add(t);
                 }
             }
@@ -343,13 +344,13 @@ public class Wikipedia implements Semantizatior {
 
     private Set<Term> getReferToTerms(String g, String lemma) throws IOException, ParseException {
         String titles = getReferToTitles(g);
-        if (titles.length() > 0) {
+        if (titles.length() > 0 && !titles.equals(prevTitles)) {
             URL url = new URL(page + "?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles);
             System.err.println(url);
             String jsonString = IOUtils.toString(url);
+            prevTitles = titles;
             return getCandidateTerms(jsonString, lemma);
         }
-
         return null;
     }
 
@@ -359,7 +360,9 @@ public class Wikipedia implements Semantizatior {
         for (String t : titlesArray) {
             if (!t.toLowerCase().contains("may refer to:")) {
                 t = URLEncoder.encode(t.split(",")[0], "UTF-8");
-                titles.append(t).append("|");
+                if (t.length() > 0) {
+                    titles.append(t).append("|");
+                }
             }
         }
         if (titles.length() > 1) {
