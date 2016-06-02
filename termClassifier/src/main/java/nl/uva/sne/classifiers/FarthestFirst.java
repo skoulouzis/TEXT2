@@ -33,7 +33,7 @@ public class FarthestFirst implements Classifier {
             weka.clusterers.FarthestFirst clusterer = new weka.clusterers.FarthestFirst();
            
             clusterer.setNumClusters(numOfClusters);
-            Instances data = ClusterUtils.terms2Instances(inDir);
+            Instances data = ClusterUtils.terms2Instances(inDir,false);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
         } catch (Exception ex) {
             Logger.getLogger(FarthestFirst.class.getName()).log(Level.SEVERE, null, ex);

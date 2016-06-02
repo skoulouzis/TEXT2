@@ -13,15 +13,22 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
 import nl.uva.sne.commons.SemanticUtils;
+import static nl.uva.sne.commons.SemanticUtils.cosineSimilarity;
+import static nl.uva.sne.commons.SemanticUtils.stem;
+import static nl.uva.sne.commons.SemanticUtils.tfIdf;
+import static nl.uva.sne.commons.SemanticUtils.tokenize;
 import nl.uva.sne.commons.Term;
+import nl.uva.sne.commons.ValueComparator;
 import org.json.simple.parser.ParseException;
 import org.mapdb.DB;
 
@@ -161,16 +168,6 @@ public class MetaSemanitizer implements Semantizatior {
     }
 
     private List<Term> removeIrrelevant(List<Term> terms) throws IOException, JWNLException, MalformedURLException, ParseException {
-
-        List<List<String>> allDocs = new ArrayList<>();
-        Map<String, List<String>> docs = new HashMap<>();
-        for (Term tv : terms) {
-            Set<String> doc = SemanticUtils.getDocument(tv);
-            allDocs.add(new ArrayList<>(doc));
-            docs.put(tv.getUID(), new ArrayList<>(doc));
-        }
-
-
         return terms;
     }
 

@@ -28,7 +28,7 @@ public class Cobweb implements Classifier {
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
 
         try {
-            Instances data = ClusterUtils.terms2Instances(inDir);
+            Instances data = ClusterUtils.terms2Instances(inDir,false);
 
             weka.clusterers.Cobweb clusterer = new weka.clusterers.Cobweb();
 //             Acuity is set to be the minimal standard deviation of a cluster attribute. The default value of acuity is 0.1.

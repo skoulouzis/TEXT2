@@ -488,7 +488,7 @@ public class SemanticUtils {
 //                         similarity += 0.02;
 //                    }
                     int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemTitle, stemLema);
-                    similarity = similarity - (dist * 0.005);
+                    similarity = similarity - (dist * 0.05);
 //                    similarity = similarity - (dist * 0.5);
 //                    double logSim = Math.log(similarity - (dist * 0.001));
 //                    System.err.println(similarity + " " + logSim);

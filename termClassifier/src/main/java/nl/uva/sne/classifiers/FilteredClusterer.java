@@ -29,7 +29,7 @@ public class FilteredClusterer implements Classifier {
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
             weka.clusterers.FilteredClusterer clusterer = new weka.clusterers.FilteredClusterer();
-            Instances data = ClusterUtils.terms2Instances(inDir);
+            Instances data = ClusterUtils.terms2Instances(inDir,false);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
         } catch (Exception ex) {
             Logger.getLogger(FilteredClusterer.class.getName()).log(Level.SEVERE, null, ex);

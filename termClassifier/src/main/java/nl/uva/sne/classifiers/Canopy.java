@@ -33,7 +33,7 @@ public class Canopy implements Classifier {
     @Override
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
-            Instances data = ClusterUtils.terms2Instances(inDir);
+            Instances data = ClusterUtils.terms2Instances(inDir,false);
 
             weka.clusterers.Canopy clusterer = new weka.clusterers.Canopy();
 
