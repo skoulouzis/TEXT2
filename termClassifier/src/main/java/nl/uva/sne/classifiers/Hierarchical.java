@@ -25,7 +25,7 @@ import weka.core.MinkowskiDistance;
  *
  * @author S. Koulouzis
  */
-public class Hierarchical implements Classifier {
+public class Hierarchical implements Clusterer {
 
     private int numOfClusters;
     private String distanceFunction;

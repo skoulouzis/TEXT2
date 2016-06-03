@@ -18,7 +18,7 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class FarthestFirst implements Classifier {
+public class FarthestFirst implements Clusterer {
 
     private Integer numOfClusters;
 

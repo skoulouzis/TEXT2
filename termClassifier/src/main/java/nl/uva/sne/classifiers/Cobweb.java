@@ -18,7 +18,7 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class Cobweb implements Classifier {
+public class Cobweb implements Clusterer {
 
     @Override
     public void configure(Properties properties) {

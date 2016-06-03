@@ -21,7 +21,7 @@ import weka.filters.unsupervised.attribute.Remove;
  *
  * @author S. Koulouzis
  */
-public class Canopy implements Classifier {
+public class Canopy implements Clusterer {
 
     private Integer numOfClusters;
 

@@ -23,7 +23,7 @@ import weka.core.ManhattanDistance;
  *
  * @author S. Koulouzis
  */
-public class Kmeans implements Classifier {
+public class Kmeans implements Clusterer {
 
     private int numOfClusters;
     private String distanceFunction;

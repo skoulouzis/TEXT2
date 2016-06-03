@@ -18,7 +18,7 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class FilteredClusterer implements Classifier {
+public class FilteredClusterer implements Clusterer {
 
     @Override
     public void configure(Properties properties) {

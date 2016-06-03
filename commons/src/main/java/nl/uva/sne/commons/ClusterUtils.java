@@ -115,7 +115,7 @@ public class ClusterUtils {
         return terms;
     }
 
-    public static Map<String, String> bulidClusters(Classifier classifier, Instances data, String inDir) throws Exception {
+    public static void train(Classifier classifier, Instances data, String outDir) throws Exception {
 
         FilteredClassifier fc = new FilteredClassifier();
         String[] options = new String[2];
@@ -128,39 +128,21 @@ public class ClusterUtils {
         fc.setClassifier(classifier);
         fc.buildClassifier(data);
 
-        Map<String, String> clusters = new HashMap<>();
-        for (int i = 0; i < data.numInstances(); i++) {
-            Instance inst = data.instance(i);
-            int predicted = (int) fc.classifyInstance(inst);
-            String theClass = data.classAttribute().value(predicted);
-            String id = inst.toString().split(",")[0];
-//           
-        }
+//        Map<String, String> clusters = new HashMap<>();
+//        for (int i = 0; i < data.numInstances(); i++) {
+//            Instance inst = data.instance(i);
+//            int predicted = (int) fc.classifyInstance(inst);
+//            String theClass = data.classAttribute().value(predicted);
+//            String id = inst.toString().split(",")[0];
+//        }
         Evaluation eTest = new Evaluation(data);
         eTest.evaluateModel(fc, data);
 
         String strSummary = eTest.toSummaryString();
-        System.out.println(strSummary);
+        Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, strSummary);
 
-        Instances testData = ClusterUtils.terms2Instances("/home/alogo/Downloads/jsonTerms", false);
+        weka.core.SerializationHelper.write(outDir + File.separator + classifier.getClass().getSimpleName() + ".model", classifier);
 
-        for (int i = 0; i < testData.numInstances(); i++) {
-            Instance inst = testData.get(i);
-            inst.setDataset(data);
-        }
-
-        for (int i = 0; i < testData.numInstances(); i++) {
-            Instance inst = testData.get(i);
-            String s = testData.attribute(0).value(i);
-            double predicted = fc.classifyInstance(inst);
-//           String id = inst.toString().split(",")[0];
-            // Classify instance.
-            String theClss = data.classAttribute().value((int) predicted);
-            System.err.println(s + " classified as : "
-                    + theClss);
-            clusters.put(inDir + File.separator + s, theClss);
-        }
-        return clusters;
     }
 
     private static Instances createInstances(String inDir) throws Exception {
@@ -237,6 +219,7 @@ public class ClusterUtils {
     }
 
     private static Instances createInstancesWithClasses(String inDir) throws IOException, ParseException, Exception {
+
         File dir = new File(inDir);
         File[] classFolders = dir.listFiles();
 
@@ -251,6 +234,17 @@ public class ClusterUtils {
                     Set<String> doc = SemanticUtils.getDocument(tv);
                     allDocs.add(new ArrayList<>(doc));
                     docs.put(tv.getUID() + "," + f.getName(), new ArrayList<>(doc));
+                }
+            } else {
+                List<Term> terms = new ArrayList<>();
+                if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
+                    terms.add(TermFactory.create(new FileReader(f)));
+                }
+                classes.add(f.getName());
+                for (Term tv : terms) {
+                    Set<String> doc = SemanticUtils.getDocument(tv);
+                    allDocs.add(new ArrayList<>(doc));
+                    docs.put(tv.getUID() + "," + "UNKNOWN", new ArrayList<>(doc));
                 }
             }
         }
@@ -293,7 +287,6 @@ public class ClusterUtils {
             inst.setClassValue(theClass);
             data.add(inst);
         }
-//        System.err.println(data);
         return data;
 
     }
@@ -305,6 +298,7 @@ public class ClusterUtils {
         for (String c : classes) {
             fvClassVal.add(c);
         }
+        fvClassVal.add("UNKNOWN");
         Attribute classAttribute = new Attribute("theClass", fvClassVal);
         attributes.add(classAttribute);
 
@@ -313,6 +307,39 @@ public class ClusterUtils {
         }
 
         return attributes;
+    }
+
+    public static Map<String, String> classify(Instances data, Classifier classifier) throws Exception {
+
+        FilteredClassifier fc = new FilteredClassifier();
+        String[] options = new String[2];
+        options[0] = "-R"; // "range"
+        options[1] = "1"; // we want to ignore the attribute that is in the position '1'
+        Remove remove = new Remove(); // new instance of filter
+        remove.setOptions(options); // set options
+
+        fc.setFilter(remove); //add filter to remove attributes
+        fc.setClassifier(classifier);
+        fc.buildClassifier(data);
+
+//
+//        for (int i = 0; i < testData.numInstances(); i++) {
+//            Instance inst = testData.get(i);
+//            inst.setDataset(data);
+//        }
+        for (int i = 0; i < data.numInstances(); i++) {
+            Instance inst = data.get(i);
+            String s = data.attribute(0).value(i);
+            double predicted = fc.classifyInstance(inst);
+//           String id = inst.toString().split(",")[0];
+            // Classify instance.
+            String theClss = data.classAttribute().value((int) predicted);
+            System.err.println(s + " classified as : "
+                    + theClss);
+//            clusters.put(inDir + File.separator + s, theClss);
+        }
+        return null;
+
     }
 
 }

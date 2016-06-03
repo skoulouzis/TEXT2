@@ -18,7 +18,7 @@ import weka.core.Instances;
  *
  * @author S. Koulouzis
  */
-public class EM implements Classifier {
+public class EM implements Clusterer {
 
     private Integer numOfClusters;
 

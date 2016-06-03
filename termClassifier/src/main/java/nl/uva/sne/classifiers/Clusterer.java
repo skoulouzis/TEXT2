@@ -14,11 +14,10 @@ import org.json.simple.parser.ParseException;
  *
  * @author S. Koulouzis
  */
-public interface Classifier {
+public interface Clusterer {
 
     public void configure(Properties properties);
 
-    public void trainModel(String trainDataDir,String outDir) throws IOException, ParseException;
-
-    public Map<String, String> classify(String model, String dataDir) throws IOException, ParseException;
+    public Map<String, String> cluster(String inDir) throws IOException, ParseException;
+    
 }

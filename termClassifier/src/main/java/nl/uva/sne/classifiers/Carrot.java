@@ -25,7 +25,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author S. Koulouzis
  */
-public class Carrot implements Classifier {
+public class Carrot implements Clusterer {
 
     @Override
     public void configure(Properties properties) {

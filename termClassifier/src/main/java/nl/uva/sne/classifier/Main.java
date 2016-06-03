@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import nl.uva.sne.classifiers.Classifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
+import nl.uva.sne.classifiers.Classifier;
 import nl.uva.sne.commons.FileUtils;
 import nl.uva.sne.commons.SemanticUtils;
 import nl.uva.sne.commons.Term;
@@ -26,6 +26,7 @@ import nl.uva.sne.extractors.JtopiaExtractor;
 import nl.uva.sne.extractors.TermExtractor;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
+import nl.uva.sne.classifiers.Clusterer;
 
 /**
  *
@@ -37,32 +38,44 @@ public class Main {
     private static String props;
 
     public static void main(String args[]) {
-        boolean cluster = false;
-        boolean name = false;
+        boolean cluster = false, name = false, train = false;
         String className = null;
-        String jsonTermsDir = null;
-        String clustersOutDir = null;
+        String inDir = null, secondInDir = null, outDir = null;
+
         if (args != null) {
-            for (int i = 0; i < args.length; i++) {
+//            for (int i = 0; i < args.length; i++) {
 //           -c nl.uva.sne.classifiers.Kmeans $HOME/Downloads/jsonTerms  $HOME/Downloads/clusters
-                if (args[i].equals("-c")) {
-                    cluster = true;
-                    className = args[i + 1];
-                    jsonTermsDir = args[i + 2];
-                    clustersOutDir = args[i + 3];
-                    break;
+            if (args[0].equals("-c")) {
+                cluster = true;
+                className = args[1];
+                inDir = args[2];
+                if (args.length == 4) {
+                    outDir = args[3];
+                } else if (args.length == 5) {
+                    secondInDir = args[3];
+                    outDir = args[4];
                 }
-                if (args[i].equals("-n")) {
-                    name = true;
-                    clustersOutDir = args[i + 1];
-                    break;
-                }
+
+//                    break;
             }
-            props = args[args.length - 1];
-            if (props.endsWith(".properties")) {
-                propertiesPath = props;
+            if (args[0].equals("-n")) {
+                name = true;
+                outDir = args[1];
+//                    break;
+            }
+            if (args[0].equals("-t")) {
+                train = true;
+                className = args[1];
+                inDir = args[2];
+                outDir = args[3];
+//                    break;
             }
         }
+        props = args[args.length - 1];
+        if (props.endsWith(".properties")) {
+            propertiesPath = props;
+        }
+//        }
 
         try {
             if (cluster) {
@@ -72,18 +85,40 @@ public class Main {
 
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
-                Classifier classifier = (Classifier) obj;
-                classifier.configure(FileUtils.getProperties(propertiesPath));
+                try {
+                    Clusterer classifier = (Clusterer) obj;
 
-                Map<String, String> theCluster = classifier.cluster(jsonTermsDir);
-                copyTerms2Clusters(theCluster, clustersOutDir);
+                    classifier.configure(FileUtils.getProperties(propertiesPath));
 
-                nameClusterFolders(clustersOutDir);
+                    Map<String, String> theCluster = classifier.cluster(inDir);
+                    copyTerms2Clusters(theCluster, outDir);
+
+                    nameClusterFolders(outDir);
+
+                } catch (ClassCastException ex) {
+//                    -c nl.uva.sne.classifiers.J48 $USER/Downloads/trainedModel/J48.model $USER/jsonTerms $USER/Downloads/clusters
+                    Classifier classifier = (Classifier) obj;
+                    classifier.configure(FileUtils.getProperties(propertiesPath));
+
+                    Map<String, String> theCluster = classifier.classify(inDir, secondInDir);
+                    copyTerms2Clusters(theCluster, outDir);
+                    nameClusterFolders(outDir);
+                }
 
             }
             if (name) {
-                writeClustersToOneFile(clustersOutDir);
-                nameClusters(clustersOutDir);
+                writeClustersToOneFile(outDir);
+                nameClusters(outDir);
+            }
+            if (train) {
+//                 -t nl.uva.sne.classifiers.J48 $HOME/Downloads/trainData $HOME/Downloads/trainedModel/
+                Class c = Class.forName(className);
+                Object obj = c.newInstance();
+
+                Classifier classifier = (Classifier) obj;
+                classifier.configure(FileUtils.getProperties(propertiesPath));
+                classifier.trainModel(inDir, outDir);
+
             }
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException | JWNLException ex) {
