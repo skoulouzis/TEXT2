@@ -69,9 +69,12 @@ public class JtopiaExtractor implements TermExtractor {
         int count = 0;
         if (dir.isDirectory()) {
             for (File f : dir.listFiles()) {
-                count++;
-                Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
-                keywordsDictionaray.putAll(extractFromFile(f, termExtractor, topiaDoc));
+                if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+                    count++;
+                    Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
+                    keywordsDictionaray.putAll(extractFromFile(f, termExtractor, topiaDoc));
+                }
+
             }
         } else if (dir.isFile()) {
             keywordsDictionaray.putAll(extractFromFile(dir, termExtractor, topiaDoc));

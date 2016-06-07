@@ -11,24 +11,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
-import nl.uva.sne.commons.SemanticUtils;
-import static nl.uva.sne.commons.SemanticUtils.cosineSimilarity;
-import static nl.uva.sne.commons.SemanticUtils.stem;
-import static nl.uva.sne.commons.SemanticUtils.tfIdf;
-import static nl.uva.sne.commons.SemanticUtils.tokenize;
 import nl.uva.sne.commons.Term;
-import nl.uva.sne.commons.ValueComparator;
 import org.json.simple.parser.ParseException;
 import org.mapdb.DB;
 
@@ -111,7 +101,7 @@ public class MetaSemanitizer implements Semantizatior {
         if (dis == null) {
             Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} Glosses: {2} URL: {3} ", new Object[]{dis, dis.getConfidence(), dis.getGlosses(), dis.getUrl()});
+            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {3} Glosses: {2}  ", new Object[]{dis, dis.getConfidence(), dis.getGlosses(), dis.getUrl()});
         }
 
 //        if (possibleTerms.size() > 1) {

@@ -5,7 +5,9 @@
  */
 package nl.uva.sne.commons;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,12 +31,15 @@ import org.apache.commons.io.FilenameUtils;
 import org.carrot2.core.Document;
 import org.carrot2.core.LanguageCode;
 import org.json.simple.parser.ParseException;
+import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.classifiers.trees.J48;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
+import weka.core.converters.ArffSaver;
+import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.unsupervised.attribute.Remove;
 
 /**
@@ -115,34 +120,17 @@ public class ClusterUtils {
         return terms;
     }
 
-    public static void train(Classifier classifier, Instances data, String outDir) throws Exception {
+    public static void train(Classifier classifier, Instances trainData, String outDir) throws Exception {
 
-        FilteredClassifier fc = new FilteredClassifier();
-        String[] options = new String[2];
-        options[0] = "-R"; // "range"
-        options[1] = "1"; // we want to ignore the attribute that is in the position '1'
-        Remove remove = new Remove(); // new instance of filter
-        remove.setOptions(options); // set options
-
-        fc.setFilter(remove); //add filter to remove attributes
-        fc.setClassifier(classifier);
-        fc.buildClassifier(data);
-
-//        Map<String, String> clusters = new HashMap<>();
-//        for (int i = 0; i < data.numInstances(); i++) {
-//            Instance inst = data.instance(i);
-//            int predicted = (int) fc.classifyInstance(inst);
-//            String theClass = data.classAttribute().value(predicted);
-//            String id = inst.toString().split(",")[0];
-//        }
-        Evaluation eTest = new Evaluation(data);
-        eTest.evaluateModel(fc, data);
-
-        String strSummary = eTest.toSummaryString();
-        Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, strSummary);
-
-        weka.core.SerializationHelper.write(outDir + File.separator + classifier.getClass().getSimpleName() + ".model", classifier);
-
+//        ArffSaver saver = new ArffSaver();
+//        saver.setInstances(trainData);
+//        File file = new File(outDir + File.separator + "trainData.arff");
+//        saver.setFile(file);
+//        saver.setDestination(file);
+//        saver.writeBatch();
+        int[] indicesToRemove = new int[]{0};
+        FilteredClassifier model = buildModel(indicesToRemove, trainData.numAttributes() - 1, trainData, classifier);
+        weka.core.SerializationHelper.write(outDir + File.separator + model.getClass().getSimpleName() + ".model", model);
     }
 
     private static Instances createInstances(String inDir) throws Exception {
@@ -185,6 +173,7 @@ public class ClusterUtils {
 //                    featureV.put(word, 0.0);
 //                }
 //            }
+//            System.err.println(t+" "+featureV.size());
 //            featureVectors.put(t, featureV);
 //        }
         ArrayList<Attribute> attributes = new ArrayList<>();
@@ -240,11 +229,12 @@ public class ClusterUtils {
                 if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
                     terms.add(TermFactory.create(new FileReader(f)));
                 }
-                classes.add(f.getName());
+                classes.add("database");
                 for (Term tv : terms) {
                     Set<String> doc = SemanticUtils.getDocument(tv);
                     allDocs.add(new ArrayList<>(doc));
-                    docs.put(tv.getUID() + "," + "UNKNOWN", new ArrayList<>(doc));
+                    docs.put(tv.getUID() + "," + "database", new ArrayList<>(doc));
+//                    docs.put(tv.getUID(), new ArrayList<>(doc));
                 }
             }
         }
@@ -264,15 +254,25 @@ public class ClusterUtils {
             featureVectors.put(k, featureVector);
         }
 
+        for (String t : featureVectors.keySet()) {
+            Map<String, Double> featureV = featureVectors.get(t);
+            for (String word : allWords) {
+                if (!featureV.containsKey(word)) {
+                    featureV.put(word, 0.0);
+                }
+            }
+//            System.err.println(t + " " + featureV.size());
+            featureVectors.put(t, featureV);
+        }
         ArrayList<Attribute> attributes = buildAttributes(allWords, classes);
 
         Instances data = new Instances("Rel", attributes, docs.size());
-        data.setClassIndex(1);
+        data.setClassIndex(data.numAttributes() - 1);
 
         for (String t : featureVectors.keySet()) {
             String[] parts = t.split(",");
             String id = parts[0];
-            String theClass = parts[1];
+            String theClass = parts[parts.length - 1];
             int index = 0;
             double[] vals = new double[data.numAttributes()];
             vals[index] = data.attribute(0).addStringValue(id);
@@ -293,53 +293,74 @@ public class ClusterUtils {
 
     private static ArrayList<Attribute> buildAttributes(Set<String> wordVector, Set<String> classes) {
         ArrayList<Attribute> attributes = new ArrayList<>();
-        attributes.add(new Attribute("UID", (ArrayList<String>) null));
+        attributes.add(new Attribute("id", (ArrayList<String>) null));
         List<String> fvClassVal = new ArrayList<>();
         for (String c : classes) {
             fvClassVal.add(c);
         }
-        fvClassVal.add("UNKNOWN");
-        Attribute classAttribute = new Attribute("theClass", fvClassVal);
-        attributes.add(classAttribute);
+//        fvClassVal.add("UNKNOWN");
 
         for (String t : wordVector) {
             attributes.add(new Attribute(t));
         }
+        Attribute classAttribute = new Attribute("theClass", fvClassVal);
+        attributes.add(classAttribute);
 
         return attributes;
     }
 
-    public static Map<String, String> classify(Instances data, Classifier classifier) throws Exception {
+    public static Map<String, String> classify(String testDataPath, Classifier classifier) throws Exception {
 
-        FilteredClassifier fc = new FilteredClassifier();
-        String[] options = new String[2];
-        options[0] = "-R"; // "range"
-        options[1] = "1"; // we want to ignore the attribute that is in the position '1'
-        Remove remove = new Remove(); // new instance of filter
-        remove.setOptions(options); // set options
+        Instances testData = createInstancesWithClasses(testDataPath);
+        testData.setClassIndex(testData.numAttributes() - 1);
 
-        fc.setFilter(remove); //add filter to remove attributes
-        fc.setClassifier(classifier);
-        fc.buildClassifier(data);
-
-//
-//        for (int i = 0; i < testData.numInstances(); i++) {
-//            Instance inst = testData.get(i);
-//            inst.setDataset(data);
-//        }
-        for (int i = 0; i < data.numInstances(); i++) {
-            Instance inst = data.get(i);
-            String s = data.attribute(0).value(i);
-            double predicted = fc.classifyInstance(inst);
-//           String id = inst.toString().split(",")[0];
-            // Classify instance.
-            String theClss = data.classAttribute().value((int) predicted);
-            System.err.println(s + " classified as : "
-                    + theClss);
-//            clusters.put(inDir + File.separator + s, theClss);
+        Map<String, String> classes = new HashMap();
+        for (int j = 0; j < testData.numInstances(); j++) {
+//                System.err.println(m);
+            Instance inst = testData.get(j);
+            String id = inst.toString().split(",")[0];
+//                System.err.println(inst);
+//            System.out.print("ID: " + UNdata.instance(j).value(0) + " ");
+            int clsLabel = (int) classifier.classifyInstance(inst);
+//            String theClass = testData.classAttribute().value(clsLabel);
+//            System.err.println(id + " " + clsLabel);
+            classes.put(testDataPath + File.separator + id, String.valueOf(clsLabel));
         }
-        return null;
-
+        return classes;
     }
 
+    public static Instances loadARFF(String trainedDataPath) throws Exception {
+        DataSource source = new DataSource(trainedDataPath);
+        Instances data = source.getDataSet();
+
+        return data;
+    }
+
+    public static BufferedReader readDataFile(String filename) {
+        BufferedReader inputReader = null;
+
+        try {
+            inputReader = new BufferedReader(new FileReader(filename));
+        } catch (FileNotFoundException ex) {
+            System.err.println("File not found: " + filename);
+        }
+
+        return inputReader;
+    }
+
+    private static FilteredClassifier buildModel(int[] indicesToRemove, int classIndex, Instances trainDataset, Classifier cl) throws Exception {
+        FilteredClassifier model = new FilteredClassifier();
+        model.setClassifier(AbstractClassifier.makeCopy(cl));
+        Remove remove = new Remove();
+        remove.setAttributeIndicesArray(indicesToRemove);
+        remove.setInputFormat(trainDataset);
+        remove.setInvertSelection(false);
+        model.setFilter(remove);
+        trainDataset.setClassIndex(classIndex);
+        model.buildClassifier(trainDataset);
+//        int foldHash = trainDataset.toString().hashCode();
+//        String modelKey = createKey(indicesToRemove, foldHash);
+//        existingModels.put(modelKey, model);
+        return model;
+    }
 }

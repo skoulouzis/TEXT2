@@ -60,6 +60,7 @@ public class Wikipedia implements Semantizatior {
         "articles to",
         "article disambiguation",
         "articles incorporating",
+        "articles_including",
         "articles covered",
         "articles created",
         "articles that",

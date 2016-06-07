@@ -465,7 +465,7 @@ public class SemanticUtils {
                             }
                         }
                     }
-
+//                    System.err.println(t.getGlosses());
                     Set<String> intersection = new HashSet<>(nTokens);
                     intersection.retainAll(subTokens);
                     if (intersection.isEmpty()) {

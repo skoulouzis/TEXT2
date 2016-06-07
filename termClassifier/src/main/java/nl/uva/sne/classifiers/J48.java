@@ -14,9 +14,8 @@ import java.util.logging.Logger;
 import nl.uva.sne.commons.ClusterUtils;
 import org.json.simple.parser.ParseException;
 import weka.classifiers.meta.FilteredClassifier;
-import weka.core.Instance;
+import weka.classifiers.rules.PART;
 import weka.core.Instances;
-import weka.filters.unsupervised.attribute.Remove;
 
 /**
  *
@@ -35,10 +34,11 @@ public class J48 implements Classifier {
         try {
             Instances trainData = ClusterUtils.terms2Instances(trainDataDir, true);
 
-            weka.classifiers.trees.J48 j48 = new weka.classifiers.trees.J48();
-            j48.setUnpruned(true);
+            weka.classifiers.trees.J48 classifier = new weka.classifiers.trees.J48();
+//            weka.classifiers.Classifier classifier = new PART();
+//            j48.setUnpruned(true);
 
-            ClusterUtils.train(j48, trainData, outDir);
+            ClusterUtils.train(classifier, trainData, outDir);
 
             Logger.getLogger(J48.class.getName()).log(Level.INFO, "Model saved in {0}", outDir);
         } catch (Exception ex) {
@@ -47,15 +47,14 @@ public class J48 implements Classifier {
     }
 
     @Override
-    public Map<String, String> classify(String model, String dataDir) throws IOException, ParseException {
+    public Map<String, String> classify(String inDir, String dataDir) throws IOException, ParseException {
         try {
-            weka.classifiers.trees.J48 cls = (weka.classifiers.trees.J48) weka.core.SerializationHelper.read(model);
-            
-            Instances testData = ClusterUtils.terms2Instances(dataDir, true);
-            
-             return ClusterUtils.classify(testData,cls);
-            
-      
+            String modelPath = inDir + File.separator + "FilteredClassifier.model";
+            FilteredClassifier cls = (FilteredClassifier) weka.core.SerializationHelper.read(modelPath);
+
+//            String trainedDataPath = inDir + File.separator + "trainData.arff";
+            return ClusterUtils.classify(dataDir, cls);
+
         } catch (Exception ex) {
             Logger.getLogger(J48.class.getName()).log(Level.SEVERE, null, ex);
         }

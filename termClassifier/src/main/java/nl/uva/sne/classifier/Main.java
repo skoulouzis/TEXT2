@@ -96,7 +96,7 @@ public class Main {
                     nameClusterFolders(outDir);
 
                 } catch (ClassCastException ex) {
-//                    -c nl.uva.sne.classifiers.J48 $USER/Downloads/trainedModel/J48.model $USER/jsonTerms $USER/Downloads/clusters
+//                    -c nl.uva.sne.classifiers.J48 $USER/Downloads/trainedModel/ $USER/Downloads/jsonTerms $USER/Downloads/clusters
                     Classifier classifier = (Classifier) obj;
                     classifier.configure(FileUtils.getProperties(propertiesPath));
 
