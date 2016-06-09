@@ -50,9 +50,6 @@ public class Kmeans implements Clusterer {
                 case "Manhattan":
                     df = new ManhattanDistance(data);
                     break;
-                                    case "Cosine":
-                    df = new CosineSimilarity(data);
-                    break;
                 default:
                     df = new EuclideanDistance(data);
                     break;

@@ -5,7 +5,26 @@
  */
 package nl.uva.sne.classifiers;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import net.didion.jwnl.JWNLException;
+import nl.uva.sne.commons.ClusterUtils;
+import nl.uva.sne.commons.FileUtils;
+import nl.uva.sne.commons.SemanticUtils;
+import nl.uva.sne.commons.Term;
+import org.json.simple.parser.ParseException;
 import weka.core.DistanceFunction;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -17,112 +36,62 @@ import weka.core.neighboursearch.PerformanceStats;
  *
  * @author S. Koulouzis
  */
-class CosineSimilarity extends NormalizableDistance implements DistanceFunction {
+public class CosineSimilarity implements Classifier {
 
-    public CosineSimilarity(Instances data) {
-        super(data);
-    }
+    @Override
+    public void configure(Properties properties) {
 
-    public CosineSimilarity() {
-        super();
     }
 
     @Override
-    public void setInstances(Instances i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void trainModel(String trainDataDir, String outDir) throws IOException, ParseException, MalformedURLException {
+        try {
+            File dir = new File(trainDataDir);
+            File[] classFolders = dir.listFiles();
+
+            Map<String, Set<String>> classes = new HashMap<>();
+            List<List<String>> allDocs = new ArrayList<>();
+            for (File f : classFolders) {
+                if (f.isDirectory()) {
+                    List<Term> terms = ClusterUtils.dir2Terms(f.getAbsolutePath());
+                    Set<String> set = new HashSet<>();
+                    for (Term tv : terms) {
+                        Set<String> doc = SemanticUtils.getDocument(tv);
+                        allDocs.add(new ArrayList<>(doc));
+                        set.addAll(doc);
+                    }
+                    classes.put(f.getName(), set);
+                }
+
+            }
+
+            Map<String, Map<String, Double>> featureVectors = new HashMap<>();
+            for (String k : classes.keySet()) {
+                Set<String> doc = classes.get(k);
+                Map<String, Double> featureVector = new TreeMap<>();
+                for (String term : doc) {
+
+                    if (!featureVector.containsKey(term)) {
+                        List<String> listDoc = new ArrayList<>();
+                        listDoc.addAll(doc);
+                        double score = SemanticUtils.tfIdf(listDoc, allDocs, term);
+                        featureVector.put(term, score);
+                    }
+                }
+                featureVectors.put(k, featureVector);
+            }
+
+            for (String className : featureVectors.keySet()) {
+                Map<String, Double> vector = featureVectors.get(className);
+                FileUtils.writeDictionary2File(vector, outDir + File.separator + className + ".csv");
+            }
+        } catch (JWNLException ex) {
+            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
-    public Instances getInstances() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void setAttributeIndices(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String getAttributeIndices() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void setInvertSelection(boolean bln) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean getInvertSelection() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double distance(Instance instnc, Instance instnc1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double distance(Instance instnc, Instance instnc1, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double distance(Instance instnc, Instance instnc1, double d, PerformanceStats ps) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void postProcessDistances(double[] doubles) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void update(Instance instnc) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void clean() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Enumeration<Option> listOptions() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void setOptions(String[] strings) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String[] getOptions() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String globalInfo() {
-        return "Cosine similarity is a measure of similarity between two vectors "
-                + "of an inner product space that measures the cosine of the angle "
-                + "between them. The cosine of 0° is 1, and it is less than 1 for "
-                + "any other angle. It is thus a judgment of orientation and not "
-                + "magnitude: two vectors with the same orientation have a cosine "
-                + "similarity of 1, two vectors at 90° have a similarity of 0, "
-                + "and two vectors diametrically opposed have a similarity of -1, "
-                + "independent of their magnitude. Cosine similarity is "
-                + "particularly used in positive space, where the outcome is "
-                + "neatly bounded in [0,1]. (https://en.wikipedia.org/wiki/Cosine_similarity)";
-    }
-
-    @Override
-    protected double updateDistance(double d, double d1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String getRevision() {
+    public Map<String, String> classify(String model, String dataDir) throws IOException, ParseException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

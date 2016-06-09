@@ -106,7 +106,7 @@ public class ClusterUtils {
         return docs;
     }
 
-    private static List<Term> dir2Terms(String inDir) throws IOException, ParseException {
+    public static List<Term> dir2Terms(String inDir) throws IOException, ParseException {
         File dir = new File(inDir);
 
         List<Term> terms = new ArrayList<>();
@@ -229,11 +229,11 @@ public class ClusterUtils {
                 if (FilenameUtils.getExtension(f.getName()).endsWith("json")) {
                     terms.add(TermFactory.create(new FileReader(f)));
                 }
-                classes.add("database");
+                classes.add("NON");
                 for (Term tv : terms) {
                     Set<String> doc = SemanticUtils.getDocument(tv);
                     allDocs.add(new ArrayList<>(doc));
-                    docs.put(tv.getUID() + "," + "database", new ArrayList<>(doc));
+                    docs.put(tv.getUID() + "," + "NON", new ArrayList<>(doc));
 //                    docs.put(tv.getUID(), new ArrayList<>(doc));
                 }
             }
@@ -298,7 +298,7 @@ public class ClusterUtils {
         for (String c : classes) {
             fvClassVal.add(c);
         }
-//        fvClassVal.add("UNKNOWN");
+        fvClassVal.add("NON");
 
         for (String t : wordVector) {
             attributes.add(new Attribute(t));
