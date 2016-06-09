@@ -72,8 +72,13 @@ public class MetaSemanitizer implements Semantizatior {
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
         String semantizatiorClassNames = properties.getProperty("semantizatiors", "nl.uva.sne.semantizators.BabelNet,nl.uva.sne.semantizators.Wikipedia");
         String[] classes = semantizatiorClassNames.split(",");
-        for (String className : classes) {
+        Set<Object> keys = properties.keySet();
+        for (Object o : keys) {
+            String p = (String) properties.get(o);
+            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "{0} : {1}", new Object[]{o, p});
+        }
 
+        for (String className : classes) {
             try {
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
