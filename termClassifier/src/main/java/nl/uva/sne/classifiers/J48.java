@@ -61,4 +61,8 @@ public class J48 implements Classifier {
         return null;
     }
 
+    @Override
+    public void saveClusterFile(String model, String dataDir, String filePath) throws IOException, ParseException {
+    }
+
 }

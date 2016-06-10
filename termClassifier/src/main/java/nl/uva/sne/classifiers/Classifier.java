@@ -21,4 +21,6 @@ public interface Classifier {
     public void trainModel(String trainDataDir,String outDir) throws IOException, ParseException;
 
     public Map<String, String> classify(String model, String dataDir) throws IOException, ParseException;
+       
+    public void saveClusterFile(String model, String dataDir, String filePath) throws IOException, ParseException;
 }

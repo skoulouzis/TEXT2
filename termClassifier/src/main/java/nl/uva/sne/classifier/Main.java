@@ -100,9 +100,12 @@ public class Main {
                     Classifier classifier = (Classifier) obj;
                     classifier.configure(FileUtils.getProperties(propertiesPath));
 
+                    classifier.saveClusterFile(inDir, secondInDir, outDir);
                     Map<String, String> theCluster = classifier.classify(inDir, secondInDir);
-                    copyTerms2Clusters(theCluster, outDir);
-                    nameClusterFolders(outDir);
+                    if (theCluster != null) {
+                        copyTerms2Clusters(theCluster, outDir);
+                    }
+
                 }
 
             }
