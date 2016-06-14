@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizators;
+package nl.uva.sne.disambiguators;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,9 +26,9 @@ import org.mapdb.DB;
  *
  * @author S. Koulouzis
  */
-public class MetaSemanitizer implements Semantizatior {
+public class MetaDisambiguator implements Disambiguator {
 
-    List<Semantizatior> semantizators = new ArrayList<>();
+    List<Disambiguator> semantizators = new ArrayList<>();
     private Integer limit;
     private DB db;
     private double minimumSimilarity;
@@ -57,7 +57,7 @@ public class MetaSemanitizer implements Semantizatior {
             }
             terms = removeIrrelevant(terms);
         } catch (Exception ex) {
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.WARNING, null, ex);
             return terms;
         } finally {
 //            saveCache();
@@ -75,18 +75,18 @@ public class MetaSemanitizer implements Semantizatior {
         Set<Object> keys = properties.keySet();
         for (Object o : keys) {
             String p = (String) properties.get(o);
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "{0} : {1}", new Object[]{o, p});
+            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "{0} : {1}", new Object[]{o, p});
         }
 
         for (String className : classes) {
             try {
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
-                Semantizatior semantizator = (Semantizatior) obj;
+                Disambiguator semantizator = (Disambiguator) obj;
                 semantizator.configure(properties);
                 semantizators.add(semantizator);
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-                Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -95,7 +95,7 @@ public class MetaSemanitizer implements Semantizatior {
     @Override
     public Term getTerm(String term, String allTermsDictionaryPath, double minimumSimilarity) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = new HashSet();
-        for (Semantizatior s : semantizators) {
+        for (Disambiguator s : semantizators) {
             Term t = s.getTerm(term, allTermsDictionaryPath, minimumSimilarity);
             if (t != null) {
                 possibleTerms.add(t);
@@ -104,9 +104,9 @@ public class MetaSemanitizer implements Semantizatior {
         Term dis = getWinner(possibleTerms, minimumSimilarity);
 //        Term dis = SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionaryPath, minimumSimilarity, true);
         if (dis == null) {
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
+            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {
-            Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {3} Glosses: {2}  ", new Object[]{dis, dis.getConfidence(), dis.getGlosses(), dis.getUrl()});
+            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {3} Glosses: {2}  ", new Object[]{dis, dis.getConfidence(), dis.getGlosses(), dis.getUrl()});
         }
 
 //        if (possibleTerms.size() > 1) {
@@ -117,7 +117,7 @@ public class MetaSemanitizer implements Semantizatior {
     }
 
 //    private void saveCache() throws FileNotFoundException, IOException {
-//        Logger.getLogger(MetaSemanitizer.class.getName()).log(Level.FINE, "Saving cache");
+//        Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.FINE, "Saving cache");
 //
 //        File cacheDBFile = new File(cachePath);
 //        if (cacheDBFile.isFile() && cacheDBFile.exists()) {

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,15 +28,8 @@ import nl.uva.sne.commons.SemanticUtils;
 import static nl.uva.sne.commons.SemanticUtils.cosineSimilarity;
 import static nl.uva.sne.commons.SemanticUtils.tfIdf;
 import nl.uva.sne.commons.Term;
-import nl.uva.sne.commons.ValueComparator;
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.parser.ParseException;
-import weka.core.DistanceFunction;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.NormalizableDistance;
-import weka.core.Option;
-import weka.core.neighboursearch.PerformanceStats;
 
 /**
  *
@@ -102,15 +94,15 @@ public class CosineSimilarity implements Classifier {
 //                Map<String, Double> classVector = classFeatureVectors.get(className);
 //                double max = Double.MIN_VALUE;
 //                String winnerClass;
-//                for (String termID : termVectors.keySet()) {
-//                    Map<String, Double> tVector = termVectors.get(termID);
+//                for (String docName : termVectors.keySet()) {
+//                    Map<String, Double> tVector = termVectors.get(docName);
 //                    Double similarity = cosineSimilarity(classVector, tVector);
 //                    if (similarity > max) {
 //                        max = similarity;
 //                        winnerClass = className;
 //                    }
 //                }
-//                classes.put(dataDirPath + File.separator + termID, className);
+//                classes.put(dataDirPath + File.separator + docName, className);
 //            }
         return null;
     }
@@ -123,10 +115,10 @@ public class CosineSimilarity implements Classifier {
 
             double minScore = Double.MAX_VALUE;
             double maxScore = Double.MIN_VALUE;
-            for (String termID : classesMap.keySet()) {
+            for (String docName : classesMap.keySet()) {
                 StringBuilder line = new StringBuilder();
-                line.append(termID).append(",");
-                Map<String, Double> res = classesMap.get(termID);
+                line.append(docName).append(",");
+                Map<String, Double> res = classesMap.get(docName);
                 Set<String> classNames = res.keySet();
                 for (String cName : classNames) {
                     Double score = res.get(cName);
@@ -140,13 +132,13 @@ public class CosineSimilarity implements Classifier {
 
             StringBuilder header = new StringBuilder();
             boolean headerSet = false;
-            header.append("termID").append(",");
+            header.append("docName").append(",");
 
             try (PrintWriter out = new PrintWriter(filePath + File.separator + "resault.csv")) {
-                for (String termID : classesMap.keySet()) {
+                for (String docName : classesMap.keySet()) {
                     StringBuilder line = new StringBuilder();
-                    line.append(termID).append(",");
-                    Map<String, Double> res = classesMap.get(termID);
+                    line.append(docName).append(",");
+                    Map<String, Double> res = classesMap.get(docName);
                     Set<String> classNames = res.keySet();
                     for (String cName : classNames) {
                         if (!headerSet) {
@@ -171,10 +163,10 @@ public class CosineSimilarity implements Classifier {
 
             }
 
-//            for (String termID : classesMap.keySet()) {
+//            for (String docName : classesMap.keySet()) {
 //                StringBuilder line = new StringBuilder();
-//                line.append(termID).append(",");
-//                Map<String, Double> res = classesMap.get(termID);
+//                line.append(docName).append(",");
+//                Map<String, Double> res = classesMap.get(docName);
 //                Set<String> classNames = res.keySet();
 //                for (String cName : classNames) {
 //                    Double score = res.get(cName);
@@ -189,15 +181,15 @@ public class CosineSimilarity implements Classifier {
 //                Map<String, Double> classVector = classFeatureVectors.get(className);
 //                double max = Double.MIN_VALUE;
 //                String winnerClass;
-//                for (String termID : termVectors.keySet()) {
-//                    Map<String, Double> tVector = termVectors.get(termID);
+//                for (String docName : termVectors.keySet()) {
+//                    Map<String, Double> tVector = termVectors.get(docName);
 //                    Double similarity = cosineSimilarity(classVector, tVector);
 //                    if (similarity > max) {
 //                        max = similarity;
 //                        winnerClass = className;
 //                    }
 //                }
-//                classes.put(dataDirPath + File.separator + termID, className);
+//                classes.put(dataDirPath + File.separator + docName, className);
 //            }
         } catch (JWNLException ex) {
             Logger.getLogger(CosineSimilarity.class.getName()).log(Level.SEVERE, null, ex);
@@ -229,15 +221,18 @@ public class CosineSimilarity implements Classifier {
         Map<String, List<String>> docs = new HashMap<>();
         for (File f : textFiles) {
             if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
+                Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Processing {0}", f.getAbsolutePath());
                 StringBuilder sb = new StringBuilder();
                 try (BufferedReader br = new BufferedReader(new FileReader(f))) {
                     for (String text; (text = br.readLine()) != null;) {
                         sb.append(text.toLowerCase()).append(" ");
                     }
                 }
+                Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Processing text{0}", sb.length());
                 List<String> doc = SemanticUtils.tokenize(sb.toString(), true);
                 allDocs.add(new ArrayList<>(doc));
                 docs.put(f.getName(), new ArrayList<>(doc));
+                Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Processed {0} documants", docs.size());
             }
         }
 //        List<Term> terms = ClusterUtils.dir2Terms(dataDir.getAbsolutePath());
@@ -250,6 +245,7 @@ public class CosineSimilarity implements Classifier {
 
         Map<String, Map<String, Double>> termVectors = new HashMap<>();
         for (String k : docs.keySet()) {
+            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Calcoalting tfidf for: {0}", k);
             List<String> doc = docs.get(k);
             Map<String, Double> featureVector = new TreeMap<>();
             for (String term : doc) {
@@ -262,15 +258,16 @@ public class CosineSimilarity implements Classifier {
         }
 
         Map<String, Map<String, Double>> classesMap = new HashMap<>();
-        for (String termID : termVectors.keySet()) {
+        for (String docName : termVectors.keySet()) {
+            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Setting score for: {0}", docName);
             Map<String, Double> scoreMap = new TreeMap<>();
-            Map<String, Double> tVector = termVectors.get(termID);
+            Map<String, Double> tVector = termVectors.get(docName);
             for (String className : classFeatureVectors.keySet()) {
                 Map<String, Double> classVector = classFeatureVectors.get(className);
                 Double similarity = cosineSimilarity(classVector, tVector);
                 scoreMap.put(className, similarity);
             }
-            classesMap.put(termID, scoreMap);
+            classesMap.put(docName, scoreMap);
         }
         return classesMap;
     }

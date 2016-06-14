@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizators;
+package nl.uva.sne.disambiguators;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,7 +34,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author S. Koulouzis
  */
-public class WordNet implements Semantizatior {
+public class WordNet implements Disambiguator {
 
     private static Dictionary wordNetdictionary;
     private Double minimumSimilarity;

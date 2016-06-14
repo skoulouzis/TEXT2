@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizators;
+package nl.uva.sne.disambiguators;
 
 import edu.stanford.nlp.util.Pair;
 import java.util.Properties;
@@ -47,7 +47,7 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class BabelNet implements Semantizatior {
+public class BabelNet implements Disambiguator {
 
     private String keysStr;
     private DB db;

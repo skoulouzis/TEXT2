@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizators;
+package nl.uva.sne.disambiguators;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,7 +42,7 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class Wikipedia implements Semantizatior {
+public class Wikipedia implements Disambiguator {
 
     private Integer limit;
 

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizators;
+package nl.uva.sne.disambiguators;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,7 +16,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author S. Koulouzis
  */
-public interface Semantizatior {
+public interface Disambiguator {
 
     public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException;
 

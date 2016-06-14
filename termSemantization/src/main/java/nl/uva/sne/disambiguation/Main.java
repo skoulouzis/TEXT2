@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nl.uva.sne.semantizaton;
+package nl.uva.sne.disambiguation;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -16,7 +16,7 @@ import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
-import nl.uva.sne.semantizators.Semantizatior;
+import nl.uva.sne.disambiguators.Disambiguator;
 
 /**
  *
@@ -24,7 +24,7 @@ import nl.uva.sne.semantizators.Semantizatior;
  */
 public class Main {
 
-    public static String propertiesPath = "semantization.properties";
+    public static String propertiesPath = "disambiguation.properties";
     private static String props;
 
     public static void main(String args[]) {
@@ -44,15 +44,15 @@ public class Main {
         try {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
-//            String className = "nl.uva.sne.semantizators.BabelNet";
-//            String className = "nl.uva.sne.semantizators.Wikipedia";
-//            String className = "nl.uva.sne.semantizators.Wikidata";
-//            String className = "nl.uva.sne.semantizators.WordNet";
-            String className = "nl.uva.sne.semantizators.MetaSemanitizer";
+//            String className = "nl.uva.sne.disambiguators.BabelNet";
+//            String className = "nl.uva.sne.disambiguators.Wikipedia";
+//            String className = "nl.uva.sne.disambiguators.Wikidata";
+//            String className = "nl.uva.sne.disambiguators.WordNet";
+            String className = "nl.uva.sne.disambiguators.MetaSemanitizer";
 
             Class c = Class.forName(className);
             Object obj = c.newInstance();
-            Semantizatior semantizator = (Semantizatior) obj;
+            Disambiguator semantizator = (Disambiguator) obj;
 
             semantizator.configure(FileUtils.getProperties(propertiesPath));
 
