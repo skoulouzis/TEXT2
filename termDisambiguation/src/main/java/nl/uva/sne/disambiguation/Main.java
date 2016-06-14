@@ -48,7 +48,7 @@ public class Main {
 //            String className = "nl.uva.sne.disambiguators.Wikipedia";
 //            String className = "nl.uva.sne.disambiguators.Wikidata";
 //            String className = "nl.uva.sne.disambiguators.WordNet";
-            String className = "nl.uva.sne.disambiguators.MetaSemanitizer";
+            String className = "nl.uva.sne.disambiguators.MetaDisambiguator";
 
             Class c = Class.forName(className);
             Object obj = c.newInstance();

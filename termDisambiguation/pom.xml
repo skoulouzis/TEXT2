@@ -69,7 +69,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>nl.uva.sne.semantizaton.Main</mainClass>
+                            <mainClass>nl.uva.sne.disambiguation.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
