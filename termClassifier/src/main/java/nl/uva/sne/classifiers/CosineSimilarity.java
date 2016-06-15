@@ -162,35 +162,6 @@ public class CosineSimilarity implements Classifier {
                 }
 
             }
-
-//            for (String docName : classesMap.keySet()) {
-//                StringBuilder line = new StringBuilder();
-//                line.append(docName).append(",");
-//                Map<String, Double> res = classesMap.get(docName);
-//                Set<String> classNames = res.keySet();
-//                for (String cName : classNames) {
-//                    Double score = res.get(cName);
-//                    double scaledValue = (score - 2.0) / (5.0 - 2.0);
-//                    line.append(scaledValue).append(",");
-//                }
-//                line.deleteCharAt(line.length() - 1);
-//                line.setLength(line.length());
-//                System.err.println(line);
-//            }
-//            for (String className : classFeatureVectors.keySet()) {
-//                Map<String, Double> classVector = classFeatureVectors.get(className);
-//                double max = Double.MIN_VALUE;
-//                String winnerClass;
-//                for (String docName : termVectors.keySet()) {
-//                    Map<String, Double> tVector = termVectors.get(docName);
-//                    Double similarity = cosineSimilarity(classVector, tVector);
-//                    if (similarity > max) {
-//                        max = similarity;
-//                        winnerClass = className;
-//                    }
-//                }
-//                classes.put(dataDirPath + File.separator + docName, className);
-//            }
         } catch (JWNLException ex) {
             Logger.getLogger(CosineSimilarity.class.getName()).log(Level.SEVERE, null, ex);
         }
