@@ -28,8 +28,11 @@ public class JtopiaExtractor implements TermExtractor {
 
     @Override
     public void configure(Properties prop) {
-
+        for (Object k : prop.keySet()) {
+            Logger.getLogger(JtopiaExtractor.class.getName()).log(Level.INFO, k + " : " + prop.getProperty((String) k));
+        }
         String taggerType = prop.getProperty("tagger.type", "stanford");
+
         String modelPath = prop.getProperty("model.path",
                 System.getProperty("user.home") + File.separator + "workspace"
                 + File.separator + "TEXT2" + File.separator + "etc" + File.separator + "model");
