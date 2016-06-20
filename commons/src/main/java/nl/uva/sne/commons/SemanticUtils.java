@@ -279,7 +279,7 @@ public class SemanticUtils {
         } finally {
             tokenStream.close();
         }
-        Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Returning {0}:", words.size() + " tokens");
+//        Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Returning {0}:", words.size() + " tokens");
         return words;
     }
 
