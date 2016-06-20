@@ -28,7 +28,7 @@ import org.mapdb.DB;
  */
 public class MetaDisambiguator implements Disambiguator {
 
-    List<Disambiguator> semantizators = new ArrayList<>();
+    List<Disambiguator> disambiguators = new ArrayList<>();
     private Integer limit;
     private DB db;
     private double minimumSimilarity;
@@ -72,25 +72,34 @@ public class MetaDisambiguator implements Disambiguator {
 
     @Override
     public void configure(Properties properties) {
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "0"));
-        cachePath = properties.getProperty("cache.path");
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
-        String semantizatiorClassNames = properties.getProperty("semantizatiors", "nl.uva.sne.semantizators.BabelNet,nl.uva.sne.semantizators.Wikipedia");
-        String[] classes = semantizatiorClassNames.split(",");
-        Set<Object> keys = properties.keySet();
-        for (Object o : keys) {
-            String p = (String) properties.get(o);
-            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "{0} : {1}", new Object[]{o, p});
+        StringBuffer props = new StringBuffer();
+        limit = Integer.valueOf(System.getProperty("num.of.terms"));
+        if (limit == null) {
+            limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
         }
+        props.append("num.of.terms: ").append(limit).append(" ");
+        lineOffset = Integer.valueOf(System.getProperty("offset.terms"));
+        if (lineOffset == null) {
+            lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "1"));
+        }
+        props.append("offset.terms: ").append(lineOffset).append(" ");
+        cachePath = properties.getProperty("cache.path");
+        props.append("cache.path: ").append(cachePath).append(" ");
+        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+        props.append("minimum.similarity: ").append(minimumSimilarity).append(" ");
+        String semantizatiorClassNames = properties.getProperty("disambiguators", "nl.uva.sne.disambiguators.BabelNet,nl.uva.sne.disambiguators.Wikipedia");
+        props.append("disambiguators: ").append(semantizatiorClassNames).append(" ");
+        Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, props.toString());
+
+        String[] classes = semantizatiorClassNames.split(",");
 
         for (String className : classes) {
             try {
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
-                Disambiguator semantizator = (Disambiguator) obj;
-                semantizator.configure(properties);
-                semantizators.add(semantizator);
+                Disambiguator disambiguator = (Disambiguator) obj;
+                disambiguator.configure(properties);
+                disambiguators.add(disambiguator);
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
                 Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -101,7 +110,7 @@ public class MetaDisambiguator implements Disambiguator {
     @Override
     public Term getTerm(String term, String allTermsDictionaryPath, double minimumSimilarity) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = new HashSet();
-        for (Disambiguator s : semantizators) {
+        for (Disambiguator s : disambiguators) {
             Term t = s.getTerm(term, allTermsDictionaryPath, minimumSimilarity);
             if (t != null) {
                 possibleTerms.add(t);
