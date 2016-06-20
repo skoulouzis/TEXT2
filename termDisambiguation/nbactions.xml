@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath nl.uva.sne.semantizaton.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/doc2/Big_Data_Analytic_Platforms/dictionary2.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-classpath %classpath nl.uva.sne.disambiguation.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/D2.2_Table_14CompetencesGroups/DataAnalytics_DSDA/dictionary.csv /home/alogo/Downloads/jsonTerms</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath nl.uva.sne.semantizaton.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/doc2/Big_Data_Analytic_Platforms/dictionary2.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath nl.uva.sne.disambiguation.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/D2.2_Table_14CompetencesGroups/DataAnalytics_DSDA/dictionary.csv /home/alogo/Downloads/jsonTerms</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath nl.uva.sne.semantizaton.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/doc2/Big_Data_Analytic_Platforms/dictionary2.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-classpath %classpath nl.uva.sne.disambiguation.Main /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/D2.2_Table_14CompetencesGroups/DataAnalytics_DSDA/dictionary.csv /home/alogo/Downloads/jsonTerms</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>

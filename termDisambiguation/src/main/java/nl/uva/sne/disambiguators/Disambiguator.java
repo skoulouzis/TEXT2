@@ -18,7 +18,7 @@ import org.json.simple.parser.ParseException;
  */
 public interface Disambiguator {
 
-    public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException;
+    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException;
 
     public void configure(Properties properties);
 

@@ -33,29 +33,34 @@ public class MetaDisambiguator implements Disambiguator {
     private DB db;
     private double minimumSimilarity;
     private String cachePath;
+    private Integer lineOffset;
 
     @Override
-    public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
+    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
         File dictionary = new File(filterredDictionary);
         int count = 0;
+        int lineCount = 1;
         try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
             for (String line; (line = br.readLine()) != null;) {
-                String[] parts = line.split(",");
-                String term = parts[0];
+                if (lineCount >= lineOffset) {
+                    String[] parts = line.split(",");
+                    String term = parts[0];
 //                Integer score = Integer.valueOf(parts[1]);
-                if (term.length() >= 1) {
-                    count++;
-                    if (count > limit) {
-                        break;
-                    }
-                    Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
-                    if (tt != null) {
-                        terms.add(tt);
+                    if (term.length() >= 1) {
+                        count++;
+                        if (count > limit) {
+                            break;
+                        }
+                        Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
+                        if (tt != null) {
+                            terms.add(tt);
+                        }
                     }
                 }
+                lineCount++;
             }
-            terms = removeIrrelevant(terms);
+//            terms = removeIrrelevant(terms);
         } catch (Exception ex) {
             Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.WARNING, null, ex);
             return terms;
@@ -68,6 +73,7 @@ public class MetaDisambiguator implements Disambiguator {
     @Override
     public void configure(Properties properties) {
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+        lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "0"));
         cachePath = properties.getProperty("cache.path");
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
         String semantizatiorClassNames = properties.getProperty("semantizatiors", "nl.uva.sne.semantizators.BabelNet,nl.uva.sne.semantizators.Wikipedia");
@@ -162,8 +168,7 @@ public class MetaDisambiguator implements Disambiguator {
         return null;
     }
 
-    private List<Term> removeIrrelevant(List<Term> terms) throws IOException, JWNLException, MalformedURLException, ParseException {
-        return terms;
-    }
-
+//    private List<Term> removeIrrelevant(List<Term> terms) throws IOException, JWNLException, MalformedURLException, ParseException {
+//        return terms;
+//    }
 }

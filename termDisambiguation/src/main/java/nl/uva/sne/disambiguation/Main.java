@@ -52,11 +52,11 @@ public class Main {
 
             Class c = Class.forName(className);
             Object obj = c.newInstance();
-            Disambiguator semantizator = (Disambiguator) obj;
+            Disambiguator disambiguator = (Disambiguator) obj;
 
-            semantizator.configure(FileUtils.getProperties(propertiesPath));
+            disambiguator.configure(FileUtils.getProperties(propertiesPath));
 
-            terms = semantizator.semnatizeTerms(allTermsDictionary, filterredDictionary);
+            terms = disambiguator.disambiguateTerms(allTermsDictionary, filterredDictionary);
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);

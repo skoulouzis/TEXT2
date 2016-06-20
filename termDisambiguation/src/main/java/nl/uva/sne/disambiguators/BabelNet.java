@@ -63,27 +63,32 @@ public class BabelNet implements Disambiguator {
     private int keyIndex = 0;
     private Double minimumSimilarity;
     private File cacheDBFile;
+    private Integer lineOffset;
 
     @Override
-    public List<Term> semnatizeTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
+    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
         File dictionary = new File(filterredDictionary);
         int count = 0;
+        int lineCount = 1;
         try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
             for (String line; (line = br.readLine()) != null;) {
-                String[] parts = line.split(",");
-                String term = parts[0];
+                if (lineCount >= lineOffset) {
+                    String[] parts = line.split(",");
+                    String term = parts[0];
 //                Integer score = Integer.valueOf(parts[1]);
-                if (term.length() >= 1) {
-                    count++;
-                    if (count > limit) {
-                        break;
-                    }
-                    Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
-                    if (tt != null) {
-                        terms.add(tt);
+                    if (term.length() >= 1) {
+                        count++;
+                        if (count > limit) {
+                            break;
+                        }
+                        Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
+                        if (tt != null) {
+                            terms.add(tt);
+                        }
                     }
                 }
+                lineCount++;
             }
         } catch (Exception ex) {
             Logger.getLogger(SemanticUtils.class.getName()).log(Level.WARNING, null, ex);
@@ -182,6 +187,7 @@ public class BabelNet implements Disambiguator {
         cacheDBFile = new File(cachePath);
 
         limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+        lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "0"));
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
 
