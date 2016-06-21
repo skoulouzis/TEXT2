@@ -114,7 +114,7 @@ public class Main {
                 nameClusters(outDir);
             }
             if (train) {
-//                 -t nl.uva.sne.classifiers.J48 $HOME/Downloads/trainData $HOME/Downloads/trainedModel/
+//                 -t nl.uva.sne.classifiers.CosineSimilarity $HOME/Downloads/trainData $HOME/Downloads/trainedModel/
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
 

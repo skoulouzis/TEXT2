@@ -9,7 +9,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -73,14 +72,21 @@ public class MetaDisambiguator implements Disambiguator {
     @Override
     public void configure(Properties properties) {
         StringBuffer props = new StringBuffer();
-        limit = Integer.valueOf(System.getProperty("num.of.terms"));
-        if (limit == null) {
+        String numOfTerms = System.getProperty("num.of.terms");
+
+        if (numOfTerms == null) {
             limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+        } else {
+            limit = Integer.valueOf(numOfTerms);
         }
         props.append("num.of.terms: ").append(limit).append(" ");
-        lineOffset = Integer.valueOf(System.getProperty("offset.terms"));
-        if (lineOffset == null) {
+
+        String offset = System.getProperty("offset.terms");
+
+        if (offset == null) {
             lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "1"));
+        } else {
+            lineOffset = Integer.valueOf(offset);
         }
         props.append("offset.terms: ").append(lineOffset).append(" ");
         cachePath = properties.getProperty("cache.path");

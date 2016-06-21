@@ -44,6 +44,7 @@ public class CosineSimilarity implements Classifier {
 
     @Override
     public void trainModel(String trainDataDir, String outDir) throws IOException, ParseException, MalformedURLException {
+        Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "trainDataDir: " + trainDataDir + " outDir: " + outDir);
         try {
             File dir = new File(trainDataDir);
             File[] classFolders = dir.listFiles();
@@ -51,6 +52,7 @@ public class CosineSimilarity implements Classifier {
             Map<String, Set<String>> classes = new HashMap<>();
             List<List<String>> allDocs = new ArrayList<>();
             for (File f : classFolders) {
+                Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "classFolder: " + f.getAbsolutePath());
                 if (f.isDirectory()) {
                     List<Term> terms = ClusterUtils.dir2Terms(f.getAbsolutePath());
                     Set<String> set = new HashSet<>();
@@ -63,6 +65,7 @@ public class CosineSimilarity implements Classifier {
                 }
             }
 
+            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "classes: " + classes);
             Map<String, Map<String, Double>> featureVectors = new HashMap<>();
             for (String k : classes.keySet()) {
                 Set<String> doc = classes.get(k);
@@ -81,6 +84,7 @@ public class CosineSimilarity implements Classifier {
 
             for (String className : featureVectors.keySet()) {
                 Map<String, Double> vector = featureVectors.get(className);
+                Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "saving : " + outDir + File.separator + className + ".csv");
                 FileUtils.writeDictionary2File(vector, outDir + File.separator + className + ".csv");
             }
         } catch (JWNLException ex) {
