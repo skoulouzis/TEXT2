@@ -98,23 +98,30 @@ public class BabelNet implements Disambiguator {
     }
 
     @Override
-    public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException {
-        Set<Term> possibleTerms = getTermNodeByLemma(term);
+    public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException, UnsupportedEncodingException, FileNotFoundException {
+        Set<Term> possibleTerms;
+        try {
+            possibleTerms = getTermNodeByLemma(term);
+
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
-        Term dis = disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
+            Term dis = disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
 //        } else if (possibleTerms.size() == 1) {
 //            return possibleTerms.iterator().next();
 //        }
 //        return null;
-        if (dis == null) {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
-        } else {
-            Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {2}", new Object[]{dis, dis.getConfidence(), dis.getUrl()});
+            if (dis == null) {
+                Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
+            } else {
+                Logger.getLogger(BabelNet.class.getName()).log(Level.INFO, "Term: {0}. Confidence: {1} URL: {2}", new Object[]{dis, dis.getConfidence(), dis.getUrl()});
+            }
+            return dis;
+        } catch (InterruptedException ex) {
+            Logger.getLogger(BabelNet.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return dis;
+        return null;
     }
 
-    private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException, UnsupportedEncodingException, JWNLException {
+    private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException, UnsupportedEncodingException, JWNLException, FileNotFoundException, InterruptedException {
         String language = "EN";
         List<String> ids = getcandidateWordIDs(language, term, key);
         Set<Term> nodes = new HashSet<>();
@@ -144,7 +151,7 @@ public class BabelNet implements Disambiguator {
         return nodes;
     }
 
-    private String getBabelnetSynset(String id, String lan, String key) throws IOException {
+    private String getBabelnetSynset(String id, String lan, String key) throws IOException, FileNotFoundException, InterruptedException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -191,7 +198,7 @@ public class BabelNet implements Disambiguator {
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
     }
 
-    private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException {
+    private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException, FileNotFoundException, InterruptedException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -233,17 +240,30 @@ public class BabelNet implements Disambiguator {
             if (ids.isEmpty()) {
                 ids.add("NON-EXISTING");
                 wordIDCache.put(word, ids);
-                db.commit();
+                commitDB();
                 return null;
             }
             wordIDCache.put(word, ids);
-            db.commit();
+            commitDB();
         }
         return ids;
     }
 
-    private void loadCache() throws FileNotFoundException, IOException {
+    private void loadCache() throws FileNotFoundException, IOException, InterruptedException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        while (lock.exists()) {
+            sleepTime = sleepTime * 2;
+            count++;
+            if (count >= 10) {
+                break;
+            }
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
+            Thread.sleep(sleepTime);
+        }
 
+        lock.createNewFile();
         db = DBMaker.newFileDB(cacheDBFile).make();
         synsetCache = db.getHashMap("synsetCacheDB");
         if (synsetCache == null) {
@@ -263,11 +283,12 @@ public class BabelNet implements Disambiguator {
         if (edgesCache == null) {
             edgesCache = db.createHashMap("edgesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
         }
-
         db.commit();
+        lock.delete();
+
     }
 
-    private void handleKeyLimitException(String genreJson) throws IOException {
+    private void handleKeyLimitException(String genreJson) throws IOException, FileNotFoundException, InterruptedException {
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
             saveCache();
             keyIndex++;
@@ -280,11 +301,11 @@ public class BabelNet implements Disambiguator {
         }
     }
 
-    private void saveCache() throws FileNotFoundException, IOException {
+    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
         Logger.getLogger(BabelNet.class.getName()).log(Level.FINE, "Saving cache");
         if (db != null) {
             if (!db.isClosed()) {
-                db.commit();
+                commitDB();
                 db.close();
             }
         }
@@ -332,7 +353,7 @@ public class BabelNet implements Disambiguator {
             if (genreJson == null) {
                 edgesCache.put(id, "NON-EXISTING");
             }
-            db.commit();
+            commitDB();
         }
         Object obj = JSONValue.parseWithException(genreJson);
         JSONArray edgeArray = (JSONArray) obj;
@@ -484,7 +505,12 @@ public class BabelNet implements Disambiguator {
         String query = lemma + " " + sentence.replaceAll("_", " ");
 
         query = URLEncoder.encode(query, "UTF-8");
-        String genreJson = disambiguateCache.get(sentence);
+        String genreJson = null;
+        try {
+            genreJson = disambiguateCache.get(sentence);
+        } catch (Exception ex) {
+            System.err.println("");
+        }
         if (genreJson != null && genreJson.equals("NON-EXISTING")) {
             return null;
         }
@@ -500,7 +526,7 @@ public class BabelNet implements Disambiguator {
             } else {
                 disambiguateCache.put(sentence, "NON-EXISTING");
             }
-            db.commit();
+            commitDB();
         }
         Object obj = JSONValue.parseWithException(genreJson);
 //        Term term = null;
@@ -524,6 +550,24 @@ public class BabelNet implements Disambiguator {
             }
         }
         return null;
+    }
+
+    private void commitDB() throws InterruptedException, IOException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        while (lock.exists()) {
+            sleepTime = sleepTime * 2;
+            count++;
+            if (count >= 10) {
+                break;
+            }
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
+            Thread.sleep(sleepTime);
+        }
+        lock.createNewFile();
+        db.commit();
+        lock.delete();
     }
 
 }

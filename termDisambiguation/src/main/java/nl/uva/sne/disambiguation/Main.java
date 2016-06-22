@@ -17,6 +17,7 @@ import nl.uva.sne.commons.TermFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import nl.uva.sne.disambiguators.Disambiguator;
+import org.apache.commons.io.FileDeleteStrategy;
 
 /**
  *
@@ -27,7 +28,7 @@ public class Main {
     public static String propertiesPath = "disambiguation.properties";
     private static String props;
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
         String allTermsDictionary = null, filterredDictionary = null, outDir = null;
         if (args != null) {
 
@@ -68,6 +69,15 @@ public class Main {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+            String cachePath = FileUtils.getProperties(propertiesPath).getProperty("cache.path");
+            File cacheFolder = new File(cachePath).getParentFile();
+
+            for (File file : cacheFolder.listFiles()) {
+                if (file.getAbsolutePath().endsWith(".lock")) {
+                    FileDeleteStrategy.FORCE.delete(file);
+                }
+            }
+
         }
     }
 

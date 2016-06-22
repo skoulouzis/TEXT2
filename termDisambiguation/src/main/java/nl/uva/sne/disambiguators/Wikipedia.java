@@ -109,7 +109,7 @@ public class Wikipedia implements Disambiguator {
     }
 
     @Override
-    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
+    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
         List<Term> terms = new ArrayList<>();
         File dictionary = new File(filterredDictionary);
         int count = 0;
@@ -133,14 +133,23 @@ public class Wikipedia implements Disambiguator {
             Logger.getLogger(Wikipedia.class.getName()).log(Level.WARNING, null, ex);
             return terms;
         } finally {
-            saveCache();
+            try {
+                saveCache();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         return terms;
     }
 
     @Override
-    public Term getTerm(String term, String allTermsDictionary, double confidence) throws IOException, ParseException, JWNLException {
-        Set<Term> possibleTerms = getTermNodeByLemma(term);
+    public Term getTerm(String term, String allTermsDictionary, double confidence) throws IOException, ParseException, JWNLException, MalformedURLException, UnsupportedEncodingException {
+        Set<Term> possibleTerms = null;
+        try {
+            possibleTerms = getTermNodeByLemma(term);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
+        }
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
         Term dis = SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionary, confidence, true);
 //        } else if (possibleTerms.size() == 1) {
@@ -155,7 +164,7 @@ public class Wikipedia implements Disambiguator {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException {
+    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException, InterruptedException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -204,7 +213,7 @@ public class Wikipedia implements Disambiguator {
             loadCache();
         }
         termCache.put(lemma, TermFactory.terms2Json(terms));
-        db.commit();
+        commitDB();
         return terms;
     }
 
@@ -316,19 +325,36 @@ public class Wikipedia implements Disambiguator {
         return categoriesList;
     }
 
-    private void loadCache() throws MalformedURLException {
+    private void loadCache() throws MalformedURLException, IOException, InterruptedException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        while (lock.exists()) {
+            sleepTime = sleepTime * 2;
+            count++;
+            if (count >= 10) {
+                break;
+            }
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
+            Thread.sleep(sleepTime);
+        }
+
+        lock.createNewFile();
+
         db = DBMaker.newFileDB(cacheDBFile).make();
         termCache = db.get("termCacheDB");
         if (termCache == null) {
             termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
         }
+        commitDB();
+        lock.delete();
     }
 
-    private void saveCache() throws FileNotFoundException, IOException {
+    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
         Logger.getLogger(Wikipedia.class.getName()).log(Level.FINE, "Saving cache");
         if (db != null) {
             if (!db.isClosed()) {
-                db.commit();
+                commitDB();
                 db.close();
             }
         }
@@ -371,6 +397,24 @@ public class Wikipedia implements Disambiguator {
             titles.setLength(titles.length());
         }
         return titles.toString();
+    }
+
+    private void commitDB() throws InterruptedException, IOException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        while (lock.exists()) {
+            sleepTime = sleepTime * 2;
+            count++;
+            if (count >= 10) {
+                break;
+            }
+            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
+            Thread.sleep(sleepTime);
+        }
+        lock.createNewFile();
+        db.commit();
+        lock.delete();
     }
 
 }
