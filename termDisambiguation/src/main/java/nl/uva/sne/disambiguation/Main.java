@@ -57,9 +57,7 @@ public class Main {
             Object obj = c.newInstance();
             DisambiguatorImpl disambiguator = (DisambiguatorImpl) obj;
             disambiguator.configure(properties);
-            Logger.getLogger(Main.class.getName()).log(Level.INFO, "Start");
             terms = disambiguator.disambiguateTerms(filterredDictionary);
-            Logger.getLogger(Main.class.getName()).log(Level.INFO, "End");
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);

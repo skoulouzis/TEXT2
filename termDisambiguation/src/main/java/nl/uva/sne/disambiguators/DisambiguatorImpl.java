@@ -59,7 +59,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
                         }
                     }
                 }
-
+                lineCount++;
             }
         } catch (Exception ex) {
             Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.WARNING, null, ex);
