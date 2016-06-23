@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.uva.sne.commons.FileUtils;
@@ -42,6 +43,7 @@ public class Main {
             }
         }
         List<Term> terms = null;
+        Properties properties = FileUtils.getProperties(propertiesPath);
         try {
 //          $HOME/textdocs/dictionaryAll.csv $HOME/textdocs/term_dictionaryPOS_expert_validation.csv $HOME/Downloads/jsonTerms
 
@@ -54,10 +56,10 @@ public class Main {
             Class c = Class.forName(className);
             Object obj = c.newInstance();
             DisambiguatorImpl disambiguator = (DisambiguatorImpl) obj;
-
-            disambiguator.configure(FileUtils.getProperties(propertiesPath));
-
+            disambiguator.configure(properties);
+            Logger.getLogger(Main.class.getName()).log(Level.INFO, "Start");
             terms = disambiguator.disambiguateTerms(filterredDictionary);
+            Logger.getLogger(Main.class.getName()).log(Level.INFO, "End");
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -69,7 +71,7 @@ public class Main {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            String cachePath = FileUtils.getProperties(propertiesPath).getProperty("cache.path");
+            String cachePath = properties.getProperty("cache.path");
             File cacheFolder = new File(cachePath).getParentFile();
             if (cacheFolder.exists()) {
                 for (File file : cacheFolder.listFiles()) {

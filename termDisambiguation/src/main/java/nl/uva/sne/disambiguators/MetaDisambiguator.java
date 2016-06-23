@@ -56,7 +56,6 @@ public class MetaDisambiguator extends DisambiguatorImpl {
     @Override
     public Term getTerm(String term) throws IOException, ParseException, JWNLException {
 //        long start = System.currentTimeMillis();
-
         try {
             if (sequentially) {
                 return getTermSequentially(term);
