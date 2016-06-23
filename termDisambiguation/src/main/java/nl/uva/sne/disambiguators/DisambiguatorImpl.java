@@ -35,16 +35,16 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
 
     @Override
     public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
-        Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "filterredDictionary: " + filterredDictionary);
+//        Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "filterredDictionary: " + filterredDictionary);
         List<Term> terms = new ArrayList<>();
         File dictionary = new File(filterredDictionary);
         int count = 0;
         int lineCount = 1;
         try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
             for (String line; (line = br.readLine()) != null;) {
-                Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "line: " + line);
+//                Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "line: " + line);
                 if (lineCount >= getLineOffset()) {
-                    Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "Processing: " + line);
+//                    Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "Processing: " + line);
                     String[] parts = line.split(",");
                     String term = parts[0];
 //                Integer score = Integer.valueOf(parts[1]);
