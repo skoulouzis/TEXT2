@@ -47,7 +47,7 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class BabelNet implements Disambiguator {
+public class BabelNet extends DisambiguatorImpl {
 
     private String keysStr;
     private DB db;
@@ -57,32 +57,29 @@ public class BabelNet implements Disambiguator {
     private static Map<String, String> disambiguateCache;
     private static Map<String, String> edgesCache;
 
-    private int limit;
     private String key;
     private String[] keys;
     private int keyIndex = 0;
-    private Double minimumSimilarity;
     private File cacheDBFile;
-    private Integer lineOffset;
 
     @Override
-    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
+    public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException {
         List<Term> terms = new ArrayList<>();
         File dictionary = new File(filterredDictionary);
         int count = 0;
         int lineCount = 1;
         try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
             for (String line; (line = br.readLine()) != null;) {
-                if (lineCount >= lineOffset) {
+                if (lineCount >= getLineOffset()) {
                     String[] parts = line.split(",");
                     String term = parts[0];
 //                Integer score = Integer.valueOf(parts[1]);
                     if (term.length() >= 1) {
                         count++;
-                        if (count > limit) {
+                        if (count > getLimit()) {
                             break;
                         }
-                        Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
+                        Term tt = getTerm(term);
                         if (tt != null) {
                             terms.add(tt);
                         }
@@ -98,13 +95,13 @@ public class BabelNet implements Disambiguator {
     }
 
     @Override
-    public Term getTerm(String term, String allTermsDictionary, double minimumSimilarity) throws IOException, ParseException, JWNLException, UnsupportedEncodingException, FileNotFoundException {
+    public Term getTerm(String term) throws IOException, ParseException, JWNLException, UnsupportedEncodingException, FileNotFoundException {
         Set<Term> possibleTerms;
         try {
             possibleTerms = getTermNodeByLemma(term);
 
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
-            Term dis = disambiguate(term, possibleTerms, allTermsDictionary, minimumSimilarity);
+            Term dis = disambiguate(term, possibleTerms, getAllTermsDictionaryPath(), getMinimumSimilarity());
 //        } else if (possibleTerms.size() == 1) {
 //            return possibleTerms.iterator().next();
 //        }
@@ -184,18 +181,15 @@ public class BabelNet implements Disambiguator {
 
     @Override
     public void configure(Properties properties) {
+        super.configure(properties);
         keysStr = properties.getProperty("bablenet.key");
         keys = keysStr.split(",");
         key = keys[keyIndex];
-        String cachePath = properties.getProperty("cache.path");
-        String fName = FilenameUtils.getName(cachePath);
-        String newName = this.getClass().getSimpleName() + "." + fName;
-        cachePath = cachePath.replaceAll(fName, newName);
-        cacheDBFile = new File(cachePath);
 
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-        lineOffset = Integer.valueOf(properties.getProperty("offset.terms", "0"));
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+        String fName = FilenameUtils.getName(getCachePath());
+        String newName = this.getClass().getSimpleName() + "." + fName;
+        String path = getCachePath().replaceAll(fName, newName);
+        cacheDBFile = new File(path);
     }
 
     private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException, FileNotFoundException, InterruptedException {

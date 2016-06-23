@@ -34,54 +34,24 @@ import org.json.simple.parser.ParseException;
  *
  * @author S. Koulouzis
  */
-public class WordNet implements Disambiguator {
+public class WordNet extends DisambiguatorImpl {
 
     private static Dictionary wordNetdictionary;
-    private Double minimumSimilarity;
-    private Integer limit;
-
-    @Override
-    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException {
-        List<Term> terms = new ArrayList<>();
-        File dictionary = new File(filterredDictionary);
-        int count = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
-            for (String line; (line = br.readLine()) != null;) {
-                String[] parts = line.split(",");
-                String term = parts[0];
-//                Integer score = Integer.valueOf(parts[1]);
-                if (term.length() >= 1) {
-                    count++;
-                    if (count > limit) {
-                        break;
-                    }
-                    Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
-                    if (tt != null) {
-                        terms.add(tt);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(SemanticUtils.class.getName()).log(Level.WARNING, null, ex);
-            return terms;
-        }
-        return terms;
-    }
 
     @Override
     public void configure(Properties properties) {
+        super.configure(properties);
         String propFile = properties.getProperty("word.net.conf.xml", "file_properties.xml");
         try (FileInputStream fis = new FileInputStream(propFile)) {
             JWNL.initialize(fis);
         } catch (IOException | JWNLException ex) {
             Logger.getLogger(WordNet.class.getName()).log(Level.SEVERE, null, ex);
         }
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
-        limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
+
     }
 
     @Override
-    public Term getTerm(String term, String allTermsDictionaryPath, double minimumSimilarity) throws IOException, ParseException, JWNLException {
+    public Term getTerm(String term) throws IOException, ParseException, JWNLException {
         wordNetdictionary = getWordNetDictionary();
         IndexWordSet ws = wordNetdictionary.lookupAllIndexWords(term);
         Set<Term> possibleTerms = new HashSet<>();
@@ -98,7 +68,7 @@ public class WordNet implements Disambiguator {
             }
             possibleTerms.add(t);
         }
-        Term dis = SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionaryPath, minimumSimilarity, true);
+        Term dis = SemanticUtils.disambiguate(term, possibleTerms, getAllTermsDictionaryPath(), getMinimumSimilarity(), true);
         if (dis == null) {
             Logger.getLogger(WordNet.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
         } else {

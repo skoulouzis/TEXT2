@@ -39,15 +39,11 @@ import org.mapdb.Serializer;
  *
  * @author S. Koulouzis
  */
-public class Wikidata implements Disambiguator {
-
-    private Integer limit;
+public class Wikidata extends DisambiguatorImpl {
 
     private DB db;
-//    private static Map<String, String> extractsCache;
     private static Map<String, Set<String>> termCache;
     private static Map<String, Set<String>> titlesCache;
-    private Double minimumSimilarity;
 
     private static final String[] EXCLUDED_CAT = new String[]{
         "articles needing",
@@ -85,51 +81,27 @@ public class Wikidata implements Disambiguator {
     private File cacheDBFile;
 
     @Override
-    public List<Term> disambiguateTerms(String allTermsDictionary, String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
-        List<Term> terms = new ArrayList<>();
-        File dictionary = new File(filterredDictionary);
-        int count = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(dictionary))) {
-            for (String line; (line = br.readLine()) != null;) {
-                String[] parts = line.split(",");
-                String term = parts[0];
-//                Integer score = Integer.valueOf(parts[1]);
-                if (term.length() >= 1) {
-                    count++;
-                    if (count > limit) {
-                        break;
-                    }
-                    Term tt = getTerm(term, allTermsDictionary, minimumSimilarity);
-                    if (tt != null) {
-                        terms.add(tt);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(Wikidata.class.getName()).log(Level.WARNING, null, ex);
-            return terms;
+    public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
+        try {
+            return super.disambiguateTerms(filterredDictionary);
         } finally {
             try {
                 saveCache();
             } catch (InterruptedException ex) {
-                Logger.getLogger(Wikidata.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        return terms;
     }
 
     @Override
     public void configure(Properties properties) {
         try {
-            limit = Integer.valueOf(properties.getProperty("num.of.terms", "5"));
-            String cachePath = properties.getProperty("cache.path");
-            minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
-
-            String fName = FilenameUtils.getName(cachePath);
+            super.configure(properties);
+            String fName = FilenameUtils.getName(getCachePath());
             String newName = new URL(page).getHost() + "." + fName;
-            cachePath = cachePath.replaceAll(fName, newName);
+            String path = getCachePath().replaceAll(fName, newName);
 
-            cacheDBFile = new File(cachePath);
+            cacheDBFile = new File(path);
         } catch (MalformedURLException ex) {
             Logger.getLogger(Wikidata.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -137,7 +109,7 @@ public class Wikidata implements Disambiguator {
     }
 
     @Override
-    public Term getTerm(String term, String allTermsDictionary, double confidence) throws IOException, ParseException, JWNLException, MalformedURLException {
+    public Term getTerm(String term) throws IOException, ParseException, JWNLException, MalformedURLException {
         Set<Term> possibleTerms = null;
         try {
             possibleTerms = getTermNodeByLemma(term);
@@ -145,7 +117,7 @@ public class Wikidata implements Disambiguator {
             Logger.getLogger(Wikidata.class.getName()).log(Level.SEVERE, null, ex);
         }
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
-        Term dis = SemanticUtils.disambiguate(term, possibleTerms, allTermsDictionary, confidence, true);
+        Term dis = SemanticUtils.disambiguate(term, possibleTerms, getAllTermsDictionaryPath(), getMinimumSimilarity(), true);
 //        } else if (possibleTerms.size() == 1) {
 //            return possibleTerms.iterator().next();
 //        }
@@ -260,7 +232,9 @@ public class Wikidata implements Disambiguator {
         return terms;
     }
 
-    private void loadCache() throws MalformedURLException {
+    private void loadCache() throws MalformedURLException, InterruptedException, IOException {
+        File lock = waitForDB();
+        lock.createNewFile();
 
         db = DBMaker.newFileDB(cacheDBFile).make();
 //        extractsCache = db.getHashMap("extractsCacheDB");
@@ -276,6 +250,31 @@ public class Wikidata implements Disambiguator {
         if (termCache == null) {
             termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
         }
+        lock.delete();
+    }
+
+    protected File waitForDB() throws InterruptedException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        while (lock.exists()) {
+            sleepTime = sleepTime * 2;
+            count++;
+            if (count >= 15) {
+                lock.delete();
+                break;
+            }
+            Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
+            Thread.currentThread().sleep(sleepTime);
+        }
+        return lock;
+    }
+
+    private void commitDB() throws InterruptedException, IOException {
+        File lock = waitForDB();
+        lock.createNewFile();
+        db.commit();
+        lock.delete();
     }
 
     private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
@@ -362,24 +361,6 @@ public class Wikidata implements Disambiguator {
             return value.substring("Category:".length()).toLowerCase().replaceAll(" ", "_");
         }
         return null;
-    }
-
-    private void commitDB() throws InterruptedException, IOException {
-        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
-        int count = 0;
-        long sleepTime = 5;
-        while (lock.exists()) {
-            sleepTime = sleepTime * 2;
-            count++;
-            if (count >= 10) {
-                break;
-            }
-            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
-            Thread.sleep(sleepTime);
-        }
-        lock.createNewFile();
-        db.commit();
-        lock.delete();
     }
 
 }

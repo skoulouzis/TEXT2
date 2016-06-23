@@ -17,6 +17,7 @@ import nl.uva.sne.commons.TermFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import nl.uva.sne.disambiguators.Disambiguator;
+import nl.uva.sne.disambiguators.DisambiguatorImpl;
 import org.apache.commons.io.FileDeleteStrategy;
 
 /**
@@ -29,12 +30,11 @@ public class Main {
     private static String props;
 
     public static void main(String args[]) throws IOException {
-        String allTermsDictionary = null, filterredDictionary = null, outDir = null;
+        String filterredDictionary = null, outDir = null;
         if (args != null) {
 
-            allTermsDictionary = args[0];
-            filterredDictionary = args[1];
-            outDir = args[2];
+            filterredDictionary = args[0];
+            outDir = args[1];
 
             props = args[args.length - 1];
             if (props.endsWith(".properties")) {
@@ -53,11 +53,11 @@ public class Main {
 
             Class c = Class.forName(className);
             Object obj = c.newInstance();
-            Disambiguator disambiguator = (Disambiguator) obj;
+            DisambiguatorImpl disambiguator = (DisambiguatorImpl) obj;
 
             disambiguator.configure(FileUtils.getProperties(propertiesPath));
 
-            terms = disambiguator.disambiguateTerms(allTermsDictionary, filterredDictionary);
+            terms = disambiguator.disambiguateTerms(filterredDictionary);
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
