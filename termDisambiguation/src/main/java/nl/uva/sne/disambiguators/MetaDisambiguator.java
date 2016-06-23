@@ -66,7 +66,12 @@ public class MetaDisambiguator extends DisambiguatorImpl {
 //            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "-----------Elapsed: " + (end - start));
 //            return d;
         } catch (IOException | ParseException | JWNLException | InterruptedException | ExecutionException ex) {
-            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.SEVERE, null, ex);
+            if (ex instanceof IOException && ex.getMessage().contains("Your key is not valid or the daily requests limit has been reached")) {
+                Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.WARNING, null, ex);
+            } else {
+                Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
         }
 
         return null;

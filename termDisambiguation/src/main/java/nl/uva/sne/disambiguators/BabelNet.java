@@ -120,18 +120,19 @@ public class BabelNet extends DisambiguatorImpl {
 
     private Set<Term> getTermNodeByLemma(String term) throws IOException, ParseException, UnsupportedEncodingException, JWNLException, FileNotFoundException, InterruptedException {
         String language = "EN";
-        List<String> ids = getcandidateWordIDs(language, term, key);
+
+        List<String> ids = getcandidateWordIDs(language, term);
         Set<Term> nodes = new HashSet<>();
         if (ids != null) {
             for (String id : ids) {
-                String synet = getBabelnetSynset(id, language, key);
+                String synet = getBabelnetSynset(id, language);
                 String url = null;
                 Term node = TermFactory.create(synet, language, term, null, url);
                 if (node != null) {
                     try {
                         url = "http://babelnet.org/synset?word=" + URLEncoder.encode(node.getUID(), "UTF-8");
                         node.setUrl(url);
-                        List<Term> h = getHypernyms(language, node, key);
+                        List<Term> h = getHypernyms(language, node);
                         if (h != null && !h.isEmpty()) {
                             node.setBroader(h);
                             for (Term t : h) {
@@ -148,7 +149,7 @@ public class BabelNet extends DisambiguatorImpl {
         return nodes;
     }
 
-    private String getBabelnetSynset(String id, String lan, String key) throws IOException, FileNotFoundException, InterruptedException {
+    private String getBabelnetSynset(String id, String lan) throws IOException, FileNotFoundException, InterruptedException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -160,7 +161,7 @@ public class BabelNet extends DisambiguatorImpl {
             return null;
         }
         if (json == null) {
-            URL url = new URL("http://babelnet.io/v2/getSynset?id=" + id + "&filterLangs=" + lan + "&langs=" + lan + "&key=" + key);
+            URL url = new URL("http://babelnet.io/v2/getSynset?id=" + id + "&filterLangs=" + lan + "&langs=" + lan + "&key=" + this.key);
             json = IOUtils.toString(url);
             handleKeyLimitException(json);
             if (db.isClosed()) {
@@ -192,7 +193,7 @@ public class BabelNet extends DisambiguatorImpl {
         cacheDBFile = new File(path);
     }
 
-    private List<String> getcandidateWordIDs(String language, String word, String key) throws IOException, ParseException, FileNotFoundException, InterruptedException {
+    private List<String> getcandidateWordIDs(String language, String word) throws IOException, ParseException, FileNotFoundException, InterruptedException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -203,10 +204,19 @@ public class BabelNet extends DisambiguatorImpl {
         language = language.toUpperCase();
         if (ids == null || ids.isEmpty()) {
             ids = new ArrayList<>();
-            URL url = new URL("http://babelnet.io/v2/getSynsetIds?word=" + word + "&langs=" + language + "&key=" + key);
+            URL url = new URL("http://babelnet.io/v2/getSynsetIds?word=" + word + "&langs=" + language + "&key=" + this.key);
             String genreJson = IOUtils.toString(url);
-
-            handleKeyLimitException(genreJson);
+            int count = 0;
+            try {
+                handleKeyLimitException(genreJson);
+            } catch (IOException ex) {
+                if (ex.getMessage().contains("Your key is not valid or the daily requests limit has been reached") && count < keys.length - 1) {
+                    count++;
+                    return getcandidateWordIDs(language, word);
+                } else {
+                    throw ex;
+                }
+            }
 
             Object obj = JSONValue.parseWithException(genreJson);
             if (obj instanceof JSONArray) {
@@ -305,8 +315,8 @@ public class BabelNet extends DisambiguatorImpl {
         }
     }
 
-    private List<Term> getHypernyms(String language, Term t, String key) throws MalformedURLException, IOException, ParseException, Exception {
-        Map<String, Double> hypenymMap = getEdgeIDs(language, t.getUID(), "HYPERNYM", key);
+    private List<Term> getHypernyms(String language, Term t) throws MalformedURLException, IOException, ParseException, Exception {
+        Map<String, Double> hypenymMap = getEdgeIDs(language, t.getUID(), "HYPERNYM");
         List<Term> hypernyms = new ArrayList<>();
 
         ValueComparator bvc = new ValueComparator(hypenymMap);
@@ -319,7 +329,7 @@ public class BabelNet extends DisambiguatorImpl {
                 break;
             }
 
-            String synetHyper = getBabelnetSynset(uid, language, key);
+            String synetHyper = getBabelnetSynset(uid, language);
             String url = "http://babelnet.org/synset?word=" + URLEncoder.encode(uid, "UTF-8");
             Term hypernym = TermFactory.create(synetHyper, language, null, uid, url);
             if (hypernym != null) {
@@ -332,13 +342,13 @@ public class BabelNet extends DisambiguatorImpl {
         return hypernyms;
     }
 
-    private Map<String, Double> getEdgeIDs(String language, String id, String relation, String key) throws MalformedURLException, IOException, ParseException, Exception {
+    private Map<String, Double> getEdgeIDs(String language, String id, String relation) throws MalformedURLException, IOException, ParseException, Exception {
         if (db == null || db.isClosed()) {
             loadCache();
         }
         String genreJson = edgesCache.get(id);
         if (genreJson == null) {
-            URL url = new URL("http://babelnet.io/v2/getEdges?id=" + id + "&key=" + key);
+            URL url = new URL("http://babelnet.io/v2/getEdges?id=" + id + "&key=" + this.key);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
             if (genreJson != null) {
@@ -533,11 +543,11 @@ public class BabelNet extends DisambiguatorImpl {
                 Double globalScore = (Double) jo.get("globalScore");
                 Double coherenceScore = (Double) jo.get("coherenceScore");
                 double someScore = (score + globalScore + coherenceScore) / 3.0;
-                String synet = getBabelnetSynset(id, language, keysStr);
+                String synet = getBabelnetSynset(id, language);
                 String url = "http://babelnet.org/synset?word=" + URLEncoder.encode(id, "UTF-8");
                 Term t = TermFactory.create(synet, language, lemma, null, url);
                 if (t != null) {
-                    List<Term> h = getHypernyms(language, t, keysStr);
+                    List<Term> h = getHypernyms(language, t);
                     t.setBroader(h);
                     return new Pair<>(t, someScore);
                 }
