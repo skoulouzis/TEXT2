@@ -129,8 +129,8 @@ public class MetaDisambiguator extends DisambiguatorImpl {
 
         for (Future<Term> future : set) {
             while (!future.isDone()) {
-                Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Task is not completed yet....");
-                Thread.currentThread().sleep(50);
+//                Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                Thread.currentThread().sleep(100);
             }
             Term t = future.get();
             if (t != null) {
