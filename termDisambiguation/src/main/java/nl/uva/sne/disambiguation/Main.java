@@ -71,13 +71,13 @@ public class Main {
             }
             String cachePath = FileUtils.getProperties(propertiesPath).getProperty("cache.path");
             File cacheFolder = new File(cachePath).getParentFile();
-
-            for (File file : cacheFolder.listFiles()) {
-                if (file.getAbsolutePath().endsWith(".lock")) {
-                    FileDeleteStrategy.FORCE.delete(file);
+            if (cacheFolder.exists()) {
+                for (File file : cacheFolder.listFiles()) {
+                    if (file.getAbsolutePath().endsWith(".lock")) {
+                        FileDeleteStrategy.FORCE.delete(file);
+                    }
                 }
             }
-
         }
     }
 

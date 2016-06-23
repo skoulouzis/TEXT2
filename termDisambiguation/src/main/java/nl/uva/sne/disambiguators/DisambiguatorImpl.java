@@ -81,7 +81,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
         } else {
             limit = Integer.valueOf(numOfTerms);
         }
-        props.append("num.of.terms: ").append(getLimit()).append(" ");
+        props.append("num.of.terms: ").append(limit).append(" ");
 
         String offset = System.getProperty("offset.terms");
 
@@ -90,18 +90,24 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
         } else {
             lineOffset = Integer.valueOf(offset);
         }
+        props.append("offset.terms: ").append(lineOffset).append(" ");
+
         minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
-        props.append("minimum.similarity: ").append(getMinimumSimilarity()).append(" ");
+        props.append("minimum.similarity: ").append(minimumSimilarity).append(" ");
 
         this.cachePath = (properties.getProperty("cache.path"));
+        props.append("cache.path: ").append(cachePath).append(" ");
         allTermsDictionaryPath = properties.getProperty("all.terms.dictionary.path");
+        props.append("all.terms.dictionary.path: ").append(allTermsDictionaryPath).append(" ");
+        Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "Properties: " + props.toString());
+        props = null;
     }
 
     @Override
     public Term getTerm(String term) throws IOException, ParseException, JWNLException {
         return null;
     }
-    
+
     /**
      * @return the cachePath
      */
