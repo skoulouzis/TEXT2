@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -271,10 +272,13 @@ public class Wikidata extends DisambiguatorImpl {
         File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
         int count = 0;
         long sleepTime = 5;
+        int max = 4;
+        int min = 2;
         while (lock.exists()) {
-            sleepTime = sleepTime * 2;
+            Random random = new Random();
+            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
             count++;
-            if (count >= 15) {
+            if (count >= 40) {
                 lock.delete();
                 break;
             }

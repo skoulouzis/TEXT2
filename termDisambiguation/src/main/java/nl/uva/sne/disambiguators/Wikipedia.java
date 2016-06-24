@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
@@ -427,11 +428,14 @@ public class Wikipedia extends DisambiguatorImpl {
         File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
         int count = 0;
         long sleepTime = 5;
+        int max = 4;
+        int min = 2;
         while (lock.exists()) {
-            sleepTime = sleepTime * 2;
+            Random random = new Random();
+            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
             count++;
-            if (count >= 15) {
-//                lock.delete();
+            if (count >= 40) {
+                lock.delete();
                 break;
             }
             Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "DB " + lock.getAbsolutePath() + " locked. Sleeping: " + sleepTime + " " + count);
