@@ -96,7 +96,7 @@ public class Main {
                     nameClusterFolders(outDir);
 
                 } catch (ClassCastException ex) {
-//                    -c nl.uva.sne.classifiers.J48 $USER/Downloads/trainedModel/ $USER/Downloads/jsonTerms $USER/Downloads/clusters
+//                    -c nl.uva.sne.classifiers.CosineSimilarity $HOME/Downloads/D2.2_Table_14CompetencesGroups $HOME/Downloads/textdocs $HOME/Downloads/D2.2_Table_14CompetencesGroups/
                     Classifier classifier = (Classifier) obj;
                     classifier.configure(FileUtils.getProperties(propertiesPath));
 
@@ -114,7 +114,7 @@ public class Main {
                 nameClusters(outDir);
             }
             if (train) {
-//                 -t nl.uva.sne.classifiers.CosineSimilarity $HOME/Downloads/trainData $HOME/Downloads/trainedModel/
+//                 -t nl.uva.sne.classifiers.CosineSimilarity $HOME/Downloads/D2.2_Table_14CompetencesGroups $HOME/Downloads/D2.2_Table_14CompetencesGroups
                 Class c = Class.forName(className);
                 Object obj = c.newInstance();
 

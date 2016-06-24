@@ -220,7 +220,7 @@ public class CosineSimilarity implements Classifier {
 
         Map<String, Map<String, Double>> termVectors = new HashMap<>();
         for (String k : docs.keySet()) {
-            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Calcoalting tfidf for: {0}", k);
+            Logger.getLogger(CosineSimilarity.class.getName()).log(Level.INFO, "Calculating tfidf for: {0}", k);
             List<String> doc = docs.get(k);
             Map<String, Double> featureVector = new TreeMap<>();
             for (String term : doc) {
