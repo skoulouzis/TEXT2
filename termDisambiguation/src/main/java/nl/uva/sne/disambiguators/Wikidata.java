@@ -5,20 +5,23 @@
  */
 package nl.uva.sne.disambiguators;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -113,7 +116,7 @@ public class Wikidata extends DisambiguatorImpl {
         Set<Term> possibleTerms = null;
         try {
             possibleTerms = getTermNodeByLemma(term);
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(Wikidata.class.getName()).log(Level.SEVERE, null, ex);
         }
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
@@ -130,7 +133,7 @@ public class Wikidata extends DisambiguatorImpl {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, JWNLException, InterruptedException {
+    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, JWNLException, InterruptedException, ExecutionException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -170,12 +173,9 @@ public class Wikidata extends DisambiguatorImpl {
         return terms;
     }
 
-    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
-        return getNumProperty(id, "P31");
-    }
-
-    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException, JWNLException {
+    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException, JWNLException, MalformedURLException, InterruptedException, ExecutionException {
         Set<Term> terms = new HashSet<>();
+
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONArray search = (JSONArray) jsonObj.get("search");
         for (Object obj : search) {
@@ -217,19 +217,33 @@ public class Wikidata extends DisambiguatorImpl {
                         t.setGlosses(glosses);
                         t.setUID(id);
 
-                        List<String> broaderID = getBroaderID(id);
-                        t.setBroaderUIDS(broaderID);
-
-                        List<String> cat = getCategories(id);
-                        t.setCategories(cat);
-
+//                        List<String> broaderID = getBroaderID(id);
+//                        t.setBroaderUIDS(broaderID);
+//                        List<String> cat = getCategories(id);
+//                        t.setCategories(cat);
                         terms.add(t);
                     }
-
                 }
             }
         }
-        return terms;
+        Set<Term> catTerms = new HashSet<>();
+
+        Map<String, List<String>> cats = getCategories(terms);
+        for (Term t : terms) {
+            List<String> cat = cats.get(t.getUID());
+            t.setCategories(cat);
+            catTerms.add(t);
+        }
+
+        Map<String, List<String>> broaderIDs = getbroaderIDS(terms);
+        Set<Term> returnTerms = new HashSet<>();
+        for (Term t : catTerms) {
+            List<String> broaderID = broaderIDs.get(t.getUID());
+            t.setBroaderUIDS(broaderID);
+            returnTerms.add(t);
+        }
+
+        return returnTerms;
     }
 
     private void loadCache() throws MalformedURLException, InterruptedException, IOException {
@@ -296,6 +310,92 @@ public class Wikidata extends DisambiguatorImpl {
         return true;
     }
 
+    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
+        return getNumProperty(id, "P31");
+    }
+
+    private Map<String, List<String>> getbroaderIDS(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
+        ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+        Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
+        String prop = "P31";
+        for (Term t : terms) {
+            URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
+            System.err.println(url);
+            WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
+            Future<Map<String, List<String>>> future = pool.submit(req);
+            set1.add(future);
+        }
+        pool.shutdown();
+        Map<String, List<String>> map = new HashMap<>();
+        for (Future<Map<String, List<String>>> future : set1) {
+            while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                Thread.currentThread().sleep(10);
+            }
+            Map<String, List<String>> c = future.get();
+            if (c != null) {
+                map.putAll(c);
+            }
+        }
+
+        return map;
+    }
+
+    private Map<String, List<String>> getCategories(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
+        ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+
+        Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
+        String prop = "P910";
+        for (Term t : terms) {
+            URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
+            System.err.println(url);
+            WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
+            Future<Map<String, List<String>>> future = pool.submit(req);
+            set1.add(future);
+        }
+        pool.shutdown();
+
+        Map<String, List<String>> map = new HashMap<>();
+        for (Future<Map<String, List<String>>> future : set1) {
+            while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                Thread.currentThread().sleep(10);
+            }
+            Map<String, List<String>> c = future.get();
+            if (c != null) {
+                map.putAll(c);
+            }
+        }
+
+        pool = Executors.newFixedThreadPool(terms.size() * 2);
+
+        Set<Future<Map<String, List<String>>>> set2 = new HashSet<>();
+        for (Term t : terms) {
+            List<String> catIDs = map.get(t.getUID());
+            for (String catID : catIDs) {
+                URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + catID);
+                System.err.println(url);
+                WikiRequestor req = new WikiRequestor(url, t.getUID(), 2);
+                Future<Map<String, List<String>>> future = pool.submit(req);
+                set2.add(future);
+            }
+        }
+        pool.shutdown();
+
+        Map<String, List<String>> cats = new HashMap<>();
+        for (Future<Map<String, List<String>>> future : set2) {
+            while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                Thread.currentThread().sleep(10);
+            }
+            Map<String, List<String>> c = future.get();
+            if (c != null) {
+                cats.putAll(c);
+            }
+        }
+        return cats;
+    }
+
     private List<String> getNumProperty(String id, String prop) throws MalformedURLException, IOException, ParseException {
         URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + id);
         System.err.println(url);
@@ -328,19 +428,18 @@ public class Wikidata extends DisambiguatorImpl {
         return ids;
     }
 
-    private List<String> getCategories(String id) throws IOException, MalformedURLException, ParseException {
-        List<String> ids = getNumProperty(id, "P910");
-        List<String> lables = new ArrayList();
-        if (ids != null) {
-            for (String s : ids) {
-                String l = getLabel(s);
-                lables.add(l);
-            }
-        }
-
-        return lables;
-    }
-
+//    private List<String> getCategories(String id) throws IOException, MalformedURLException, ParseException {
+//        List<String> ids = getNumProperty(id, "P910");
+//        List<String> lables = new ArrayList();
+//        if (ids != null) {
+//            for (String s : ids) {
+//                String l = getLabel(s);
+//                lables.add(l);
+//            }
+//        }
+//
+//        return lables;
+//    }
     private String getLabel(String id) throws MalformedURLException, IOException, ParseException {
 
         URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + id);

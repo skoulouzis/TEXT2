@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -32,6 +34,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
     private String cachePath;
     private String allTermsDictionaryPath;
     private String termToProcess;
+    
 
     @Override
     public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
@@ -164,5 +167,6 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
     public Term call() throws Exception {
         return getTerm(getTermToProcess());
     }
+
 
 }

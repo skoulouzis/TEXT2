@@ -12,7 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +20,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -47,7 +51,7 @@ public class Wikipedia extends DisambiguatorImpl {
     private static Map<String, Set<String>> termCache;
 //    private static Map<String, Set<String>> titlesCache;
 
-    private static final String[] EXCLUDED_CAT = new String[]{
+    public static final String[] EXCLUDED_CAT = new String[]{
         "articles needing",
         "articles lacking",
         "articles with",
@@ -119,7 +123,7 @@ public class Wikipedia extends DisambiguatorImpl {
         Set<Term> possibleTerms = null;
         try {
             possibleTerms = getTermNodeByLemma(term);
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
         }
 //        if (possibleTerms != null & possibleTerms.size() > 1) {
@@ -136,7 +140,7 @@ public class Wikipedia extends DisambiguatorImpl {
         return dis;
     }
 
-    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException, InterruptedException {
+    private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException, InterruptedException, ExecutionException {
         if (db == null || db.isClosed()) {
             loadCache();
         }
@@ -231,19 +235,25 @@ public class Wikipedia extends DisambiguatorImpl {
         return titles;
     }
 
-    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException {
+    private Set<Term> getCandidateTerms(String jsonString, String originalTerm) throws ParseException, IOException, MalformedURLException, InterruptedException, ExecutionException {
         Set<Term> terms = new HashSet<>();
+        Set<Term> termsToReturn = new HashSet<>();
         JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
         JSONObject query = (JSONObject) jsonObj.get("query");
         JSONObject pages = (JSONObject) query.get("pages");
         Set<String> keys = pages.keySet();
-
         for (String key : keys) {
             JSONObject jsonpage = (JSONObject) pages.get(key);
             Term t = TermFactory.create(jsonpage, originalTerm);
-            boolean add = true;
             if (t != null) {
-                List<String> cat = getCategories(t.getUID());
+                terms.add(t);
+            }
+        }
+        if (terms.size() > 0) {
+            Map<String, List<String>> cats = getCategories(terms);
+            for (Term t : terms) {
+                boolean add = true;
+                List<String> cat = cats.get(t.getUID());
                 t.setCategories(cat);
                 for (String g : t.getGlosses()) {
                     if (g != null && g.contains("may refer to:")) {
@@ -252,51 +262,106 @@ public class Wikipedia extends DisambiguatorImpl {
                             for (Term rt : referToTerms) {
                                 String url = "https://en.wikipedia.org/?curid=" + rt.getUID();
                                 rt.setUrl(url);
-                                terms.add(rt);
+                                termsToReturn.add(rt);
                             }
                         }
                         add = false;
                         break;
                     }
                 }
-
                 if (add) {
                     String url = "https://en.wikipedia.org/?curid=" + t.getUID();
                     t.setUrl(url);
-                    terms.add(t);
+                    termsToReturn.add(t);
                 }
             }
         }
-        return terms;
+
+//        for (String key : keys) {
+//            JSONObject jsonpage = (JSONObject) pages.get(key);
+//            Term t = TermFactory.create(jsonpage, originalTerm);
+//            boolean add = true;
+//            if (t != null) {
+//                List<String> cat = getCategories(t.getUID());
+//                t.setCategories(cat);
+//                for (String g : t.getGlosses()) {
+//                    if (g != null && g.contains("may refer to:")) {
+//                        Set<Term> referToTerms = getReferToTerms(g, originalTerm);
+//                        if (referToTerms != null) {
+//                            for (Term rt : referToTerms) {
+//                                String url = "https://en.wikipedia.org/?curid=" + rt.getUID();
+//                                rt.setUrl(url);
+//                                terms.add(rt);
+//                            }
+//                        }
+//                        add = false;
+//                        break;
+//                    }
+//                }
+//
+//                if (add) {
+//                    String url = "https://en.wikipedia.org/?curid=" + t.getUID();
+//                    t.setUrl(url);
+//                    terms.add(t);
+//                }
+//            }
+//        }
+        return termsToReturn;
     }
 
-    private List<String> getCategories(String uid) throws MalformedURLException, IOException, ParseException {
-        URL url = new URL(page + "?action=query&format=json&prop=categories&pageids=" + uid);
-        System.err.println(url);
-        List<String> categoriesList = new ArrayList<>();
-        String jsonString = IOUtils.toString(url);
-        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
-        JSONObject query = (JSONObject) jsonObj.get("query");
-        JSONObject pages = (JSONObject) query.get("pages");
-        Set<String> keys = pages.keySet();
-        for (String key : keys) {
-            JSONObject p = (JSONObject) pages.get(key);
-            JSONArray categories = (JSONArray) p.get("categories");
-            if (categories != null) {
-                for (Object obj : categories) {
-                    JSONObject jObj = (JSONObject) obj;
-                    String cat = (String) jObj.get("title");
-                    if (shouldAddCategory(cat)) {
-//                    System.err.println(cat.substring("Category:".length()).toLowerCase());
-                        categoriesList.add(cat.substring("Category:".length()).toLowerCase().replaceAll(" ", "_"));
-                    }
-                }
-            }
-
+    private Map<String, List<String>> getCategories(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
+        ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+        Map<String, List<String>> cats = new HashMap<>();
+        Set<Future<Map<String, List<String>>>> set = new HashSet<>();
+        for (Term t : terms) {
+            URL url = new URL(page + "?action=query&format=json&prop=categories&pageids=" + t.getUID());
+            System.err.println(url);
+            WikiRequestor req = new WikiRequestor(url, t.getUID(), 0);
+            Future<Map<String, List<String>>> future = pool.submit(req);
+            set.add(future);
         }
-        return categoriesList;
+        pool.shutdown();
+
+        for (Future<Map<String, List<String>>> future : set) {
+            while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                Thread.currentThread().sleep(10);
+            }
+            Map<String, List<String>> c = future.get();
+            if (c != null) {
+                cats.putAll(c);
+            }
+        }
+
+        return cats;
     }
 
+//    private List<String> getCategories(String uid) throws MalformedURLException, IOException, ParseException {
+//        URL url = new URL(page + "?action=query&format=json&prop=categories&pageids=" + uid);
+//        System.err.println(url);
+//        List<String> categoriesList = new ArrayList<>();
+//        String jsonString = IOUtils.toString(url);
+//        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
+//        JSONObject query = (JSONObject) jsonObj.get("query");
+//        JSONObject pages = (JSONObject) query.get("pages");
+//        Set<String> keys = pages.keySet();
+//        for (String key : keys) {
+//            JSONObject p = (JSONObject) pages.get(key);
+//            JSONArray categories = (JSONArray) p.get("categories");
+//            if (categories != null) {
+//                for (Object obj : categories) {
+//                    JSONObject jObj = (JSONObject) obj;
+//                    String cat = (String) jObj.get("title");
+//                    if (shouldAddCategory(cat)) {
+////                    System.err.println(cat.substring("Category:".length()).toLowerCase());
+//                        categoriesList.add(cat.substring("Category:".length()).toLowerCase().replaceAll(" ", "_"));
+//                    }
+//                }
+//            }
+//
+//        }
+//        return categoriesList;
+//    }
     protected void loadCache() throws MalformedURLException, IOException, InterruptedException {
         File lock = waitForDB();
         lock.createNewFile();
@@ -328,7 +393,7 @@ public class Wikipedia extends DisambiguatorImpl {
         return true;
     }
 
-    private Set<Term> getReferToTerms(String g, String lemma) throws IOException, ParseException {
+    private Set<Term> getReferToTerms(String g, String lemma) throws IOException, ParseException, MalformedURLException, InterruptedException, ExecutionException {
         String titles = getReferToTitles(g);
         if (titles.length() > 0 && !titles.equals(prevTitles)) {
             URL url = new URL(page + "?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles);
