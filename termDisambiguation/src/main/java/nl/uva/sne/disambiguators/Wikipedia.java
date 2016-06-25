@@ -433,7 +433,6 @@ public class Wikipedia extends DisambiguatorImpl {
         File lock = waitForDB(cacheDBFile);
         lock.createNewFile();
         loadTermCache();
-
         termCache.put(lemma, terms2Json);
         db.commit();
         db.close();

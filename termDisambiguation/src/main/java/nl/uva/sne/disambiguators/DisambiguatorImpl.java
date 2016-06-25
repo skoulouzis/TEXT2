@@ -174,7 +174,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
         int min = 2;
         while (lock.exists()) {
             Random random = new Random();
-            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
+            sleepTime = sleepTime * (random.nextInt(max - min + 1) + min);
             count++;
             if (count >= 40) {
                 lock.delete();

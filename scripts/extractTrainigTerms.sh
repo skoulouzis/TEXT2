@@ -28,7 +28,8 @@ do
   done <$i/dictionary.csv
   
   sort $i/tmp | uniq -u > $i/dictionary.csv
-  rm $i/tmp
+  sort -r -t"," -k2 -k1 $i/dictionary.csv > $i/tmp
+  mv $i/tmp $i/dictionary.csv
 done
 
 
