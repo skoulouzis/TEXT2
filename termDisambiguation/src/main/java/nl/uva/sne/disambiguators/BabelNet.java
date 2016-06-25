@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -150,30 +151,29 @@ public class BabelNet extends DisambiguatorImpl {
     }
 
     private String getBabelnetSynset(String id, String lan) throws IOException, FileNotFoundException, InterruptedException {
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
+//        if (db == null || db.isClosed()) {
+//            loadCache();
+//        }
         if (id == null || id.length() < 1) {
             return null;
         }
-        String json = synsetCache.get(id);
+        String json = getFromSynsetCache(id);
         if (json != null && json.equals("NON-EXISTING")) {
             return null;
         }
         if (json == null) {
             URL url = new URL("http://babelnet.io/v2/getSynset?id=" + id + "&filterLangs=" + lan + "&langs=" + lan + "&key=" + this.key);
+            System.err.println(url);
             json = IOUtils.toString(url);
             handleKeyLimitException(json);
-            if (db.isClosed()) {
-                loadCache();
-            }
+//            if (db.isClosed()) {
+//                loadCache();
+//            }
 
             if (json != null) {
-                synsetCache.put(id, json);
-                db.commit();
+                putInSynsetCache(id, json);
             } else {
-                synsetCache.put(id, "NON-EXISTING");
-                db.commit();
+                putInSynsetCache(id, "NON-EXISTING");
             }
         }
 
@@ -194,10 +194,10 @@ public class BabelNet extends DisambiguatorImpl {
     }
 
     private List<String> getcandidateWordIDs(String language, String word) throws IOException, ParseException, FileNotFoundException, InterruptedException {
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
-        List<String> ids = wordIDCache.get(word);
+//        if (db == null || db.isClosed()) {
+//            loadCache();
+//        }
+        List<String> ids = getFromWordIDCache(word);
         if (ids != null && ids.size() == 1 && ids.get(0).equals("NON-EXISTING")) {
             return null;
         }
@@ -205,6 +205,7 @@ public class BabelNet extends DisambiguatorImpl {
         if (ids == null || ids.isEmpty()) {
             ids = new ArrayList<>();
             URL url = new URL("http://babelnet.io/v2/getSynsetIds?word=" + word + "&langs=" + language + "&key=" + this.key);
+            System.err.println(url);
             String genreJson = IOUtils.toString(url);
             int count = 0;
             try {
@@ -237,64 +238,59 @@ public class BabelNet extends DisambiguatorImpl {
                     ids.add(id);
                 }
             }
-            if (db.isClosed()) {
-                loadCache();
-            }
+//            if (db.isClosed()) {
+//                loadCache();
+//            }
 
             if (ids.isEmpty()) {
                 ids.add("NON-EXISTING");
-                wordIDCache.put(word, ids);
-                commitDB();
+                putInWordIDCache(word, ids);
                 return null;
             }
-            wordIDCache.put(word, ids);
-            commitDB();
+            putInWordIDCache(word, ids);
         }
         return ids;
     }
 
-    private void loadCache() throws FileNotFoundException, IOException, InterruptedException {
-        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
-        int count = 0;
-        long sleepTime = 5;
-        while (lock.exists()) {
-            sleepTime = sleepTime * 2;
-            count++;
-            if (count >= 10) {
-                break;
-            }
-            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
-            Thread.sleep(sleepTime);
-        }
-
-        lock.createNewFile();
-        db = DBMaker.newFileDB(cacheDBFile).make();
-        synsetCache = db.getHashMap("synsetCacheDB");
-        if (synsetCache == null) {
-            synsetCache = db.createHashMap("synsetCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
-        }
-        wordIDCache = db.get("wordIDCacheDB");
-        if (wordIDCache == null) {
-            wordIDCache = db.createHashMap("wordIDCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
-        }
-
-        disambiguateCache = db.get("disambiguateCacheDB");
-        if (disambiguateCache == null) {
-            disambiguateCache = db.createHashMap("").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
-        }
-
-        edgesCache = db.getHashMap("edgesCacheDB");
-        if (edgesCache == null) {
-            edgesCache = db.createHashMap("edgesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
-        }
-        db.commit();
-        lock.delete();
-
-    }
-
+//    private void loadCache() throws FileNotFoundException, IOException, InterruptedException {
+//        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+//        int count = 0;
+//        long sleepTime = 5;
+//        while (lock.exists()) {
+//            sleepTime = sleepTime * 2;
+//            count++;
+//            if (count >= 10) {
+//                break;
+//            }
+//            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: {0} {1}", new Object[]{sleepTime, count});
+//            Thread.sleep(sleepTime);
+//        }
+//
+//        lock.createNewFile();
+//        db = DBMaker.newFileDB(cacheDBFile).make();
+//        synsetCache = db.getHashMap("synsetCacheDB");
+//        if (synsetCache == null) {
+//            synsetCache = db.createHashMap("synsetCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+//        }
+//        wordIDCache = db.get("wordIDCacheDB");
+//        if (wordIDCache == null) {
+//            wordIDCache = db.createHashMap("wordIDCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
+//        }
+//
+//        disambiguateCache = db.get("disambiguateCacheDB");
+//        if (disambiguateCache == null) {
+//            disambiguateCache = db.createHashMap("").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+//        }
+//
+//        edgesCache = db.getHashMap("edgesCacheDB");
+//        if (edgesCache == null) {
+//            edgesCache = db.createHashMap("edgesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+//        }
+//        db.commit();
+//        lock.delete();
+//    }
     private void handleKeyLimitException(String genreJson) throws IOException, FileNotFoundException, InterruptedException {
         if (genreJson.contains("Your key is not valid or the daily requests limit has been reached")) {
-            saveCache();
             keyIndex++;
             if (keyIndex > keys.length - 1) {
                 keyIndex = 0;
@@ -305,16 +301,15 @@ public class BabelNet extends DisambiguatorImpl {
         }
     }
 
-    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
-        Logger.getLogger(BabelNet.class.getName()).log(Level.FINE, "Saving cache");
-        if (db != null) {
-            if (!db.isClosed()) {
-                commitDB();
-                db.close();
-            }
-        }
-    }
-
+//    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
+//        Logger.getLogger(BabelNet.class.getName()).log(Level.FINE, "Saving cache");
+//        if (db != null) {
+//            if (!db.isClosed()) {
+//                commitDB();
+//                db.close();
+//            }
+//        }
+//    }
     private List<Term> getHypernyms(String language, Term t) throws MalformedURLException, IOException, ParseException, Exception {
         Map<String, Double> hypenymMap = getEdgeIDs(language, t.getUID(), "HYPERNYM");
         List<Term> hypernyms = new ArrayList<>();
@@ -343,21 +338,21 @@ public class BabelNet extends DisambiguatorImpl {
     }
 
     private Map<String, Double> getEdgeIDs(String language, String id, String relation) throws MalformedURLException, IOException, ParseException, Exception {
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
-        String genreJson = edgesCache.get(id);
+//        if (db == null || db.isClosed()) {
+//            loadCache();
+//        }
+        String genreJson = getFromEdgesCache(id);
         if (genreJson == null) {
             URL url = new URL("http://babelnet.io/v2/getEdges?id=" + id + "&key=" + this.key);
+            System.err.println(url);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
             if (genreJson != null) {
-                edgesCache.put(id, genreJson);
+                putInEdgesCache(id, genreJson);
             }
             if (genreJson == null) {
-                edgesCache.put(id, "NON-EXISTING");
+                putInEdgesCache(id, "NON-EXISTING");
             }
-            commitDB();
         }
         Object obj = JSONValue.parseWithException(genreJson);
         JSONArray edgeArray = (JSONArray) obj;
@@ -503,34 +498,31 @@ public class BabelNet extends DisambiguatorImpl {
         if (lemma == null || lemma.length() < 1) {
             return null;
         }
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
+//        if (db == null || db.isClosed()) {
+//            loadCache();
+//        }
         String query = lemma + " " + sentence.replaceAll("_", " ");
 
         query = URLEncoder.encode(query, "UTF-8");
-        String genreJson = null;
-        try {
-            genreJson = disambiguateCache.get(sentence);
-        } catch (Exception ex) {
-            System.err.println("");
-        }
+        String genreJson;
+
+        genreJson = getFromDisambiguateCache(sentence);
         if (genreJson != null && genreJson.equals("NON-EXISTING")) {
             return null;
         }
         if (genreJson == null) {
             URL url = new URL("http://babelfy.io/v1/disambiguate?text=" + query + "&lang=" + language + "&key=" + key);
+            System.err.println(url);
             genreJson = IOUtils.toString(url);
             handleKeyLimitException(genreJson);
-            if (db.isClosed()) {
-                loadCache();
-            }
+//            if (db.isClosed()) {
+//                loadCache();
+//            }
             if (!genreJson.isEmpty() || genreJson.length() < 1) {
-                disambiguateCache.put(sentence, genreJson);
+                putInDisambiguateCache(sentence, genreJson);
             } else {
-                disambiguateCache.put(sentence, "NON-EXISTING");
+                putInDisambiguateCache(sentence, "NON-EXISTING");
             }
-            commitDB();
         }
         Object obj = JSONValue.parseWithException(genreJson);
 //        Term term = null;
@@ -556,22 +548,132 @@ public class BabelNet extends DisambiguatorImpl {
         return null;
     }
 
-    private void commitDB() throws InterruptedException, IOException {
-        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
-        int count = 0;
-        long sleepTime = 5;
-        while (lock.exists()) {
-            sleepTime = sleepTime * 2;
-            count++;
-            if (count >= 10) {
-                break;
-            }
-            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
-            Thread.sleep(sleepTime);
-        }
+    private void putInSynsetCache(String id, String json) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
         lock.createNewFile();
+
+        loadSynsetCache();
+
+        synsetCache.put(id, json);
         db.commit();
+        db.close();
         lock.delete();
+    }
+
+    private String getFromSynsetCache(String id) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadSynsetCache();
+        String json = synsetCache.get(id);
+        db.close();
+        lock.delete();
+        return json;
+    }
+
+    private void loadSynsetCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        synsetCache = db.getHashMap("synsetCacheDB");
+        if (synsetCache == null) {
+            synsetCache = db.createHashMap("synsetCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+        }
+    }
+
+    private void putInWordIDCache(String word, List<String> ids) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadWordIDCache();
+        wordIDCache.put(word, ids);
+        db.commit();
+        db.close();
+        lock.delete();
+    }
+
+    private void loadWordIDCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        wordIDCache = db.get("wordIDCacheDB");
+        if (wordIDCache == null) {
+            wordIDCache = db.createHashMap("wordIDCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
+        }
+
+    }
+
+    private void putInEdgesCache(String id, String genreJson) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+
+        loadEdgesCache();
+
+        edgesCache.put(id, genreJson);
+        db.commit();
+        db.close();
+        lock.delete();
+    }
+
+    private void loadEdgesCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        edgesCache = db.getHashMap("edgesCacheDB");
+        if (edgesCache == null) {
+            edgesCache = db.createHashMap("edgesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+        }
+    }
+
+    private void putInDisambiguateCache(String sentence, String genreJson) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+
+        loadDisambiguateCache();
+
+        disambiguateCache.put(sentence, genreJson);
+        db.commit();
+        db.close();
+        lock.delete();
+    }
+
+    private void loadDisambiguateCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        disambiguateCache = db.get("disambiguateCacheDB");
+        if (disambiguateCache == null) {
+            disambiguateCache = db.createHashMap("disambiguateCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+        }
+    }
+
+    private List<String> getFromWordIDCache(String word) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadWordIDCache();
+        List<String> ids = wordIDCache.get(word);
+        db.close();
+        lock.delete();
+        return ids;
+    }
+
+    private String getFromEdgesCache(String id) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadEdgesCache();
+        String genreJson = edgesCache.get(id);
+        db.close();
+        lock.delete();
+        return genreJson;
+
+    }
+
+    private String getFromDisambiguateCache(String sentence) throws IOException, InterruptedException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadDisambiguateCache();
+        String genreJson = disambiguateCache.get(sentence);
+        db.close();
+        lock.delete();
+        return genreJson;
     }
 
 }

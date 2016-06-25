@@ -13,9 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -34,7 +33,6 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
     private String cachePath;
     private String allTermsDictionaryPath;
     private String termToProcess;
-    
 
     @Override
     public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
@@ -168,5 +166,24 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
         return getTerm(getTermToProcess());
     }
 
+    protected File waitForDB(File cacheDBFile) throws InterruptedException {
+        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+        int count = 0;
+        long sleepTime = 5;
+        int max = 4;
+        int min = 2;
+        while (lock.exists()) {
+            Random random = new Random();
+            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
+            count++;
+            if (count >= 40) {
+                lock.delete();
+                break;
+            }
+            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "DB {0} locked. Sleeping: {1} {2}", new Object[]{lock.getAbsolutePath(), sleepTime, count});
+            Thread.currentThread().sleep(sleepTime);
+        }
+        return lock;
+    }
 
 }

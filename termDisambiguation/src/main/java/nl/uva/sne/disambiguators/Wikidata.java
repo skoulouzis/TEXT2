@@ -6,7 +6,6 @@
 package nl.uva.sne.disambiguators;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,7 +45,7 @@ public class Wikidata extends DisambiguatorImpl {
 
     private DB db;
     private static Map<String, Set<String>> termCache;
-    private static Map<String, Set<String>> titlesCache;
+//    private static Map<String, Set<String>> titlesCache;
 
     private static final String[] EXCLUDED_CAT = new String[]{
         "articles needing",
@@ -81,21 +79,8 @@ public class Wikidata extends DisambiguatorImpl {
         "wikipedia spam",
         "on wikidata"
     };
-    private String page = "https://www.wikidata.org/w/api.php";
+    private final String page = "https://www.wikidata.org/w/api.php";
     private File cacheDBFile;
-
-    @Override
-    public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
-        try {
-            return super.disambiguateTerms(filterredDictionary);
-        } finally {
-            try {
-                saveCache();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
 
     @Override
     public void configure(Properties properties) {
@@ -135,11 +120,8 @@ public class Wikidata extends DisambiguatorImpl {
     }
 
     private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, JWNLException, InterruptedException, ExecutionException {
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
-        Set<Term> terms = null;
-        Set<String> termsStr = termCache.get(lemma);
+        Set<Term> terms;
+        Set<String> termsStr = getFromTermCache(lemma);
         if (termsStr != null) {
             terms = TermFactory.create(termsStr);
             Set<Term> possibleTerms = new HashSet<>();
@@ -166,11 +148,8 @@ public class Wikidata extends DisambiguatorImpl {
         String jsonString = IOUtils.toString(url);
         terms = getCandidateTerms(jsonString, lemma);
 
-        if (db.isClosed()) {
-            loadCache();
-        }
-        termCache.put(lemma, TermFactory.terms2Json(terms));
-        commitDB();
+        putInTermCache(lemma, TermFactory.terms2Json(terms));
+
         return terms;
     }
 
@@ -247,98 +226,42 @@ public class Wikidata extends DisambiguatorImpl {
         return returnTerms;
     }
 
-    private void loadCache() throws MalformedURLException, InterruptedException, IOException {
-        File lock = waitForDB();
-        lock.createNewFile();
-
-        db = DBMaker.newFileDB(cacheDBFile).make();
-//        extractsCache = db.getHashMap("extractsCacheDB");
-
-//        if (extractsCache == null) {
-//            extractsCache = db.createHashMap("extractsCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+//    private boolean shouldAddCategory(String cat) {
+//        for (String s : EXCLUDED_CAT) {
+//            if (cat.toLowerCase().contains(s)) {
+//                return false;
+//            }
 //        }
-        titlesCache = db.get("titlesCacheDB");
-        if (titlesCache == null) {
-            titlesCache = db.createHashMap("titlesCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
-        }
-        termCache = db.get("termCacheDB");
-        if (termCache == null) {
-            termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
-        }
-        lock.delete();
-    }
+//        return true;
+//    }
 
-    protected File waitForDB() throws InterruptedException {
-        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
-        int count = 0;
-        long sleepTime = 5;
-        int max = 4;
-        int min = 2;
-        while (lock.exists()) {
-            Random random = new Random();
-            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
-            count++;
-            if (count >= 40) {
-                lock.delete();
-                break;
-            }
-            Logger.getLogger(Wikidata.class.getName()).log(Level.INFO, "DB locked. Sleeping: " + sleepTime + " " + count);
-            Thread.currentThread().sleep(sleepTime);
-        }
-        return lock;
-    }
-
-    private void commitDB() throws InterruptedException, IOException {
-        File lock = waitForDB();
-        lock.createNewFile();
-        db.commit();
-        lock.delete();
-    }
-
-    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
-        Logger.getLogger(Wikidata.class.getName()).log(Level.FINE, "Saving cache");
-        if (db != null) {
-            if (!db.isClosed()) {
-                commitDB();
-                db.close();
-            }
-        }
-    }
-
-    private boolean shouldAddCategory(String cat) {
-        for (String s : EXCLUDED_CAT) {
-            if (cat.toLowerCase().contains(s)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
-        return getNumProperty(id, "P31");
-    }
-
+//    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
+//        return getNumProperty(id, "P31");
+//    }
     private Map<String, List<String>> getbroaderIDS(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
-        ExecutorService pool = Executors.newFixedThreadPool(terms.size());
-        Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
-        String prop = "P31";
-        for (Term t : terms) {
-            URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
-            System.err.println(url);
-            WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
-            Future<Map<String, List<String>>> future = pool.submit(req);
-            set1.add(future);
-        }
-        pool.shutdown();
         Map<String, List<String>> map = new HashMap<>();
-        for (Future<Map<String, List<String>>> future : set1) {
-            while (!future.isDone()) {
-//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
-                Thread.currentThread().sleep(10);
+        if (terms.size() > 0) {
+            ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+            Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
+            String prop = "P31";
+            for (Term t : terms) {
+                URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
+                System.err.println(url);
+                WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
+                Future<Map<String, List<String>>> future = pool.submit(req);
+                set1.add(future);
             }
-            Map<String, List<String>> c = future.get();
-            if (c != null) {
-                map.putAll(c);
+            pool.shutdown();
+
+            for (Future<Map<String, List<String>>> future : set1) {
+                while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                    Thread.currentThread().sleep(10);
+                }
+                Map<String, List<String>> c = future.get();
+                if (c != null) {
+                    map.putAll(c);
+                }
             }
         }
 
@@ -346,57 +269,61 @@ public class Wikidata extends DisambiguatorImpl {
     }
 
     private Map<String, List<String>> getCategories(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
-        ExecutorService pool = Executors.newFixedThreadPool(terms.size());
-
-        Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
-        String prop = "P910";
-        for (Term t : terms) {
-            URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
-            System.err.println(url);
-            WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
-            Future<Map<String, List<String>>> future = pool.submit(req);
-            set1.add(future);
-        }
-        pool.shutdown();
-
-        Map<String, List<String>> map = new HashMap<>();
-        for (Future<Map<String, List<String>>> future : set1) {
-            while (!future.isDone()) {
-//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
-                Thread.currentThread().sleep(10);
-            }
-            Map<String, List<String>> c = future.get();
-            if (c != null) {
-                map.putAll(c);
-            }
-        }
-
-        pool = Executors.newFixedThreadPool(terms.size() * 2);
-
-        Set<Future<Map<String, List<String>>>> set2 = new HashSet<>();
-        for (Term t : terms) {
-            List<String> catIDs = map.get(t.getUID());
-            for (String catID : catIDs) {
-                URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + catID);
-                System.err.println(url);
-                WikiRequestor req = new WikiRequestor(url, t.getUID(), 2);
-                Future<Map<String, List<String>>> future = pool.submit(req);
-                set2.add(future);
-            }
-        }
-        pool.shutdown();
-
         Map<String, List<String>> cats = new HashMap<>();
-        for (Future<Map<String, List<String>>> future : set2) {
-            while (!future.isDone()) {
-//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
-                Thread.currentThread().sleep(10);
+
+        if (terms.size() > 0) {
+            ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+
+            Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
+            String prop = "P910";
+            for (Term t : terms) {
+                URL url = new URL(page + "?action=wbgetclaims&format=json&props=&property=" + prop + "&entity=" + t.getUID());
+                System.err.println(url);
+                WikiRequestor req = new WikiRequestor(url, t.getUID(), 1);
+                Future<Map<String, List<String>>> future = pool.submit(req);
+                set1.add(future);
             }
-            Map<String, List<String>> c = future.get();
-            if (c != null) {
-                cats.putAll(c);
+            pool.shutdown();
+
+            Map<String, List<String>> map = new HashMap<>();
+            for (Future<Map<String, List<String>>> future : set1) {
+                while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                    Thread.currentThread().sleep(10);
+                }
+                Map<String, List<String>> c = future.get();
+                if (c != null) {
+                    map.putAll(c);
+                }
+            }
+
+            pool = Executors.newFixedThreadPool(terms.size() * 2);
+
+            Set<Future<Map<String, List<String>>>> set2 = new HashSet<>();
+            for (Term t : terms) {
+                List<String> catIDs = map.get(t.getUID());
+                for (String catID : catIDs) {
+                    URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + catID);
+                    System.err.println(url);
+                    WikiRequestor req = new WikiRequestor(url, t.getUID(), 2);
+                    Future<Map<String, List<String>>> future = pool.submit(req);
+                    set2.add(future);
+                }
+            }
+            pool.shutdown();
+
+            for (Future<Map<String, List<String>>> future : set2) {
+                while (!future.isDone()) {
+//                Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "Task is not completed yet....");
+                    Thread.currentThread().sleep(10);
+                }
+                Map<String, List<String>> c = future.get();
+                if (c != null) {
+                    cats.putAll(c);
+                }
             }
         }
+
         return cats;
     }
 
@@ -444,26 +371,55 @@ public class Wikidata extends DisambiguatorImpl {
 //
 //        return lables;
 //    }
-    private String getLabel(String id) throws MalformedURLException, IOException, ParseException {
+//    private String getLabel(String id) throws MalformedURLException, IOException, ParseException {
+//
+//        URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + id);
+//        System.err.println(url);
+//        String jsonString = IOUtils.toString(url);
+//        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
+//
+//        JSONObject entities = (JSONObject) jsonObj.get("entities");
+////        System.err.println(entities);
+//        JSONObject jID = (JSONObject) entities.get(id);
+//
+//        JSONObject labels = (JSONObject) jID.get("labels");
+////        System.err.println(labels);
+//        JSONObject en = (JSONObject) labels.get("en");
+////        System.err.println(en);
+//        if (en != null) {
+//            String value = (String) en.get("value");
+//            return value.substring("Category:".length()).toLowerCase().replaceAll(" ", "_");
+//        }
+//        return null;
+//    }
+    private void putInTermCache(String lemma, Set<String> terms2Json) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadTermCache();
 
-        URL url = new URL(page + "?action=wbgetentities&format=json&props=labels&languages=en&ids=" + id);
-        System.err.println(url);
-        String jsonString = IOUtils.toString(url);
-        JSONObject jsonObj = (JSONObject) JSONValue.parseWithException(jsonString);
-
-        JSONObject entities = (JSONObject) jsonObj.get("entities");
-//        System.err.println(entities);
-        JSONObject jID = (JSONObject) entities.get(id);
-
-        JSONObject labels = (JSONObject) jID.get("labels");
-//        System.err.println(labels);
-        JSONObject en = (JSONObject) labels.get("en");
-//        System.err.println(en);
-        if (en != null) {
-            String value = (String) en.get("value");
-            return value.substring("Category:".length()).toLowerCase().replaceAll(" ", "_");
-        }
-        return null;
+        termCache.put(lemma, terms2Json);
+        db.commit();
+        db.close();
+        lock.delete();
     }
 
+    private void loadTermCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        termCache = db.getHashMap("termCacheDB");
+        if (termCache == null) {
+            termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+        }
+    }
+
+    private Set<String> getFromTermCache(String lemma) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadTermCache();
+        Set<String> termsStr = termCache.get(lemma);
+        db.close();
+        lock.delete();
+        return termsStr;
+    }
 }

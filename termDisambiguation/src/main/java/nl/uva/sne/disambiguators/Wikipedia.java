@@ -6,7 +6,6 @@
 package nl.uva.sne.disambiguators;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -18,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
@@ -107,19 +105,6 @@ public class Wikipedia extends DisambiguatorImpl {
     }
 
     @Override
-    public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
-        try {
-            return super.disambiguateTerms(filterredDictionary);
-        } finally {
-            try {
-                saveCache();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Wikipedia.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
-    @Override
     public Term getTerm(String term) throws IOException, ParseException, JWNLException, MalformedURLException, UnsupportedEncodingException {
         Set<Term> possibleTerms = null;
         try {
@@ -142,17 +127,14 @@ public class Wikipedia extends DisambiguatorImpl {
     }
 
     private Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException, InterruptedException, ExecutionException {
-        if (db == null || db.isClosed()) {
-            loadCache();
-        }
 
-        Set<String> termsStr = termCache.get(lemma);
+        Set<String> termsStr = getFromTermCache(lemma);
         if (termsStr != null) {
             return TermFactory.create(termsStr);
         }
 
         Set<Term> terms = new HashSet<>();
-//        Set<String> titlesList = titlesCache.get(lemma);
+
         URL url;
         String jsonString;
 
@@ -175,7 +157,7 @@ public class Wikipedia extends DisambiguatorImpl {
             if ((i % 20 == 0 && i > 0) || i >= titlesList.size() - 1) {
                 titles.deleteCharAt(titles.length() - 1);
                 titles.setLength(titles.length());
-                jsonString = null; //extractsCache.get(titles.toString());
+                jsonString = null;
                 if (jsonString == null) {
                     url = new URL(page + "?format=json&redirects&action=query&prop=extracts&exlimit=max&explaintext&exintro&titles=" + titles.toString());
                     System.err.println(url);
@@ -186,11 +168,7 @@ public class Wikipedia extends DisambiguatorImpl {
             }
             i++;
         }
-        if (db.isClosed()) {
-            loadCache();
-        }
-        termCache.put(lemma, TermFactory.terms2Json(terms));
-        commitDB();
+        putInTermCache(lemma, TermFactory.terms2Json(terms));
         return terms;
     }
 
@@ -363,37 +341,38 @@ public class Wikipedia extends DisambiguatorImpl {
 //        }
 //        return categoriesList;
 //    }
-    protected void loadCache() throws MalformedURLException, IOException, InterruptedException {
-        File lock = waitForDB();
-        lock.createNewFile();
-
-        db = DBMaker.newFileDB(cacheDBFile).make();
-        termCache = db.get("termCacheDB");
-        if (termCache == null) {
-            termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
-        }
-        lock.delete();
-    }
-
-    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
-        Logger.getLogger(Wikipedia.class.getName()).log(Level.FINE, "Saving cache");
-        if (db != null) {
-            if (!db.isClosed()) {
-                commitDB();
-                db.close();
-            }
-        }
-    }
-
-    private boolean shouldAddCategory(String cat) {
-        for (String s : EXCLUDED_CAT) {
-            if (cat.toLowerCase().contains(s)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
+//    protected void loadCache() throws MalformedURLException, IOException, InterruptedException {
+//        File lock = waitForDB();
+//        lock.createNewFile();
+//
+//        
+//        db = DBMaker.newFileDB(cacheDBFile).make();
+//        termCache = db.get("termCacheDB");
+//        if (termCache == null) {
+//            termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.BASIC).make();
+//        }        
+//        
+//        lock.delete();
+//    }
+//
+//    private void saveCache() throws FileNotFoundException, IOException, InterruptedException {
+//        Logger.getLogger(Wikipedia.class.getName()).log(Level.FINE, "Saving cache");
+//        if (db != null) {
+//            if (!db.isClosed()) {
+//                commitDB();
+//                db.close();
+//            }
+//        }
+//    }
+//
+//    private boolean shouldAddCategory(String cat) {
+//        for (String s : EXCLUDED_CAT) {
+//            if (cat.toLowerCase().contains(s)) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
     private Set<Term> getReferToTerms(String g, String lemma) throws IOException, ParseException, MalformedURLException, InterruptedException, ExecutionException {
         String titles = getReferToTitles(g);
         if (titles.length() > 0 && !titles.equals(prevTitles)) {
@@ -424,31 +403,60 @@ public class Wikipedia extends DisambiguatorImpl {
         return titles.toString();
     }
 
-    protected File waitForDB() throws InterruptedException {
-        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
-        int count = 0;
-        long sleepTime = 5;
-        int max = 4;
-        int min = 2;
-        while (lock.exists()) {
-            Random random = new Random();
-            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
-            count++;
-            if (count >= 40) {
-                lock.delete();
-                break;
-            }
-            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "DB " + lock.getAbsolutePath() + " locked. Sleeping: " + sleepTime + " " + count);
-            Thread.currentThread().sleep(sleepTime);
-        }
-        return lock;
-    }
-
-    private void commitDB() throws InterruptedException, IOException {
-        File lock = waitForDB();
+//    protected File waitForDB() throws InterruptedException {
+//        File lock = new File(cacheDBFile.getAbsolutePath() + ".lock");
+//        int count = 0;
+//        long sleepTime = 5;
+//        int max = 4;
+//        int min = 2;
+//        while (lock.exists()) {
+//            Random random = new Random();
+//            sleepTime = sleepTime * random.nextInt(max - min + 1) + min;
+//            count++;
+//            if (count >= 40) {
+//                lock.delete();
+//                break;
+//            }
+//            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "DB " + lock.getAbsolutePath() + " locked. Sleeping: " + sleepTime + " " + count);
+//            Thread.currentThread().sleep(sleepTime);
+//        }
+//        return lock;
+//    }
+//
+//    private void commitDB() throws InterruptedException, IOException {
+//        File lock = waitForDB();
+//        lock.createNewFile();
+//        db.commit();
+//        lock.delete();
+//    }
+    private void putInTermCache(String lemma, Set<String> terms2Json) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
         lock.createNewFile();
+        loadTermCache();
+
+        termCache.put(lemma, terms2Json);
         db.commit();
+        db.close();
         lock.delete();
     }
 
+    private void loadTermCache() {
+        if (db == null || db.isClosed()) {
+            db = DBMaker.newFileDB(cacheDBFile).make();
+        }
+        termCache = db.getHashMap("termCacheDB");
+        if (termCache == null) {
+            termCache = db.createHashMap("termCacheDB").keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING).make();
+        }
+    }
+
+    private Set<String> getFromTermCache(String lemma) throws InterruptedException, IOException {
+        File lock = waitForDB(cacheDBFile);
+        lock.createNewFile();
+        loadTermCache();
+        Set<String> termsStr = termCache.get(lemma);
+        db.close();
+        lock.delete();
+        return termsStr;
+    }
 }
