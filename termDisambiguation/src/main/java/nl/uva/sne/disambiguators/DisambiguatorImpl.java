@@ -64,15 +64,9 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
             }
         } catch (Exception ex) {
             Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.WARNING, null, ex);
-            return terms;
         } finally {
-//            try {
-//                saveCache();
-//            } catch (InterruptedException ex) {
-//                Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.SEVERE, null, ex);
-//            }
+            return terms;
         }
-        return terms;
     }
 
     @Override
@@ -180,7 +174,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
                 lock.delete();
                 break;
             }
-            Logger.getLogger(Wikipedia.class.getName()).log(Level.INFO, "DB {0} locked. Sleeping: {1} {2}", new Object[]{lock.getAbsolutePath(), sleepTime, count});
+            Logger.getLogger(WikipediaOnline.class.getName()).log(Level.INFO, "DB {0} locked. Sleeping: {1} {2}", new Object[]{lock.getAbsolutePath(), sleepTime, count});
             Thread.currentThread().sleep(sleepTime);
         }
         return lock;

@@ -5,20 +5,15 @@
  */
 package nl.uva.sne.disambiguators;
 
-import com.google.common.collect.ForwardingMapEntry;
-import static edu.stanford.nlp.time.SUTime.TimexAttr.type;
 import java.io.IOException;
 import java.net.URL;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import static nl.uva.sne.disambiguators.Wikipedia.EXCLUDED_CAT;
+import static nl.uva.sne.disambiguators.WikipediaOnline.EXCLUDED_CAT;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -43,17 +38,21 @@ public class WikiRequestor implements Callable {
 
     @Override
     public Map<String, List<String>> call() throws Exception {
+        long start = System.currentTimeMillis();
+        Map<String, List<String>> map = null;
         switch (type) {
             case 0:
-                return getWikiCategory();
+                map = getWikiCategory();
+                break;
             case 1:
-                return getWikidataNumProperty();
+                map = getWikidataNumProperty();
+                break;
             case 2:
                 return getWikidataLables();
-            default:
-                return null;
-        }
 
+        }
+//        System.err.println(this.hashCode() + " Elapsed: " + (System.currentTimeMillis() - start));
+        return map;
     }
 
     private boolean shouldAddCategory(String cat) {

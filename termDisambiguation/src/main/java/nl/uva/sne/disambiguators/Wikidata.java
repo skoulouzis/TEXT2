@@ -17,10 +17,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -234,14 +237,17 @@ public class Wikidata extends DisambiguatorImpl {
 //        }
 //        return true;
 //    }
-
 //    private List<String> getBroaderID(String id) throws MalformedURLException, IOException, ParseException {
 //        return getNumProperty(id, "P31");
 //    }
     private Map<String, List<String>> getbroaderIDS(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
         Map<String, List<String>> map = new HashMap<>();
         if (terms.size() > 0) {
-            ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+            int maxT = 3;
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                    5000L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P31";
             for (Term t : terms) {
@@ -272,7 +278,10 @@ public class Wikidata extends DisambiguatorImpl {
         Map<String, List<String>> cats = new HashMap<>();
 
         if (terms.size() > 0) {
-            ExecutorService pool = Executors.newFixedThreadPool(terms.size());
+            int maxT = 3;
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                    5000L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
 
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P910";
@@ -297,7 +306,9 @@ public class Wikidata extends DisambiguatorImpl {
                 }
             }
 
-            pool = Executors.newFixedThreadPool(terms.size() * 2);
+            pool = new ThreadPoolExecutor(maxT, maxT,
+                    5000L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
 
             Set<Future<Map<String, List<String>>>> set2 = new HashSet<>();
             for (Term t : terms) {

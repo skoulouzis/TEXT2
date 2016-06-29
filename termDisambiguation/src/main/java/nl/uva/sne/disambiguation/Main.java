@@ -17,7 +17,6 @@ import nl.uva.sne.commons.Term;
 import nl.uva.sne.commons.TermFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
-import nl.uva.sne.disambiguators.Disambiguator;
 import nl.uva.sne.disambiguators.DisambiguatorImpl;
 import org.apache.commons.io.FileDeleteStrategy;
 

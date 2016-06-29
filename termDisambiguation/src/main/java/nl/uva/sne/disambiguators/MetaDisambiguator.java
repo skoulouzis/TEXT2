@@ -11,10 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNLException;
@@ -55,16 +58,12 @@ public class MetaDisambiguator extends DisambiguatorImpl {
 
     @Override
     public Term getTerm(String term) throws IOException, ParseException, JWNLException {
-//        long start = System.currentTimeMillis();
         try {
             if (sequentially) {
                 return getTermSequentially(term);
             } else {
                 return getTermConcurrently(term);
             }
-//            long end = System.currentTimeMillis();
-//            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "-----------Elapsed: " + (end - start));
-//            return d;
         } catch (IOException | ParseException | JWNLException | InterruptedException | ExecutionException ex) {
             if (ex instanceof IOException && ex.getMessage().contains("Your key is not valid or the daily requests limit has been reached")) {
                 Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.WARNING, null, ex);
@@ -118,7 +117,11 @@ public class MetaDisambiguator extends DisambiguatorImpl {
     private Term getTermConcurrently(String term) throws InterruptedException, ExecutionException {
         Set<Term> possibleTerms = new HashSet();
 
-        ExecutorService pool = Executors.newFixedThreadPool(disambiguators.size());
+        int maxT = 3;
+        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                5000L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+
         Set<Future<Term>> set = new HashSet<>();
         for (int i = 0; i < disambiguators.size(); i++) {
             DisambiguatorImpl s = disambiguators.get(i);

@@ -39,6 +39,24 @@
             <type>jar</type>
         </dependency>
         
+        <dependency>
+            <groupId>edu.jhu.nlp</groupId>
+            <artifactId>wikixmlj</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.bluestemsoftware.open.maven.tparty</groupId>
+            <artifactId>xerces-impl</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant-compress</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        
         
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
@@ -57,7 +75,6 @@
             <version>1.0-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
-        
     </dependencies>
     
     
@@ -80,4 +97,37 @@
         </plugins>
     </build>
     <name>termDisambiguation</name>
+    
+    
+    <repositories>
+      
+        <repository>
+            <id>repo2_maven_org</id>
+            <url>http://repo2.maven.org/maven2</url>
+        </repository>
+        
+        <repository>
+            <id>mvn-public</id>
+            <name>MVNRepository</name>
+            <url>http://mvnrepository.com</url>
+        </repository>
+
+        
+        <repository>
+            <snapshots />
+            <id>skoulouzis-snapshots</id>
+            <url>https://raw.githubusercontent.com/skoulouzis/mvn-repo/master/snapshots</url>
+        </repository>
+                
+                
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>releases</id>
+            <url>https://raw.githubusercontent.com/skoulouzis/mvn-repo/master/releases</url>
+        </repository>
+      
+    </repositories>
+    
 </project>
