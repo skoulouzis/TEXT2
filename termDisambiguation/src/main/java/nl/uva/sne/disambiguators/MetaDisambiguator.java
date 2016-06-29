@@ -117,10 +117,9 @@ public class MetaDisambiguator extends DisambiguatorImpl {
     private Term getTermConcurrently(String term) throws InterruptedException, ExecutionException {
         Set<Term> possibleTerms = new HashSet();
 
-        int maxT = 3;
-        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(),
                 5000L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+                new ArrayBlockingQueue<>(disambiguators.size(), true), new ThreadPoolExecutor.CallerRunsPolicy());
 
         Set<Future<Term>> set = new HashSet<>();
         for (int i = 0; i < disambiguators.size(); i++) {
