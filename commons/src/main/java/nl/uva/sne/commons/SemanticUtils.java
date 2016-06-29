@@ -530,6 +530,7 @@ public class SemanticUtils {
     }
 
     public static Term disambiguate(String term, Set<Term> possibleTerms, String allTermsDictionary, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
+        long start = System.currentTimeMillis();
         Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, allTermsDictionary);
         possibleTerms = SemanticUtils.tf_idf_Disambiguation(possibleTerms, ngarms, term, confidence, matchTitle);
         Term dis = null;
@@ -541,6 +542,7 @@ public class SemanticUtils {
 //        } else {
 //            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
 //        }
+        Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Elapsed:" + (System.currentTimeMillis() - start));
         return dis;
     }
 
