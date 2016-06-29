@@ -253,10 +253,6 @@ public class TermFactory {
         for (String s : terms) {
             Term t = create(s);
             te.add(t);
-//            System.err.print(t);
-//            for (String g : t.getGlosses()) {
-//                System.err.println("\t: " + g);
-//            }
         }
         return te;
     }

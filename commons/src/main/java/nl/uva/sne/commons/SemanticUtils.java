@@ -22,6 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.didion.jwnl.JWNL;
@@ -390,6 +395,7 @@ public class SemanticUtils {
     public static Set<Term> tf_idf_Disambiguation(Set<Term> possibleTerms, Set<String> nGrams, String lemma, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
         List<List<String>> allDocs = new ArrayList<>();
         Map<String, List<String>> docs = new HashMap<>();
+
         for (Term tv : possibleTerms) {
             Set<String> doc = SemanticUtils.getDocument(tv);
             allDocs.add(new ArrayList<>(doc));
@@ -418,7 +424,6 @@ public class SemanticUtils {
             for (String term : doc) {
                 if (!featureVector.containsKey(term)) {
                     double tfidf = tfIdf(doc, allDocs, term);
-//  double tf = SemanticUtils.tf(doc, allDocs, term);
                     featureVector.put(term, tfidf);
                 }
             }
@@ -428,76 +433,59 @@ public class SemanticUtils {
         Map<String, Double> contextVector = featureVectors.remove("context");
 
         Map<String, Double> scoreMap = new HashMap<>();
-        for (String key : featureVectors.keySet()) {
+        for (String key : featureVectors.keySet()) {            
             Double similarity = cosineSimilarity(contextVector, featureVectors.get(key));
-
+            
             for (Term t : possibleTerms) {
-                if (t.getUID().equals(key)) {
+                if (t.getUID().equals(key)) {                    
+                    
                     String stemTitle = stem(t.getLemma().toLowerCase());
                     String stemLema = stem(lemma);
-                    List<String> subTokens = new ArrayList<>();
-                    if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(") && t.getLemma().toLowerCase().contains(")")) {
-                        int index1 = t.getLemma().toLowerCase().indexOf("(") + 1;
-                        int index2 = t.getLemma().toLowerCase().indexOf(")");
-                        String sub = t.getLemma().toLowerCase().substring(index1, index2);
-                        subTokens.addAll(tokenize(sub, true));
-                    }
-
-                    List<String> nTokens = new ArrayList<>();
-                    for (String s : nGrams) {
-                        if (s.contains("_")) {
-                            String[] parts = s.split("_");
-                            for (String token : parts) {
-                                nTokens.addAll(tokenize(token, true));
-                            }
-                        } else {
-                            nTokens.addAll(tokenize(s, true));
-                        }
-                    }
-                    if (t.getCategories() != null) {
-                        for (String s : t.getCategories()) {
-                            if (s != null && s.contains("_")) {
-                                String[] parts = s.split("_");
-                                for (String token : parts) {
-                                    subTokens.addAll(tokenize(token, true));
-                                }
-                            } else if (s != null) {
-                                subTokens.addAll(tokenize(s, true));
-                            }
-                        }
-                    }
-//                    System.err.println(t.getGlosses());
-                    Set<String> intersection = new HashSet<>(nTokens);
-                    intersection.retainAll(subTokens);
-                    if (intersection.isEmpty()) {
-                        similarity -= 0.1;
-                    }
-
-//                    String shorter;
-//                    String longer;
-//                    if (stemTitle.length() > stemLema.length()) {
-//                        longer = stemTitle;
-//                        shorter = stemLema;
-//                    } else {
-//                        longer = stemLema;
-//                        shorter = stemTitle;
+//                    List<String> subTokens = new ArrayList<>();
+//                    if (!t.getLemma().toLowerCase().startsWith("(") && t.getLemma().toLowerCase().contains("(") && t.getLemma().toLowerCase().contains(")")) {
+//                        int index1 = t.getLemma().toLowerCase().indexOf("(") + 1;
+//                        int index2 = t.getLemma().toLowerCase().indexOf(")");
+//                        String sub = t.getLemma().toLowerCase().substring(index1, index2);
+//                        subTokens.addAll(tokenize(sub, true));
 //                    }
-//                    if (longer.contains(shorter)) {
-//                        similarity += 0.02;
+//
+//                    List<String> nTokens = new ArrayList<>();
+//                    for (String s : nGrams) {
+//                        if (s.contains("_")) {
+//                            String[] parts = s.split("_");
+//                            for (String token : parts) {
+//                                nTokens.addAll(tokenize(token, true));
+//                            }
+//                        } else {
+//                            nTokens.addAll(tokenize(s, true));
+//                        }
 //                    }
-//                    if(possibleTerms.size()==1){
-//                         similarity += 0.02;
+//                    if (t.getCategories() != null) {
+//                        for (String s : t.getCategories()) {
+//                            if (s != null && s.contains("_")) {
+//                                String[] parts = s.split("_");
+//                                for (String token : parts) {
+//                                    subTokens.addAll(tokenize(token, true));
+//                                }
+//                            } else if (s != null) {
+//                                subTokens.addAll(tokenize(s, true));
+//                            }
+//                        }
+//                    }
+////                    System.err.println(t.getGlosses());
+//                    Set<String> intersection = new HashSet<>(nTokens);
+//                    intersection.retainAll(subTokens);
+//                    if (intersection.isEmpty()) {
+//                        similarity -= 0.1;
 //                    }
                     int dist = edu.stanford.nlp.util.StringUtils.editDistance(stemTitle, stemLema);
                     similarity = similarity - (dist * 0.05);
-//                    similarity = similarity - (dist * 0.5);
-//                    double logSim = Math.log(similarity - (dist * 0.001));
-//                    System.err.println(similarity + " " + logSim);
                     t.setConfidence(similarity);
                 }
             }
             scoreMap.put(key, similarity);
         }
+
         if (scoreMap.isEmpty()) {
             return null;
         }
@@ -530,7 +518,6 @@ public class SemanticUtils {
     }
 
     public static Term disambiguate(String term, Set<Term> possibleTerms, String allTermsDictionary, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
-//        long start = System.currentTimeMillis();
         Set<String> ngarms = FileUtils.getNGramsFromTermDictionary(term, allTermsDictionary);
         possibleTerms = SemanticUtils.tf_idf_Disambiguation(possibleTerms, ngarms, term, confidence, matchTitle);
         Term dis = null;
@@ -542,7 +529,7 @@ public class SemanticUtils {
 //        } else {
 //            Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Couldn''''t figure out what ''{0}'' means", term);
 //        }
-//        Logger.getLogger(SemanticUtils.class.getName()).log(Level.INFO, "Elapsed:" + (System.currentTimeMillis() - start));
+
         return dis;
     }
 
