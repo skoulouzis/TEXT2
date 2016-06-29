@@ -38,7 +38,7 @@ public class WikiRequestor implements Callable {
 
     @Override
     public Map<String, List<String>> call() throws Exception {
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
         Map<String, List<String>> map = null;
         switch (type) {
             case 0:

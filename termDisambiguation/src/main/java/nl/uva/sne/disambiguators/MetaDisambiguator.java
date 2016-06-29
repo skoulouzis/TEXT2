@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +76,7 @@ public class MetaDisambiguator extends DisambiguatorImpl {
     }
 
     private Term getWinner(Set<Term> possibleTerms, double minimumSimilarity) {
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
         double highScore = minimumSimilarity;
         String id = null;
         for (Term t : possibleTerms) {
@@ -90,23 +89,22 @@ public class MetaDisambiguator extends DisambiguatorImpl {
         if (id != null) {
             for (Term t : possibleTerms) {
                 if (id.equals(t.getUID())) {
-                    Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}.", new Object[]{System.currentTimeMillis() - start,});
+//                    Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}.", new Object[]{System.currentTimeMillis() - start,});
                     return t;
                 }
             }
         }
-        Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}.", new Object[]{System.currentTimeMillis() - start,});
+//        Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}.", new Object[]{System.currentTimeMillis() - start,});
         return null;
     }
 
     private Term getTermSequentially(String term) throws IOException, ParseException, JWNLException {
         Set<Term> possibleTerms = new HashSet();
         for (Disambiguator s : disambiguators) {
-            long start = System.currentTimeMillis();
+//            long start = System.currentTimeMillis();
             Term t = s.getTerm(term);
 
-            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}. {1}", new Object[]{System.currentTimeMillis() - start, s.getClass().getName()});
-
+//            Logger.getLogger(MetaDisambiguator.class.getName()).log(Level.INFO, "Elapsed: {0}. {1}", new Object[]{System.currentTimeMillis() - start, s.getClass().getName()});
             if (t != null) {
                 possibleTerms.add(t);
             }
