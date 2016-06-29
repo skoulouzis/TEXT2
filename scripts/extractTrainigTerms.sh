@@ -7,7 +7,15 @@ DICTIONARY_ALL=$HOME/Downloads/textdocs/dictionaryAll.csv
 # declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/doc3/6ApplicationSubjectDomain" "$HOME/Downloads/doc3/5PersonalInter-personalCommunication")
 
 
-declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/D2.2_Table_14CompetencesGroups/DataAnalytics_DSDA/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DataManagementCuration_DSDM/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DSDomain_DSDK/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DSEngineering_DSENG/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/ScientificResearchMethods_DSRM")
+# declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/D2.2_Table_14CompetencesGroups/DataAnalytics_DSDA/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DataManagementCuration_DSDM/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DSDomain_DSDK/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/DSEngineering_DSENG/" "$HOME/Downloads/D2.2_Table_14CompetencesGroups/ScientificResearchMethods_DSRM")
+
+declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools/Big_Data_Analytics_platforms/" "$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools/Databases/" "$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools/Data_Management_Curation_platform/" "$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools/Data_visualization/" "$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools/Math_Stats_tools")
+
+
+
+# declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/locations/london" "$HOME/Downloads/locations/berlin" "$HOME/Downloads/locations/amsterdam")
+
+
 
 
 for i in "${TRAIN_DOC_PATHS[@]}"
@@ -28,7 +36,7 @@ do
   done <$i/dictionary.csv
   
   sort $i/tmp | uniq -u > $i/dictionary.csv
-  sort -r -t"," -k2 -k1 $i/dictionary.csv > $i/tmp
+  sort -n -r -t"," -k2 -k1 $i/dictionary.csv > $i/tmp
   mv $i/tmp $i/dictionary.csv
 done
 

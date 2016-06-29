@@ -184,6 +184,7 @@ public class CosineSimilarity implements Classifier {
                         String[] parts = line.split(",");
                         String key = parts[0];
                         String val = parts[1];
+//                        System.err.println(featureFile.getAbsolutePath() + " " + line);
                         classVector.put(key, Double.valueOf(val));
                     }
                     classFeatureVectors.put(FilenameUtils.removeExtension(featureFile.getName()), classVector);
