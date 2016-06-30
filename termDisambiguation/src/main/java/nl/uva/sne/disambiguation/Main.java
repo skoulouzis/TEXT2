@@ -78,6 +78,8 @@ public class Main {
                 }
             }
         }
+        
+        Logger.getLogger(Main.class.getName()).log(Level.INFO, "-----Done-----");
     }
 
     private static void writeTerms2Json(List<Term> terms, String outputDir) throws IOException {
