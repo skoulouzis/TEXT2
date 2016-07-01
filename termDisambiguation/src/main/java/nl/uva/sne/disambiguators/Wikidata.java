@@ -243,7 +243,7 @@ public class Wikidata extends DisambiguatorImpl {
     private Map<String, List<String>> getbroaderIDS(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
         Map<String, List<String>> map = new HashMap<>();
         if (terms.size() > 0) {
-            int maxT = 3;
+            int maxT = 2;
             ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
                     5000L, TimeUnit.MILLISECONDS,
                     new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -278,7 +278,7 @@ public class Wikidata extends DisambiguatorImpl {
         Map<String, List<String>> cats = new HashMap<>();
 
         if (terms.size() > 0) {
-            int maxT = 3;
+            int maxT = 2;
             ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
                     5000L, TimeUnit.MILLISECONDS,
                     new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());

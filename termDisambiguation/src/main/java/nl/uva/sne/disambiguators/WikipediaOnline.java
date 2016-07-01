@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +91,7 @@ public class WikipediaOnline extends Wikipedia {
 
     @Override
     protected Set<Term> getTermNodeByLemma(String lemma) throws MalformedURLException, IOException, ParseException, UnsupportedEncodingException, JWNLException, InterruptedException, ExecutionException {
-
+        
         Set<String> termsStr = getFromTermCache(lemma);
         if (termsStr != null) {
             return TermFactory.create(termsStr);
@@ -176,7 +175,7 @@ public class WikipediaOnline extends Wikipedia {
     }
 
     private Map<String, List<String>> getCategories(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
-        int maxT = 3;
+        int maxT = 2;
         ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
                 5000L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());

@@ -38,6 +38,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
     public List<Term> disambiguateTerms(String filterredDictionary) throws IOException, ParseException, FileNotFoundException {
 //        Logger.getLogger(DisambiguatorImpl.class.getName()).log(Level.INFO, "filterredDictionary: " + filterredDictionary);
         List<Term> terms = new ArrayList<>();
+        
         File dictionary = new File(filterredDictionary);
         int count = 0;
         int lineCount = 1;
