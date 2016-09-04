@@ -345,6 +345,11 @@ public class FileUtils {
         try (PrintWriter out = new PrintWriter(outkeywordsDictionarayFile)) {
             for (String key : sorted_map.keySet()) {
                 Double value = keywordsDictionaray.get(key);
+                key = key.toLowerCase().trim().replaceAll(" ", "_");
+                if (key.endsWith("_")) {
+                    key = key.substring(0, key.lastIndexOf("_"));
+                }
+
                 out.print(key + "," + value + "\n");
             }
         }

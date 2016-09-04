@@ -57,6 +57,7 @@ edu.ehu.galan.rake.RakeAlgorithm ex = new edu.ehu.galan.rake.RakeAlgorithm();
     
 //    parser.readSource("testCorpus/textAstronomy");
     edu.ehu.galan.rake.model.Document doc = new edu.ehu.galan.rake.model.Document("full_path", "name");
+    
 //    ex.init(doc, pPropsDir);
 //    ex.runAlgorithm();
 //    doc.getTermList();

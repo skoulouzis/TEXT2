@@ -51,7 +51,7 @@ public class WikipediaOnline extends Wikipedia {
 //    private static Map<String, Set<String>> titlesCache;
 
     private File cacheDBFile;
-    private Object prevTitles = "";
+    private String prevTitles = "";
 
     @Override
     public void configure(Properties properties) {
