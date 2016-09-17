@@ -138,7 +138,7 @@ public class CosineSimilarity implements Classifier {
             boolean headerSet = false;
             header.append("docName").append(",");
 
-            try (PrintWriter out = new PrintWriter(filePath + File.separator + "resault.csv")) {
+            try (PrintWriter out = new PrintWriter(filePath + File.separator + "result.csv")) {
                 for (String docName : classesMap.keySet()) {
                     StringBuilder line = new StringBuilder();
                     line.append(docName).append(",");
@@ -181,6 +181,7 @@ public class CosineSimilarity implements Classifier {
                     String line;
                     Map<String, Double> classVector = new TreeMap<>();
                     while ((line = br.readLine()) != null) {
+//                        System.err.println(featureFile + " " + line);
                         String[] parts = line.split(",");
                         String key = parts[0];
                         String val = parts[1];
