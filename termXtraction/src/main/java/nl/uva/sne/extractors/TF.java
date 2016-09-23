@@ -34,7 +34,7 @@ public class TF implements SortTerms {
                 int count = 0;
                 if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                     count++;
-                    Logger.getLogger(TF.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, docs.length});
+//                    Logger.getLogger(TF.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, docs.length});
                     String line;
                     StringBuilder sb = new StringBuilder();
                     try (BufferedReader br = new BufferedReader(new FileReader(f))) {
