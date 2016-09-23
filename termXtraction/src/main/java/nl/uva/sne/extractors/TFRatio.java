@@ -17,7 +17,10 @@ public class TFRatio implements SortTerms {
 
     @Override
     public Map<String, Double> sort(Map<String, Double> termDictionaray, String dirPath) throws IOException, InterruptedException {
+        TF tfSort = new TF();
+//        Map<String, Double> tfMap = tfSort.sort(termDictionaray, dirPath);
         Map<String, Double> newTermDictionaray = new HashMap<>();
+
         for (String term : termDictionaray.keySet()) {
             Double tf = termDictionaray.get(term);
             int totalNumberOfTerms = termDictionaray.size();
