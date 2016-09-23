@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -244,9 +245,11 @@ public class Wikidata extends DisambiguatorImpl {
         Map<String, List<String>> map = new HashMap<>();
         if (terms.size() > 0) {
             int maxT = 2;
-            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
-                    5000L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+            BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(maxT);
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
+//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+//                    5000L, TimeUnit.MILLISECONDS,
+//                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
 
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P31";
@@ -279,10 +282,12 @@ public class Wikidata extends DisambiguatorImpl {
 
         if (terms.size() > 0) {
             int maxT = 2;
-            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
-                    5000L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+            BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(maxT);
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
 
+//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+//                    5000L, TimeUnit.MILLISECONDS,
+//                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P910";
             for (Term t : terms) {
@@ -305,11 +310,12 @@ public class Wikidata extends DisambiguatorImpl {
                     map.putAll(c);
                 }
             }
+            workQueue = new ArrayBlockingQueue(maxT);
+            pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
 
-            pool = new ThreadPoolExecutor(maxT, maxT,
-                    5000L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
-
+//            pool = new ThreadPoolExecutor(maxT, maxT,
+//                    5000L, TimeUnit.MILLISECONDS,
+//                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
             Set<Future<Map<String, List<String>>>> set2 = new HashSet<>();
             for (Term t : terms) {
                 List<String> catIDs = map.get(t.getUID());

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -122,9 +123,12 @@ public class MetaDisambiguator extends DisambiguatorImpl {
     private Term getTermConcurrently(String term) throws InterruptedException, ExecutionException {
         Set<Term> possibleTerms = new HashSet();
 
-        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(),
-                5000L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(disambiguators.size(), true), new ThreadPoolExecutor.CallerRunsPolicy());
+         BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(disambiguators.size());
+        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(), 500L, TimeUnit.MICROSECONDS, workQueue);
+         
+//        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(),
+//                5000L, TimeUnit.MILLISECONDS,
+//                new ArrayBlockingQueue<>(disambiguators.size(), true), new ThreadPoolExecutor.CallerRunsPolicy());
 
         Set<Future<Term>> set = new HashSet<>();
         for (int i = 0; i < disambiguators.size(); i++) {
