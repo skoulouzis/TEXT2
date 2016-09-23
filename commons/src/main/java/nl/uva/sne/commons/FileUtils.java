@@ -314,11 +314,16 @@ public class FileUtils {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
-                if (line.length() > 2) {
-                    String[] parts = line.split(",");
-                    if (parts.length > 1) {
-                        map.put(parts[0], Double.valueOf(parts[1]));
+                if (line.length() > 1) {
+                    if (line.contains(",")) {
+                        String[] parts = line.split(",");
+                        if (parts.length > 1) {
+                            map.put(parts[0], Double.valueOf(parts[1]));
+                        }
+                    } else {
+                        map.put(line, 0.0);
                     }
+
                 }
             }
         }
