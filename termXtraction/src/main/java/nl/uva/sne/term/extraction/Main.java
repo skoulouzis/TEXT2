@@ -33,7 +33,7 @@ public class Main {
 
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
-                // -e nl.uva.sne.extractors.LuceneExtractor $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionary.csv
+                // -e nl.uva.sne.extractors.LuceneExtractor $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionary.csv $HOME/workspace/TEXT2/etc/text.properties
                 if (args[i].equals("-e")) {
                     extractTerms = true;
                     className = args[i + 1];

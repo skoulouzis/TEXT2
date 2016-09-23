@@ -43,10 +43,10 @@
             <!--	<param name="dictionary_path" value="/opt/WordNet-3.1/dict"/> -->
 
             <!--  Use this in Ubuntu  -->
-            <param name="dictionary_path" value="/usr/share/wordnet"/>
+            <!--<param name="dictionary_path" value="/usr/share/wordnet"/>-->
                         
             <!--For DAS5-->
-            <!--<param name="dictionary_path" value="//var/scratch/skoulouz/WordNet-glosstag/dict/"/>-->
+            <param name="dictionary_path" value="//var/scratch/skoulouz/WordNet-glosstag/dict/"/>
                         
 
             <!--  Use this in Windows -->
