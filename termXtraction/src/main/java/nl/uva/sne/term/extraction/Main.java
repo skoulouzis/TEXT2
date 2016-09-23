@@ -43,7 +43,7 @@ public class Main {
                 }
                 // -s nl.uva.sne.extractors.IDFSort $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryIDF.csv
                 // -s nl.uva.sne.extractors.TFRatio $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryTFRatio.csv
-                    // -s nl.uva.sne.extractors.TFIDF $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryTFIDF.csv
+                // -s nl.uva.sne.extractors.TFIDF $HOME/Downloads/textdocs/dictionary.csv $HOME/Downloads/textdocs $HOME/Downloads/textdocs/dictionaryTFIDF.csv
                 if (args[i].equals("-s")) {
                     sort = true;
                     className = args[i + 1];
