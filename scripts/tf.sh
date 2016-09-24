@@ -29,6 +29,7 @@ transpose(){
 
 transpose $1 
 sed -i 's/ /,/g' $1.trans
+sed -i 's/_/ /g' $1.trans
 terms=`cat $1.trans`
 header="fileName,"$terms
 echo $header > tf.csv
@@ -37,6 +38,7 @@ echo $header > tf.csv
 
 for f in $2/*.tokens
 do
+  echo "$0 Processing file $f"
   while read p; do
     tf=`grep "$p" $f | wc -l`
     line=$line,$tf
