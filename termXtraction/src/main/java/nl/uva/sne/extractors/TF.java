@@ -27,14 +27,18 @@ public class TF implements SortTerms {
         Map<String, Double> newTermDictionaray = new HashMap<>();
         File dir = new File(dirPath);
         File[] docs = dir.listFiles();
-
+        int count = 0;
         for (String term : termDictionaray.keySet()) {
+            count++;
+            if (count % 100 == 0) {
+                Logger.getLogger(IDFSort.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{term, count, termDictionaray.size()});
+            }
             double tf = 0;
             for (File f : docs) {
-                int count = 0;
+
+//                Logger.getLogger(TF.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, docs.length});
                 if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                     count++;
-//                    Logger.getLogger(TF.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, docs.length});
                     String line;
                     StringBuilder sb = new StringBuilder();
                     try (BufferedReader br = new BufferedReader(new FileReader(f))) {

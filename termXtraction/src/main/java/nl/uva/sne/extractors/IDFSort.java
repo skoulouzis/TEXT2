@@ -29,13 +29,16 @@ public class IDFSort implements SortTerms {
         File dir = new File(dirPath);
         File[] docs = dir.listFiles();
         GrepOptionSets go = new GrepOptionSets();
+        int count = 0;
         for (String term : termDictionaray.keySet()) {
+            count++;
+            if (count % 100 == 0) {
+                Logger.getLogger(IDFSort.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{term, count, termDictionaray.size()});
+            }
             int numOfDocsWithTerm = 0;
             for (File f : docs) {
-                int count = 0;
+
                 if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
-                    count++;
-                    Logger.getLogger(IDFSort.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, docs.length});
                     try (InputStream fis = new FileInputStream(f)) {
                         String result = Unix4j.from(fis).grep(go.i.count, term.replaceAll("_", " ")).toStringResult();
                         Integer lineCount = Integer.valueOf(result);
