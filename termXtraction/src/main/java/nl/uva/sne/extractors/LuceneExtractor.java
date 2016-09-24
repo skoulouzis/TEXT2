@@ -50,7 +50,7 @@ public class LuceneExtractor implements TermExtractor {
             if (dir.isDirectory()) {
                 for (File f : dir.listFiles()) {
                     count++;
-                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
+//                    Logger.getLogger(LuceneExtractor.class.getName()).log(Level.INFO, "{0}: {1} of {2}", new Object[]{f.getName(), count, dir.list().length});
                     if (FilenameUtils.getExtension(f.getName()).endsWith("txt")) {
                         termDictionaray.putAll(extractFromFile(f));
                     }
