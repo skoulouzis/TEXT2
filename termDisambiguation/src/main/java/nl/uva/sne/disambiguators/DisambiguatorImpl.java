@@ -91,7 +91,7 @@ public class DisambiguatorImpl implements Disambiguator, Callable {
         }
         props.append("offset.terms: ").append(lineOffset).append(" ");
 
-        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0,3"));
+        minimumSimilarity = Double.valueOf(properties.getProperty("minimum.similarity", "0.3"));
         props.append("minimum.similarity: ").append(minimumSimilarity).append(" ");
 
         this.cachePath = (properties.getProperty("cache.path"));
