@@ -176,15 +176,16 @@ public class WikipediaOnline extends Wikipedia {
     }
 
     private Map<String, List<String>> getCategories(Set<Term> terms) throws MalformedURLException, InterruptedException, ExecutionException {
-        int maxT = 2;
+        int maxT = 3;
         BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(maxT);
-        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
+//        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
 
-//        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
-//                5000L, TimeUnit.MILLISECONDS,
-//                new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+        ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                5000L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
         Map<String, List<String>> cats = new HashMap<>();
         Set<Future<Map<String, List<String>>>> set = new HashSet<>();
+        int count = 0;
         for (Term t : terms) {
             URL url = new URL(page + "?action=query&format=json&prop=categories&pageids=" + t.getUID());
             System.err.println(url);

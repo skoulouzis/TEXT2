@@ -266,4 +266,147 @@ public class TermFactory {
         return te;
     }
 
+    public static Term merge(Term tv1, Term tv2) throws Exception {
+        if (!tv1.getUID().equals(tv2.getUID())) {
+            throw new Exception("Can't merge differant terms. UID must be the same");
+        }
+        Set<String> altLables = new HashSet<>();
+        List<String> a1 = tv1.getAlternativeLables();
+        if (a1 != null) {
+            altLables.addAll(a1);
+        }
+        List<String> a2 = tv2.getAlternativeLables();
+        if (a2 != null) {
+            altLables.addAll(a2);
+        }
+
+        Set<Term> broader = new HashSet<>();
+        List<Term> b1 = tv1.getBroader();
+        if (b1 != null) {
+            broader.addAll(b1);
+        }
+        List<Term> b2 = tv2.getBroader();
+        if (b2 != null) {
+            broader.addAll(b2);
+        }
+
+//        List<Term> broads1 = tv1.getBroader();
+//        List<Term> broads2 = tv2.getBroader();
+//        List<Term> broader = new ArrayList();
+//        for (Term b : broads1) {
+//            if (!broader.contains(b)) {
+//                broader.add(b);
+//            }
+//        }
+//        for (Term b : broads2) {
+//            if (!broader.contains(b)) {
+//                broader.add(b);
+//            }
+//        }
+        Set<Term> narrower = new HashSet<>();
+        List<Term> n1 = tv1.getNarrower();
+        if (n1 != null) {
+            narrower.addAll(n1);
+        }
+        List<Term> n2 = tv2.getNarrower();
+        if (n2 != null) {
+            narrower.addAll(n2);
+        }
+
+//                List<Term> narrower = new ArrayList();
+//        List<Term> narrs1 = tv1.getNarrower();
+//         List<Term> narrs2 = tv2.getNarrower();
+//        for (Term n : narrs1) {
+//            if (!narrower.contains(n)) {
+//                narrower.add(n);
+//            }
+//        }
+//        for (Term n : narrs2) {
+//            if (!broader.contains(n)) {
+//                narrower.add(n);
+//            }
+//        }
+        Set<String> broaderUIDS = new HashSet<>();
+        List<String> buid1 = tv1.getBroaderUIDS();
+        if (buid1 != null) {
+            broaderUIDS.addAll(buid1);
+        }
+        List<String> buid2 = tv2.getBroaderUIDS();
+        if (buid2 != null) {
+            broaderUIDS.addAll(buid2);
+        }
+
+        Set<String> categories = new HashSet<>();
+        List<String> c1 = tv1.getCategories();
+        if (c1 != null) {
+            categories.addAll(c1);
+        }
+
+        List<String> c2 = tv2.getCategories();
+        if (c2 != null) {
+            categories.addAll(c2);
+        }
+
+        String foreignKey;
+        if (tv1.getForeignKey() != null) {
+            foreignKey = tv1.getForeignKey();
+        } else {
+            foreignKey = tv2.getForeignKey();
+        }
+
+        Set<String> glosses = new HashSet<>();
+        List<String> g1 = tv1.getGlosses();
+        if (g1 != null) {
+            glosses.addAll(g1);
+        }
+        List<String> g2 = tv2.getGlosses();
+        if (g1 != null) {
+            glosses.addAll(g2);
+        }
+
+        boolean idFromDic = false;
+        if (tv1.getIsFromDictionary() && tv2.getIsFromDictionary()) {
+            idFromDic = true;
+        }
+        if (!tv1.getLemma().equals(tv2.getLemma())) {
+            altLables.add(tv2.getLemma());
+        }
+        String lemma = tv1.getLemma();
+
+        Set<String> narrowerUIDS = new HashSet<>();
+        Set<String> nuid1 = tv1.getNarrowerUIDS();
+        if (nuid1 != null) {
+            narrowerUIDS.addAll(nuid1);
+        }
+        Set<String> nuid2 = tv2.getNarrowerUIDS();
+        if (nuid2 != null) {
+            narrowerUIDS.addAll(nuid2);
+        }
+
+        Set<Term> synonyms = new HashSet<>();
+        List<Term> s1 = tv1.getSynonyms();
+        if (s1 != null) {
+            synonyms.addAll(s1);
+        }
+
+        List<Term> s2 = tv2.getSynonyms();
+        if (s2 != null) {
+            synonyms.addAll(s2);
+        }
+
+        Term mtv = new Term(lemma, "");
+        mtv.setUID(tv1.getUID());
+        mtv.setAlternativeLables(new ArrayList<>(altLables));
+        mtv.setBroader(new ArrayList<>(broader));
+        mtv.setBroaderUIDS(new ArrayList<>(broaderUIDS));
+        mtv.setCategories(new ArrayList<>(categories));
+        mtv.setForeignKey(foreignKey);
+        mtv.setGlosses(new ArrayList<>(glosses));
+        mtv.setIsFromDictionary(idFromDic);
+        mtv.setNarrowerUIDS(narrowerUIDS);
+        mtv.setNarrower(new ArrayList<>(narrower));
+        mtv.setSynonyms(new ArrayList<>(synonyms));
+
+        return mtv;
+    }
 }

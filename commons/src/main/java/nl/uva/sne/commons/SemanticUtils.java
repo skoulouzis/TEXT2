@@ -51,8 +51,8 @@ public class SemanticUtils {
 
     static Set<String> stopwords = new HashSet();
     public static String stopwordsFile = System.getProperty("user.home")
-            + File.separator + "workspace" + File.separator + "TEXT2"
-            + File.separator + "etc" + File.separator + "sropwords";
+            + File.separator + "workspace" + File.separator + "E-CO-2" 
+            + File.separator + "etc" + File.separator + "stopwords.csv";
 
     static Map<String, Map<String, Double>> termDocCache;
 

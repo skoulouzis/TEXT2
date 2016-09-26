@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath ${packageClassName} /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-classpath %classpath ${packageClassName} /home/alogo/workspace/E-CO-2/Competences/data_analytics/data_analytics-DSDA01_predictive_analytics/DSDA01.csv /home/alogo/Downloads/ /home/alogo/workspace/TEXT2/termDisambiguation/src/main/resources/disambiguation.properties</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath ${packageClassName} /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath nl.uva.sne.disambiguation.Main /home/alogo/workspace/E-CO-2/Competences/data_analytics/data_analytics-DSDA01_predictive_analytics/DSDA01.csv /home/alogo/Downloads/ /home/alogo/workspace/TEXT2/termDisambiguation/src/main/resources/disambiguation.properties</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath ${packageClassName} /home/alogo/Downloads/textdocs/dictionaryAll.csv /home/alogo/Downloads/jsonTerms</exec.args>
+                <exec.args>-classpath %classpath ${packageClassName} /home/alogo/workspace/E-CO-2/Competences/data_analytics/data_analytics-DSDA01_predictive_analytics/DSDA01.csv /home/alogo/Downloads/ /home/alogo/workspace/TEXT2/termDisambiguation/src/main/resources/disambiguation.properties</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>

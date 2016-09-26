@@ -8,7 +8,11 @@ package nl.uva.sne.disambiguation;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +23,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import nl.uva.sne.disambiguators.DisambiguatorImpl;
 import org.apache.commons.io.FileDeleteStrategy;
+import org.semanticweb.skos.AddAssertion;
+import org.semanticweb.skos.SKOSChange;
+import org.semanticweb.skos.SKOSChangeException;
+import org.semanticweb.skos.SKOSConceptScheme;
+import org.semanticweb.skos.SKOSCreationException;
+import org.semanticweb.skos.SKOSEntityAssertion;
+import org.semanticweb.skos.SKOSStorageException;
+import org.semanticweb.skosapibinding.SKOSFormatExt;
 
 /**
  *
@@ -29,7 +41,7 @@ public class Main {
     public static String propertiesPath = "disambiguation.properties";
     private static String props;
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) throws IOException, Exception {
         String filterredDictionary = null, outDir = null;
         if (args != null) {
 
@@ -64,6 +76,8 @@ public class Main {
             if (terms != null) {
                 try {
                     writeTerms2Json(terms, outDir);
+                    terms = buildGraph(terms, null);
+                    export2SKOS(terms, outDir + File.separator + "taxonomy.rdf", String.valueOf(1));
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -78,7 +92,7 @@ public class Main {
                 }
             }
         }
-        
+
         Logger.getLogger(Main.class.getName()).log(Level.INFO, "-----Done-----");
     }
 
@@ -93,4 +107,43 @@ public class Main {
         }
     }
 
+    private static List<Term> buildGraph(List<Term> allTerms, Map<String, Term> termMap) throws Exception {
+        if (termMap == null) {
+            termMap = new HashMap<>();
+        }
+        for (Term tv : allTerms) {
+            List<Term> broader = tv.getBroader();
+            if (broader != null) {
+                for (Term b : broader) {
+                    b.addNarrowerUID(tv.getUID());
+                    b.addNarrower(tv);
+                }
+                buildGraph(broader, termMap);
+            }
+            Term tmp = termMap.get(tv.getUID());
+            if (tmp != null) {
+                tv = TermFactory.merge(tmp, tv);
+            }
+            termMap.put(tv.getUID(), tv);
+        }
+        return new ArrayList<>(termMap.values());
+    }
+
+    private static void export2SKOS(List<Term> allTerms, String fileName, String version) throws SKOSCreationException, IOException, SKOSChangeException, SKOSStorageException {
+        URI uri = URI.create(SkosUtils.SKOS_URI + "v" + version);
+        SKOSConceptScheme scheme = SkosUtils.getSKOSDataFactory().getSKOSConceptScheme(uri);
+        List<SKOSChange> change = new ArrayList<>();
+        SKOSEntityAssertion schemaAss = SkosUtils.getSKOSDataFactory().getSKOSEntityAssertion(scheme);
+        change.add(new AddAssertion(SkosUtils.getSKOSDataset(), schemaAss));
+
+        for (Term tv : allTerms) {
+            if (tv.getBroader() == null || tv.getBroader().isEmpty()) {
+                change.addAll(SkosUtils.create(tv, "EN", true, version));
+            } else {
+                change.addAll(SkosUtils.create(tv, "EN", false, version));
+            }
+        }
+        SkosUtils.getSKOSManager().applyChanges(change);
+        SkosUtils.getSKOSManager().save(SkosUtils.getSKOSDataset(), SKOSFormatExt.RDFXML, new File(fileName).toURI());
+    }
 }

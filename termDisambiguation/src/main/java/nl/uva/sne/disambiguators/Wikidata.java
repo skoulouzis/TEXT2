@@ -246,10 +246,10 @@ public class Wikidata extends DisambiguatorImpl {
         if (terms.size() > 0) {
             int maxT = 2;
             BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(maxT);
-            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
-//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
-//                    5000L, TimeUnit.MILLISECONDS,
-//                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                    5000L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
 
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P31";
@@ -283,11 +283,11 @@ public class Wikidata extends DisambiguatorImpl {
         if (terms.size() > 0) {
             int maxT = 2;
             BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(maxT);
-            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
+//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT, 500L, TimeUnit.MICROSECONDS, workQueue);
 
-//            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
-//                    5000L, TimeUnit.MILLISECONDS,
-//                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
+            ExecutorService pool = new ThreadPoolExecutor(maxT, maxT,
+                    5000L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(maxT, true), new ThreadPoolExecutor.CallerRunsPolicy());
             Set<Future<Map<String, List<String>>>> set1 = new HashSet<>();
             String prop = "P910";
             for (Term t : terms) {

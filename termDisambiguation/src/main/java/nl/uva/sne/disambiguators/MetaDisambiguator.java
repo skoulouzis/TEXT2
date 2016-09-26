@@ -124,11 +124,11 @@ public class MetaDisambiguator extends DisambiguatorImpl {
         Set<Term> possibleTerms = new HashSet();
 
          BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(disambiguators.size());
-        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(), 500L, TimeUnit.MICROSECONDS, workQueue);
+//        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(), 500L, TimeUnit.MICROSECONDS, workQueue);
          
-//        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(),
-//                5000L, TimeUnit.MILLISECONDS,
-//                new ArrayBlockingQueue<>(disambiguators.size(), true), new ThreadPoolExecutor.CallerRunsPolicy());
+        ExecutorService pool = new ThreadPoolExecutor(disambiguators.size(), disambiguators.size(),
+                5000L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(disambiguators.size(), true), new ThreadPoolExecutor.CallerRunsPolicy());
 
         Set<Future<Term>> set = new HashSet<>();
         for (int i = 0; i < disambiguators.size(); i++) {
