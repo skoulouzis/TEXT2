@@ -98,13 +98,16 @@ public class FileUtils {
         return (Boolean) jsonObject.get(field);
     }
 
-    private static double getDouble(String jsonStr, String field) throws ParseException {
+    private static Double getDouble(String jsonStr, String field) throws ParseException {
         if (parser == null) {
             parser = new JSONParser();
         }
         Object obj = parser.parse(jsonStr);
         JSONObject jsonObject = (JSONObject) obj;
-        return (Double) jsonObject.get(field);
+        if (jsonObject != null) {
+            return (Double) jsonObject.get(field);
+        }
+        return null;
     }
 
     private static boolean getBoolean(FileReader fr, String field) throws IOException, ParseException {
@@ -202,7 +205,7 @@ public class FileUtils {
         return getString(jsonStr, "originalTerm");
     }
 
-    static double getConfidence(String jsonStr) throws ParseException {
+    static Double getConfidence(String jsonStr) throws ParseException {
         return getDouble(jsonStr, "confidence");
     }
 

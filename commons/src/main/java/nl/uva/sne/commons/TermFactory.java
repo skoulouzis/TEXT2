@@ -164,7 +164,10 @@ public class TermFactory {
         term.setGlosses(FileUtils.getGlosses(jsonStr));
         term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonStr));
         term.setOriginalTerm(FileUtils.getOriginalTerm(jsonStr));
-        term.setConfidence(FileUtils.getConfidence(jsonStr));
+        Double c = FileUtils.getConfidence(jsonStr);
+        if (c != null) {
+            term.setConfidence(c);
+        }
         return term;
     }
 
@@ -191,7 +194,11 @@ public class TermFactory {
         term.setGlosses(FileUtils.getGlosses(jsonStr));
         term.setIsFromDictionary(FileUtils.IsFromDictionary(jsonStr));
         term.setOriginalTerm(FileUtils.getOriginalTerm(jsonStr));
-        term.setConfidence(FileUtils.getConfidence(jsonStr));
+        Double c = FileUtils.getConfidence(jsonStr);
+        if (c != null) {
+            term.setConfidence(c);
+        }
+
         return term;
     }
 

@@ -33,12 +33,9 @@ import org.carrot2.core.LanguageCode;
 import org.json.simple.parser.ParseException;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
 import weka.classifiers.meta.FilteredClassifier;
-import weka.classifiers.trees.J48;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
-import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.unsupervised.attribute.Remove;
 
