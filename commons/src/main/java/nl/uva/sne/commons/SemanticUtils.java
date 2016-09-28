@@ -390,7 +390,9 @@ public class SemanticUtils {
     public static Set<Term> tf_idf_Disambiguation(Set<Term> possibleTerms, Set<String> nGrams, String lemma, double confidence, boolean matchTitle) throws IOException, JWNLException, ParseException {
         List<List<String>> allDocs = new ArrayList<>();
         Map<String, List<String>> docs = new HashMap<>();
-
+        if(possibleTerms == null || possibleTerms.size() < 10){
+            return null;
+        }
         for (Term tv : possibleTerms) {
             Set<String> doc = SemanticUtils.getDocument(tv);
             allDocs.add(new ArrayList<>(doc));
