@@ -49,12 +49,13 @@ public class Main {
                 cluster = true;
                 className = args[1];
                 inDir = args[2];
-                if (args.length == 4) {
-                    outDir = args[3];
-                } else if (args.length == 5) {
-                    secondInDir = args[3];
-                    outDir = args[4];
-                }
+//                if (args.length == 4) {/home/alogo
+                outDir = args[3];
+//                } 
+//                else if (args.length == 5) {
+//                    secondInDir = args[3];
+//                    outDir = args[4];
+//                }
 
 //                    break;
             }
@@ -131,7 +132,7 @@ public class Main {
 
     private static void copyTerms2Clusters(Map<String, String> cluster, String outputDir) throws IOException, ParseException {
         for (String fileName : cluster.keySet()) {
-            File dir = new File(outputDir + File.separator + cluster.get(fileName));
+            File dir = new File(outputDir + File.separator + "Cluster-" + cluster.get(fileName));
             if (!dir.exists()) {
                 org.apache.commons.io.FileUtils.forceMkdir(dir);
             }

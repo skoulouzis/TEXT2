@@ -36,6 +36,7 @@ import weka.classifiers.Classifier;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
+import weka.clusterers.SimpleKMeans;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.unsupervised.attribute.Remove;
 
@@ -73,11 +74,18 @@ public class ClusterUtils {
             int theClass = fc.clusterInstance(inst);
             String s = data.attribute(0).value(i);
             clusters.put(inDir + File.separator + s, String.valueOf(theClass));
-//            System.err.println(s + " is in cluster " + theClass);
+            System.err.println(s + " is in cluster " + theClass);
         }
         ClusterEvaluation eval = new ClusterEvaluation();
         eval.setClusterer(fc);                                   // the cluster to evaluate
         eval.evaluateClusterer(data);                                // data to evaluate the clusterer on
+//        double ll = eval.getLogLikelihood();
+//        Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "LogLikelihood :{0}", ll);
+//
+//        if (clusterer instanceof SimpleKMeans) {
+//            double sqrErr = ((SimpleKMeans) clusterer).getSquaredError();
+//            Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "Squared Error:{0}", sqrErr);
+//        }
 
         Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "# of clusters: {0}", eval.getNumClusters());
         Logger.getLogger(ClusterUtils.class.getName()).log(Level.INFO, "clusterResults: {0}", eval.clusterResultsToString());

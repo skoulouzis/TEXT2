@@ -31,7 +31,6 @@ public class FarthestFirst implements Clusterer {
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
             weka.clusterers.FarthestFirst clusterer = new weka.clusterers.FarthestFirst();
-           
             clusterer.setNumClusters(numOfClusters);
             Instances data = ClusterUtils.terms2Instances(inDir,false);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);

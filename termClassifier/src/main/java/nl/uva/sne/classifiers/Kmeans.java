@@ -39,7 +39,7 @@ public class Kmeans implements Clusterer {
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
 
-            Instances data = ClusterUtils.terms2Instances(inDir,false);
+            Instances data = ClusterUtils.terms2Instances(inDir, false);
 
             DistanceFunction df;
 //            SimpleKMeans currently only supports the Euclidean and Manhattan distances.

@@ -5,11 +5,15 @@
  */
 package nl.uva.sne.classifiers;
 
+import java.awt.Container;
+import java.awt.GridLayout;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
 import nl.uva.sne.commons.ClusterUtils;
 import org.json.simple.parser.ParseException;
 
@@ -20,6 +24,9 @@ import weka.core.EuclideanDistance;
 import weka.core.Instances;
 import weka.core.ManhattanDistance;
 import weka.core.MinkowskiDistance;
+import weka.core.converters.ArffSaver;
+import weka.filters.unsupervised.attribute.Remove;
+import weka.gui.hierarchyvisualizer.HierarchyVisualizer;
 
 /**
  *
@@ -41,7 +48,12 @@ public class Hierarchical implements Clusterer {
     public Map<String, String> cluster(String inDir) throws IOException, ParseException {
         try {
 
-            Instances data = ClusterUtils.terms2Instances(inDir,false);
+            Instances data = ClusterUtils.terms2Instances(inDir, false);
+
+//            ArffSaver s = new ArffSaver();
+//            s.setInstances(data);
+//            s.setFile(new File(inDir+"/dataset.arff"));
+//            s.writeBatch();
 
             DistanceFunction df;
 //            SimpleKMeans currently only supports the Euclidean and Manhattan distances.
@@ -64,7 +76,6 @@ public class Hierarchical implements Clusterer {
             }
 
             Logger.getLogger(Hierarchical.class.getName()).log(Level.INFO, "Start clusteing");
-            
 
             weka.clusterers.HierarchicalClusterer clusterer = new HierarchicalClusterer();
             clusterer.setOptions(new String[]{"-L", "COMPLETE"});
@@ -73,7 +84,36 @@ public class Hierarchical implements Clusterer {
             clusterer.setDistanceFunction(df);
             clusterer.setDistanceIsBranchLength(true);
             clusterer.setPrintNewick(false);
-            
+
+            weka.clusterers.FilteredClusterer fc = new weka.clusterers.FilteredClusterer();
+            String[] options = new String[2];
+            options[0] = "-R"; // "range"
+            options[1] = "1"; // we want to ignore the attribute that is in the position '1'
+            Remove remove = new Remove(); // new instance of filter
+            remove.setOptions(options); // set options
+
+            fc.setFilter(remove); //add filter to remove attributes
+            fc.setClusterer(clusterer); //bind FilteredClusterer to original clusterer
+            fc.buildClusterer(data);
+
+//             // Print normal
+//        clusterer.setPrintNewick(false);
+//        System.out.println(clusterer.graph());
+//        // Print Newick
+//        clusterer.setPrintNewick(true);
+//        System.out.println(clusterer.graph());
+//
+//        // Let's try to show this clustered data!
+//        JFrame mainFrame = new JFrame("Weka Test");
+//        mainFrame.setSize(600, 400);
+//        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        Container content = mainFrame.getContentPane();
+//        content.setLayout(new GridLayout(1, 1));
+//
+//        HierarchyVisualizer visualizer = new HierarchyVisualizer(clusterer.graph());
+//        content.add(visualizer);
+//
+//        mainFrame.setVisible(true);
             return ClusterUtils.bulidClusters(clusterer, data, inDir);
 
         } catch (Exception ex) {
