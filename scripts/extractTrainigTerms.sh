@@ -1,7 +1,7 @@
 #!/bin/bash
 
 JAR_PATH=$HOME/workspace/TEXT2/termXtraction/target/termXtraction-1.0-SNAPSHOT-jar-with-dependencies.jar
-DICTIONARY_ALL=$HOME/Downloads/textdocs/dictionaryAll.csv
+DICTIONARY_ALL=$HOME/workspace/TEXT2/etc/dictionaryAll.csv
 
 # declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/doc3/1Data_Analytics_and_Machine_Learning/" "$HOME/Downloads/doc3/2Data_Management_data_Curation/" "$HOME/Downloads/doc3/3Data_Science_Engineering/" "$HOME/Downloads/doc3/4Scientific_Research_Methods/" "$HOME/Downloads/doc3/5PersonalInter-personalCommunication" "$HOME/Downloads/doc3/2Data_Management_data_Curation/" "$HOME/Downloads/doc3/6ApplicationSubjectDomain")
 # declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/doc3/6ApplicationSubjectDomain" "$HOME/Downloads/doc3/5PersonalInter-personalCommunication")
@@ -14,7 +14,11 @@ DICTIONARY_ALL=$HOME/Downloads/textdocs/dictionaryAll.csv
 # declare -a TRAIN_DOC_PATHS=("$HOME/Downloads/locations/london" "$HOME/Downloads/locations/berlin" "$HOME/Downloads/locations/amsterdam")
 
 TRAIN_DOC_PATHS=()
-CATEGORIES_FOLDER=$HOME/Downloads/D2.1_Table5_Skills_and_knowledge_Big_Data_platforms_and_tools
+
+CATEGORIES_FOLDER=/var/scratch/skoulouz/Competences/data_analytics
+
+
+
 for i in $(ls -d $CATEGORIES_FOLDER/*)
 do 
   TRAIN_DOC_PATHS+=($i)
